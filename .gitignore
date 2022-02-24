@@ -1,0 +1,15 @@
+build/
+
+devel/
+
+.vscode/
+
+catkin_ws/src/construction_Robot/scripts/yolov3.cfg
+
+catkin_ws/src/construction_Robot/scripts/yolov3.weights
+
+catkin_ws/src/construction_Robot/scripts/darknet/
+
+catkin_ws/src/construction_Robot/scripts/Sensing_Nodes/darknet/
+
+catkin_ws/src/construction_Robot/scripts/Sensing_Nodes/yolov3.weights
