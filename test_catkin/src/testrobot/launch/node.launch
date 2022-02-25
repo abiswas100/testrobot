@@ -6,7 +6,7 @@
     <node pkg="testrobot" name="Panel_Detectionn" type="Panel_Detection.py"/>
     <node pkg="testrobot" name="Mapping_Node" type="Mapping.py"/>
     <node pkg="testrobot" name="Planner" type="Planning_Node.py"/>
-
+  
     
     
     <!-- ALL MONITORING NODES GETS LAUNCHED HERE -->

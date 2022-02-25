@@ -15,7 +15,8 @@ def callback(msg: LaserScan):
     
             
 def main():
-    
+    rospy.loginfo("hello")
+    rospy.spin()    
     try:
         pass
         # rospy.Subscriber("/scan", LaserScan, callback, queue_size=10)

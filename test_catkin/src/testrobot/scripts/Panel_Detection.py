@@ -20,22 +20,22 @@ rospy.init_node('Panel_Detection', anonymous = False)
 pub_Image = rospy.Publisher('Panel', Image, queue_size=10)
 pub = rospy.Publisher('Panel_Detection_', String, queue_size=10)
 pub.publish(hello_str)
-bridge = CvBridge()  
+# bridge = CvBridge()  
 
 
-def image_processing_publish(cv_img):       
-    yolo_output = Yolo.Yolo_imp(cv_img)
-    print("for left")
-    left_output = bridge.cv2_to_imgmsg(yolo_output)
-    while not rospy.is_shutdown():
-        pub_Image.publish(left_output)
-        '''will add this here when real implementation happens'''
-        # pub.publish(hello_str)
-        rospy.spin()   
+# def image_processing_publish(cv_img):       
+#     yolo_output = Yolo.Yolo_imp(cv_img)
+#     print("for left")
+#     left_output = bridge.cv2_to_imgmsg(yolo_output)
+#     while not rospy.is_shutdown():
+#         pub_Image.publish(left_output)
+#         '''will add this here when real implementation happens'''
+#         # pub.publish(hello_str)
+#         rospy.spin()   
         
-def image_callback(msg: Image):
-    cv_img =  bridge.imgmsg_to_cv2(msg)
-    image_processing_publish(cv_img)
+# def image_callback(msg: Image):
+#     cv_img =  bridge.imgmsg_to_cv2(msg)
+#     image_processing_publish(cv_img)
 
         
 def main():
