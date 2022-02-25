@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import rospy
 from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan
@@ -8,14 +10,14 @@ pub = rospy.Publisher('Map', String, queue_size=10)
 pub.publish(hello_str)
     
         
-def callback(msg: LaserScan):
-    '''Will publish when Laser is available'''
-    # pub.publish(hello_str)
-    pass
+# def callback(msg: LaserScan):
+#     '''Will publish when Laser is available'''
+#     # pub.publish(hello_str)
+#     pass
     
             
 def main():
-    rospy.loginfo("hello")
+    rospy.loginfo("I am mapping node")
     rospy.spin()    
     try:
         pass

@@ -46,7 +46,7 @@ bridge = CvBridge()
 
         
 def main():
-    rospy.loginfo("Hello")
+    rospy.loginfo("I am human detection node    ")
     ### Depth Camera Input Subscribers
     rospy.spin()
     try:

@@ -1,25 +1,25 @@
-#!/usr/bin/env python
-
 import rospy
 from std_msgs.msg import String
 
-hello_str = "I do planning for Robot"
-rospy.init_node('Planner', anonymous = False)
-pub = rospy.Publisher('Planning_Node', String, queue_size=10)
+hello_str = "Critical Action - ALL STOP"
+rospy.init_node('ALLStop', anonymous = False)
+pub = rospy.Publisher('All_Stop', String, queue_size=10)
 pub.publish(hello_str)
     
         
-# def callback(msg: String):
-#     pub.publish(hello_str)
-#     pass
+def callback(msg: String):
+    # pub.publish(hello_str)
+    pass
     
             
 def main():
-    rospy.loginfo("Im planner")
+    
     try:
         pass
         # rospy.Subscriber("/mapping", String, callback, queue_size=10)
-        
+        '''
+        Subscribe to message from the Central Decision Node
+        '''
     except rospy.ROSInterruptException:
         pass
 

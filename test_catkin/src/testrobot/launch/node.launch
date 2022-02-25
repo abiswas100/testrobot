@@ -4,7 +4,7 @@
     <!-- ALL SENSING NODES GETS LAUNCHED HERE -->
     <node pkg="testrobot" name="Human_Detection" type="Human_Detection.py"/>
     <node pkg="testrobot" name="Panel_Detectionn" type="Panel_Detection.py"/>
-    <node pkg="testrobot" name="Mapping_Node" type="Mapping.py"/>
+    <node pkg="testrobot" name="Mapping_Node" type="Mapping_Node.py"/>
     <node pkg="testrobot" name="Planner" type="Planning_Node.py"/>
   
     

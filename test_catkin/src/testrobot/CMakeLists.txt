@@ -206,5 +206,7 @@ include_directories(
 # catkin_add_nosetests(test)
 
 catkin_install_python(PROGRAMS scripts/Human_Detection.py scripts/Mapping_Node.py scripts/Panel_Detection.py scripts/Planning_Node.py
+scripts/Central_Decision.py scripts/Change_Angle.py scripts/Check_Human_Presence.py scripts/Human_Checking_Node.py scripts/Move_Towards_Goal.py
+scripts/Specification_Checking.py scripts/Stop_All_Actions.py scripts/Track_Human.py scripts/Wait.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

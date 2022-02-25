@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import rospy
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
@@ -39,7 +41,7 @@ pub.publish(hello_str)
 
         
 def main():
-    rospy.loginfo("hello")
+    rospy.loginfo("I am panel detection node")
     rospy.spin()
     ### Depth Camera Input Subscribers
     
