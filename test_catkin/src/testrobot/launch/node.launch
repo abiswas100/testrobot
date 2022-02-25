@@ -20,7 +20,7 @@
     <node pkg="testrobot" name="Wait" type="Wait.py"/>
     
     <!-- ALL MONITORING NODES GETS LAUNCHED HERE -->
-    <node pkg="testrobot" name="Specification_Node" type="Specification_Checking.py"/>
+    <!-- <node pkg="testrobot" name="Specification_Node" type="S.py"/> -->
 
   
   
