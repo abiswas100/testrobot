@@ -6,11 +6,21 @@
     <node pkg="testrobot" name="Panel_Detectionn" type="Panel_Detection.py"/>
     <node pkg="testrobot" name="Mapping_Node" type="Mapping_Node.py"/>
     <node pkg="testrobot" name="Planner" type="Planning_Node.py"/>
+
+    <!-- ALL DECISION NODES GETS LAUNCHED HERE -->
+    <node pkg="testrobot" name="Central_Decision" type="Central_Decision.py"/>
+    <node pkg="testrobot" name="Human_Checking" type="Human_Checking_Node.py"/>
+    <node pkg="testrobot" name="Specification_Node" type="Specification_Checking.py"/>
   
     
+    <!-- ALL ACTION NODES GETS LAUNCHED HERE -->
+    <node pkg="testrobot" name="Change_Angle" type="Change_Angle.py"/>
+    <node pkg="testrobot" name="Move_Goal" type="Move_Towards_Goal.py"/>
+    <node pkg="testrobot" name="ALLStop" type="Stop_All_Action.py"/>
+    <node pkg="testrobot" name="Wait" type="Wait.py"/>
     
     <!-- ALL MONITORING NODES GETS LAUNCHED HERE -->
-    <!-- <node pkg="construction_robot" name="" type=".py"/> -->
+    <node pkg="testrobot" name="Specification_Node" type="Specification_Checking.py"/>
 
   
   
