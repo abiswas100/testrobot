@@ -18,18 +18,20 @@ def callback(msg: String):
     
             
 def main():
-    
-    try:
-        pass
-        # rospy.Subscriber("", String, callback, queue_size=10)
-        '''
+    '''
         Subscribe to message from the Detect Panel
         Subscribe to message from the Detect Human
         Subscribe to message from Specification Node about Safety
         Subscribe to Mapping Node
         Subscribe to Planning Node
         Subscribe to Odometer        
-        '''
+    '''
+    rospy.loginfo("hello in Central Decision")
+    
+    try:
+        rospy.spin()
+        # rospy.Subscriber("", String, callback, queue_size=10)
+
     except rospy.ROSInterruptException:
         pass
 
