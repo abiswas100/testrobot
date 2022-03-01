@@ -20,7 +20,7 @@ def callback(msg: String):
 def main():
     
     try:
-        pass
+        rospy.spin()
         # rospy.Subscriber("/mapping", String, callback, queue_size=10)
         '''
         Subscribe to Detect Human

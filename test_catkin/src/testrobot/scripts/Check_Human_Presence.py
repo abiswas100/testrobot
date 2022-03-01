@@ -18,13 +18,14 @@ def callback(msg: String):
     
             
 def main():
+    # rospy.Subscriber("", String, callback, queue_size=10)
+    '''
+        Subscribe to whatever who cares !!!       
+    '''
     
     try:
         pass
-        # rospy.Subscriber("", String, callback, queue_size=10)
-        '''
-        Subscribe to whatever who cares !!!       
-        '''
+        
     except rospy.ROSInterruptException:
         pass
 
