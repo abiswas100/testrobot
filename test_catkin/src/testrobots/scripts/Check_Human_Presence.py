@@ -1,33 +1,34 @@
 #!/usr/bin/env python
+
 import rospy
-from std_msgs.msg import String
 
-hello_str = "I am the Central Decision"
-rospy.init_node('Central_Decision', anonymous = False)
-pub = rospy.Publisher('Central_Decision', String, queue_size=10)
-pub.publish(hello_str)
-
-'''
-Publication List
-
-'''
+from testrobots.msg import H_detection
+from testrobots.msg import P_detection
         
-def callback(msg: String):
-    # pub.publish(hello_str)
-    pass
+def H_callbackdata(data):
+    rospy.loginfo("In H_callback")
+    rospy.loginfo(data.signal)  
     
-            
-def main():
-    # rospy.Subscriber("", String, callback, queue_size=10)
     '''
-        Subscribe to whatever who cares !!!       
+    If signal is 0 take a set of actions git-
+        and 
+    If signal is 1 take another set of action
     '''
+                
+def listener():
+    '''
+        Subscribe to message from the Detect Human       
+    '''
+    rospy.init_node('Human_Check', anonymous = False)
+    rospy.loginfo("Hello I am Human_Check")
     
-    try:
-        pass
-        
-    except rospy.ROSInterruptException:
-        pass
+    rospy.Subscriber("/H_Detection_msg", H_detection, H_callbackdata)
 
+    rospy.spin()
+
+    
 if __name__ == "__main__":
-    main()
+    listener()
+    
+    
+    

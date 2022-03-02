@@ -1,29 +1,48 @@
 #!/usr/bin/env python
 
 import rospy
-from sensor_msgs.msg import Image
+# from sensor_msgs.msg import Image
 from std_msgs.msg import String
-# import matplotlib.pyplot as plt
-# try:
-#     import cv2
-# except ImportError:
-#     import sys
-#     ros_path = '/opt/ros/kinetic/lib/python2.7/dist-packages'
-#     sys.path.remove(ros_path)
-#     import cv2
-#     sys.path.append(ros_path)
-# from cv_bridge import CvBridge
-
+from testrobots.msg import P_detection
 
 # import yolo as Yolo
 
-hello_str = "I detect Panels"
-rospy.init_node('Panel_Detection', anonymous = False)
-pub_Image = rospy.Publisher('Panel', Image, queue_size=10)
-pub = rospy.Publisher('Panel_Detection_', String, queue_size=10)
-pub.publish(hello_str)
-# bridge = CvBridge()  
+        
+def talker():
+    msg_pub = rospy.Publisher("P_Detection_msg", P_detection)
+    
+    rospy.init_node('Panel_Detection', anonymous = True)
 
+    r = rospy.Rate(10)
+    
+    msg = P_detection()
+    msg.signal = 1 
+    
+    # human_flag = 1
+    
+    # if human_flag == 1:
+    #     # rospy.loginfo_once("Human Detected on Camera")
+
+    while not rospy.is_shutdown():        
+        # rospy.loginfo(msg)
+        msg_pub.publish(msg)
+        rospy.loginfo("Human Detected on Camera")
+        r.sleep()
+
+if __name__ == "__main__":
+    try:
+        talker()
+    except rospy.ROSInterruptException: pass
+    rospy.spin()
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
 # def image_processing_publish(cv_img):       
 #     yolo_output = Yolo.Yolo_imp(cv_img)
@@ -39,19 +58,3 @@ pub.publish(hello_str)
 #     cv_img =  bridge.imgmsg_to_cv2(msg)
 #     image_processing_publish(cv_img)
 
-        
-def main():
-    rospy.loginfo("I am panel detection node")
-    rospy.spin()
-    ### Depth Camera Input Subscribers
-    
-    # rospy.Subscriber("/camera", Image, image_callback, queue_size=10)
-    
-    # rospy.Subscriber()
-    try:
-        rospy.Subscriber()
-    except rospy.ROSInterruptException:
-        pass
-
-if __name__ == "__main__":
-    main()
