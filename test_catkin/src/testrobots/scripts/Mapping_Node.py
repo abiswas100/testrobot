@@ -10,12 +10,12 @@ pub = rospy.Publisher('Map', String, queue_size=10)
 pub.publish(hello_str)
     
         
-# def callback(msg: LaserScan):
+def main():
 #     '''Will publish when Laser is available'''
 #     # pub.publish(hello_str)
 #     pass
     
-            
+      
 def main():
     rospy.loginfo("I am mapping node")
     rospy.spin()    

@@ -26,7 +26,7 @@ def talker():
     while not rospy.is_shutdown():        
         # rospy.loginfo(msg)
         msg_pub.publish(msg)
-        rospy.loginfo("Human Detected on Camera")
+        rospy.loginfo("Panel Detected on Camera")
         r.sleep()
 
 if __name__ == "__main__":
