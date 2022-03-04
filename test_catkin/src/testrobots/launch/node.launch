@@ -3,31 +3,23 @@
     <!-- <param name="moveTG" type="int" value="1"> -->
     <!-- ALL SENSING NODES GETS LAUNCHED HERE -->
     <node pkg="testrobots" name="Human_Detection" type="Human_Detection.py"/>
-    <!-- <node pkg="testrobot" name="Panel_Detectionn" type="Panel_Detection.py"/> -->
+    <node pkg="testrobots" name="Panel_Detection" type="Panel_Detection.py"/>
+    <node pkg="testrobots" name="Human_Tracking" type="Human_Tracking_Node.py"/>
+    
     <!-- <node pkg="testrobot" name="Mapping_Node" type="Mapping_Node.py"/>
     <node pkg="testrobot" name="Planner" type="Planning_Node.py"/>  -->
-<!--  -->
+
     <!-- ALL DECISION NODES GETS LAUNCHED HERE -->
     <node pkg="testrobots" name="Central_Decision" type="Central_Decision.py"/>
-    <!-- <node pkg="testrobot" name="Human_Checking" type="Human_Checking_Node.py"/> -->
-    <!-- <node pkg="testrobot" name="Specification_Node" type="Specification_Checking.py"/>  -->
+    <node pkg="testrobots" name="Human_Checking" type="Check_Human_Presence.py"/>
+    <node pkg="testrobots" name="Specification_Check" type="Specification_Checking.py"/> 
   
     
     <!-- ALL ACTION NODES GETS LAUNCHED HERE -->
-    <!-- <node pkg="testrobot" name="Change_Angle" type="Change_Angle.py"/>
-    <node pkg="testrobot" name="Move_Goal" type="Move_Towards_Goal.py"/>
-    <node pkg="testrobot" name="ALLStop" type="Stop_All_Action.py"/>
-    <node pkg="testrobot" name="Wait" type="Wait.py"/>
-     -->
-    <!-- ALL MONITORING NODES GETS LAUNCHED HERE -->
-    <!-- <node pkg="testrobot" name="Specification_Node" type="S.py"/> -->
-
-  
-  
-
-    <!-- ALL SYNSTHESIS NODES GETS LAUNCHED HERE -->
-    <!-- <node pkg="construction_robot" name="de" type=".py"/> -->
-  
+    <node pkg="testrobots" name="Change_Angle" type="Change_Angle.py"/>
+    <node pkg="testrobots" name="Move_Goal" type="Move_Towards_Goal.py"/>
+    <node pkg="testrobots" name="ALLStop" type="Stop_All_Actions.py"/>
+    
   
   <!-- Launch RVIZ -->
     <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find avhishekbiswas_roslab)/launch/config.rviz" output="screen"/> -->

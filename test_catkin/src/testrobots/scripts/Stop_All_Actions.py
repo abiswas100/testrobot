@@ -1,28 +1,26 @@
 #!/usr/bin/env python
+
 import rospy
-from std_msgs.msg import String
 
-hello_str = "Critical Action - ALL STOP"
-rospy.init_node('ALLStop', anonymous = False)
-pub = rospy.Publisher('All_Stop', String, queue_size=10)
-pub.publish(hello_str)
-    
+from testrobots.msg import stop
         
-def callback(msg: String):
-    # pub.publish(hello_str)
-    pass
+def callback(data):
+    rospy.loginfo("STOP movement")
+    rospy.loginfo(data.movement)  
     
-            
-def main():
+    '''
+    If signal is 0 take a set of actions git-
+        and 
+    If signal is 1 take another set of action
+    '''
+                
+def listener():
+    rospy.init_node('All Stop', anonymous=False)
     
-    try:
-        pass
-        # rospy.Subscriber("/mapping", String, callback, queue_size=10)
-        '''
-        Subscribe to message from the Central Decision Node
-        '''
-    except rospy.ROSInterruptException:
-        pass
+    rospy.Subscriber("stop", stop, callback)
 
+    rospy.spin()
+
+    
 if __name__ == "__main__":
-    main()
+    listener()

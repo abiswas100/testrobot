@@ -1,30 +1,52 @@
 #!/usr/bin/env python
+
 import rospy
-from std_msgs.msg import String
 
-hello_str = "I check if specifications are running or not"
-rospy.init_node('Specification_Node', anonymous = False)
-pub = rospy.Publisher('Specification', String, queue_size=10)
-pub.publish(hello_str)
-    
+from testrobots.msg import H_detection
+from testrobots.msg import P_detection
+from testrobots.msg import track
+from testrobots.msg import stop
+from testrobots.msg import tracking_updates
+
+
+rospy.init_node('Specification_Check', anonymous = False)
+stop_msg = rospy.Publisher("stop", stop)
         
-def callback(msg: String):
-    # pub.publish(hello_str)
-    pass
-    
-            
-def main():
-    
-    try:
-        pass
-        # rospy.Subscriber("/mapping", String, callback, queue_size=10)
-        '''
-        Subscribe to message from Human_Checking_Node to start this node
-        Subsrcibe to the Human Tracking Node
-        Subscribe to the Lidar
-         '''
-    except rospy.ROSInterruptException:
-        pass
+def callbackdata(data):
+    rospy.loginfo("In H_callback")
+    rospy.loginfo(data.signal)  
 
+def update_callback(t_data):
+    rospy.loginfo("In tracking udpate callback")
+    rospy.loginfo(t_data.update)  
+        
+    if t_data.update == 1: pass
+        ## check for all distance comparisions       
+        
+def P_callbackdata(data):
+    rospy.loginfo("In P_callback")
+    rospy.loginfo(data.signal)    
+    
+    '''
+    If signal is 0 take a set of actions -
+        and 
+    If signal is 1 take another set of action
+    '''
+    
+                
+def listener():
+    '''
+        Subscribe to message from the Detect Human Tracking        
+    '''
+    
+    rospy.loginfo("Hello I am Specification_Check")
+    
+    rospy.Subscriber("/P_Detection_msg", P_detection, P_callbackdata)
+    rospy.Subscriber("/tack", track, callbackdata)
+    rospy.Subscriber("/tupdate", tracking_updates, update_callback)
+    
+    rospy.spin()
+
+    
 if __name__ == "__main__":
-    main()
+    listener()

@@ -1,34 +1,33 @@
 #!/usr/bin/env python
+
+
 import rospy
-from std_msgs.msg import String
+from testrobots.msg import move
 
-hello_str = "I change angle by 10 degrees"
-rospy.init_node('Change_Angle', anonymous = False)
-pub = rospy.Publisher('Change_Angle', String, queue_size=10)
-pub.publish(hello_str)
+def callbackdata(data):
+    rospy.loginfo("Will change the angle")
+    rospy.loginfo(data.movement)  
     
-        
-def callback(msg: String):
-    # pub.publish(hello_str)
-    pass
+    '''
+    If signal is 0 take a set of actions git-
+        and 
+    If signal is 1 take another set of action
+    '''
+                
+def listener():
+    '''
+        Subscribe to message from the Detect Human       
+    '''
+    rospy.init_node('Change Angle', anonymous = False)
     
-            
-def main():
-    rospy.loginfo("hello in Change Angle")
-    '''
-        Subscribe to message from the Central Decision Node
-        Subscribe to Odometer
-        Subscribe to Mapping and Planning if required
-    '''
-    try:
-        rospy.spin()
-        pass
-        # rospy.Subscriber("/mapping", String, callback, queue_size=10)
-        
-    except rospy.ROSInterruptException:
-        pass
+    
+    rospy.Subscriber("/movement_msg", move, callbackdata)
 
+    rospy.spin()
+
+    
 if __name__ == "__main__":
-    main()
+    listener()
     
-
+    
+    
