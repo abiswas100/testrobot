@@ -3,6 +3,9 @@ import rospy
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
+from sensor_msgs.msg import Image
+from sensor_msgs.msg import LaserScan 
+
 from cv_bridge import CvBridge
 
 
@@ -19,7 +22,7 @@ def main():
     
     ### Depth Camera Input Subscribers
     
-    # rospy.Subscriber("/camera", Image, image_callback, queue_size=10)
+    rospy.Subscriber("/camera", Image, Image_callback)
     
     # rospy.Subscriber()
     try:

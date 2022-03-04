@@ -5,11 +5,17 @@ import rospy
 from testrobots.msg import track
 from testrobots.msg import tracking_updates
 
+from sensor_msgs.msg import Image
+from sensor_msgs.msg import LaserScan 
+
 rospy.init_node('Human_Tracking', anonymous=False)
 
 tracking_update = rospy.Publisher("tupdate", tracking_updates)
 
-        
+def Image_callback(data):
+    pass
+
+
 def callbackdata(data):
     rospy.loginfo("In callback")
     rospy.loginfo(data.starttrack)  
@@ -30,6 +36,9 @@ def listener():
     rospy.loginfo("Hello I am Human Tracking")
     
     rospy.Subscriber("track", track, callbackdata)
+    
+    ### Depth Camera Input Subscribers
+    rospy.Subscriber("/camera", Image, Image_callback)
 
     rospy.spin()
 

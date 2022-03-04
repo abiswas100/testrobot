@@ -1,60 +1,53 @@
 #!/usr/bin/env python
 
 import rospy
-# from sensor_msgs.msg import Image
-from std_msgs.msg import String
-from testrobots.msg import P_detection
 
-# import yolo as Yolo
+from testrobots.msg import track
+from testrobots.msg import tracking_updates
 
+from sensor_msgs.msg import Image
+from sensor_msgs.msg import LaserScan 
+
+rospy.init_node('Human_Tracking', anonymous=False)
+
+tracking_update = rospy.Publisher("tupdate", tracking_updates)
+
+def Image_callback(data):
+    pass
+
+
+def callbackdata(data):
+    rospy.loginfo("In callback")
+    rospy.loginfo(data.starttrack)  
+    
+    tu_msg = tracking_updates
+    tu_msg.update = 1
+    ## if human_found 
+    if (data.starttrack == 0):
+        rospy.loginfo(tu_msg)
+        tracking_update.publish(tu_msg)
         
-def talker():
-    msg_pub = rospy.Publisher("P_Detection_msg", P_detection)
-    
-    rospy.init_node('Panel_Detection', anonymous = True)
+def Laser_callback():
+    pass
 
-    r = rospy.Rate(10)
+def Image_callback():
+    pass
+                    
+                
+def listener():
+    '''
+        Subscribe to message from the Detect Human Tracking symbol and camera      
+    '''
     
-    msg = P_detection()
-    msg.signal = 1 
+    rospy.loginfo("Hello I am Human Tracking")
     
-    # human_flag = 1
     
-    # if human_flag == 1:
-    #     # rospy.loginfo_once("Human Detected on Camera")
-
-    while not rospy.is_shutdown():        
-        # rospy.loginfo(msg)
-        msg_pub.publish(msg)
-        rospy.loginfo("Panel Detected on Camera")
-        r.sleep()
-
-if __name__ == "__main__":
-    try:
-        talker()
-    except rospy.ROSInterruptException: pass
+    
+    ### Depth Camera Input Subscribers
+    rospy.Subscriber("/camera", Image, Image_callback)
+    rospy.Subscriber("/scan", LaserScan, Laser_callback)
     rospy.spin()
-    
-    
-    
-    
-    
-    
-    
-    
-    
 
-# def image_processing_publish(cv_img):       
-#     yolo_output = Yolo.Yolo_imp(cv_img)
-#     print("for left")
-#     left_output = bridge.cv2_to_imgmsg(yolo_output)
-#     while not rospy.is_shutdown():
-#         pub_Image.publish(left_output)
-#         '''will add this here when real implementation happens'''
-#         # pub.publish(hello_str)
-#         rospy.spin()   
-        
-# def image_callback(msg: Image):
-#     cv_img =  bridge.imgmsg_to_cv2(msg)
-#     image_processing_publish(cv_img)
-
+    
+if __name__ == "__main__":
+    listener()

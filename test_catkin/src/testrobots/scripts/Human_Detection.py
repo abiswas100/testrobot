@@ -1,16 +1,21 @@
 #!/usr/bin/env python
 
 import rospy
+from sensor_msgs.msg import Image
+from sensor_msgs.msg import LaserScan 
 
 
 from testrobots.msg import H_detection
+
+rospy.init_node('Human_Detection', anonymous=False)
     
+
+def Image_callback(data):
+    pass
+
+
 def talker():
-
     msg_pub = rospy.Publisher("H_Detection_msg", H_detection)
-    
-    rospy.init_node('Human_Detection', anonymous=True)
-
     r = rospy.Rate(10)
     
     msg = H_detection()
@@ -21,15 +26,13 @@ def talker():
     # if human_flag == 1:
     #     # rospy.loginfo_once("Human Detected on Camera")
 
-    while not rospy.is_shutdown():        
-        # rospy.loginfo(msg)
-        msg_pub.publish(msg)
-        rospy.loginfo("If Human Detected on Camera")
-        r.sleep()
+            
+    msg_pub.publish(msg)
+        
         
     
     ### Depth Camera Input Subscribers
-    # rospt.Subscriber("/camera", Image, image_callback)
+    rospy.Subscriber("/camera", Image, Image_callback)
     
 if __name__ == "__main__":
     try:
