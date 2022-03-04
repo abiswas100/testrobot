@@ -13,3 +13,5 @@ catkin_ws/src/construction_Robot/scripts/darknet/
 catkin_ws/src/construction_Robot/scripts/Sensing_Nodes/darknet/
 
 catkin_ws/src/construction_Robot/scripts/Sensing_Nodes/yolov3.weights
+
+test_catkin/src/turtlebot3_simulations
