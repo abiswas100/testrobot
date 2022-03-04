@@ -30,7 +30,7 @@ def move_callback(data):
     If signal is 1 take another set of action
     '''
     
-def Lasercallback():
+def Lasercallback(data):
     pass
 
 def test_updatecallback(data):
