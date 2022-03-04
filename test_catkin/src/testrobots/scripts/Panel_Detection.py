@@ -27,10 +27,10 @@ def callbackdata(data):
         rospy.loginfo(tu_msg)
         tracking_update.publish(tu_msg)
         
-def Laser_callback():
+def Laser_callback(data):
     pass
 
-def Image_callback():
+def Image_callback(data):
     pass
                     
                 

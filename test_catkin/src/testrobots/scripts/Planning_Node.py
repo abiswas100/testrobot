@@ -30,7 +30,7 @@ def move_callback(data):
     If signal is 1 take another set of action
     '''
     
-def Lasercallback(data):
+def Lasercallback():
     pass
 
 def test_updatecallback(data):
@@ -41,7 +41,7 @@ def listener():
     rospy.init_node('Planner', anonymous=False)
     
     rospy.Subscriber("movement_msg", move,move_callback)
-    rospy.Subscriber("scan", LaserScan, Lasercallback)
+    rospy.Subscriber("/scan", LaserScan, Lasercallback)
     rospy.Subscriber("/camera", Image, Image_callback)
     rospy.Subscriber("stop", stop, callback)
     rospy.Subscriber("/tupdate", tracking_updates, test_updatecallback)
