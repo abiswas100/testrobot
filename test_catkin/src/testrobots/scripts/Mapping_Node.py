@@ -13,7 +13,7 @@ pub.publish(hello_str)
 def main():
 #     '''Will publish when Laser is available'''
 #     # pub.publish(hello_str)
-#     pass
+    pass
     
       
 def main():

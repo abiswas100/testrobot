@@ -1,19 +1,53 @@
 #!/usr/bin/env python
+
+from multiprocessing.sharedctypes import Value
 import rospy
+
+import roslaunch
+import threading
+from threading import Thread
 
 from testrobots.msg import H_detection
 from testrobots.msg import P_detection
-        
-def H_callbackdata(data):
-    rospy.loginfo("In H_callback")
-    rospy.loginfo(data.signal)  
+
+# import asyncio
     
+     
+        #launch another node 
+def start_action():
+    print("starting ..")
+    # r = rospy.Rate(20)
+    package = 'testrobots'
+    executable = 'Move_Towards_Goal.py'
+    node = roslaunch.core.Node(package, executable)
+    
+    launch = roslaunch.scriptapi.ROSLaunch()
+    launch.start()
+    
+    # t = Timer(5, ds)
+    task = launch.launch(node)
+    
+    
+    print (task.is_alive())
+
+    
+    
+def H_callbackdata(data):
+    # rospy.loginfo("In H_callback")
+    rospy.loginfo("Signal is",data.signal,"so will start Move_to_Goal")  
     '''
     If signal is 0 take a set of actions -
         and 
     If signal is 1 take another set of action
     '''
-
+    if (data.signal == 0):
+        
+        try:
+            start_action()
+        except ValueError: pass
+        
+    
+        
 def P_callbackdata(data):
     rospy.loginfo("In P_callback")
     rospy.loginfo(data.signal)    
@@ -36,15 +70,19 @@ def listener():
     rospy.init_node('Central_Decision', anonymous=True)
     rospy.loginfo("Hello I am Central Decision")
     
-    rospy.Subscriber("/H_Detection_msg", H_detection, H_callbackdata)
+    start_action()
+    # rospy.Subscriber("/H_Detection_msg", H_detection, H_callbackdata)
     
-    rospy.Subscriber("/P_Detection_msg", P_detection, P_callbackdata)
+    # rospy.Subscriber("/P_Detection_msg", P_detection, P_callbackdata)
     
     rospy.spin()
 
     
 if __name__ == "__main__":
-    listener()
+    
+    try:
+        listener()
+    except rospy.ROSInterruptException: pass
     
     
     

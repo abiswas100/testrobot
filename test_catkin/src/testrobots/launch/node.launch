@@ -1,15 +1,15 @@
 <?xml version="1.0"?>
 <launch>
-
+    <!-- <param name="moveTG" type="int" value="1"> -->
     <!-- ALL SENSING NODES GETS LAUNCHED HERE -->
     <node pkg="testrobots" name="Human_Detection" type="Human_Detection.py"/>
-    <node pkg="testrobot" name="Panel_Detectionn" type="Panel_Detection.py"/>
+    <!-- <node pkg="testrobot" name="Panel_Detectionn" type="Panel_Detection.py"/> -->
     <!-- <node pkg="testrobot" name="Mapping_Node" type="Mapping_Node.py"/>
     <node pkg="testrobot" name="Planner" type="Planning_Node.py"/>  -->
-
+<!--  -->
     <!-- ALL DECISION NODES GETS LAUNCHED HERE -->
     <node pkg="testrobots" name="Central_Decision" type="Central_Decision.py"/>
-    <node pkg="testrobot" name="Human_Checking" type="Human_Checking_Node.py"/>
+    <!-- <node pkg="testrobot" name="Human_Checking" type="Human_Checking_Node.py"/> -->
     <!-- <node pkg="testrobot" name="Specification_Node" type="Specification_Checking.py"/>  -->
   
     

@@ -14,7 +14,7 @@ def talker():
     r = rospy.Rate(10)
     
     msg = H_detection()
-    msg.signal = 1 
+    msg.signal = 0 
     
     # human_flag = 1
     
@@ -24,7 +24,7 @@ def talker():
     while not rospy.is_shutdown():        
         # rospy.loginfo(msg)
         msg_pub.publish(msg)
-        rospy.loginfo("Human Detected on Camera")
+        rospy.loginfo("If Human Detected on Camera")
         r.sleep()
         
     
