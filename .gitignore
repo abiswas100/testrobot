@@ -19,3 +19,5 @@ test_catkin/src/turtlebot3_simulations
 test_catkin/src/testrobots/darknet
 
 *.weights
+
+test_catkin/src/testrobots/scripts/darknet
