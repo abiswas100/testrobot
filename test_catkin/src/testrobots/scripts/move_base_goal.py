@@ -1,8 +1,11 @@
+#!/usr/bin/env python
+
 import rospy
 import actionlib 
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
-def movebase_client():
+def move():
+    
     client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
     client.wait_for_server()
     
@@ -25,7 +28,7 @@ if __name__ == '__main__':
     
     try:
         rospy.init_node('movebase_client')
-        result = movebase_client()
+        result = move()
         if result:
             rospy.loginfo("Goal execution done")
     except rospy.ROSInterruptException:
