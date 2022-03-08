@@ -21,3 +21,6 @@ test_catkin/src/testrobots/darknet
 *.weights
 
 test_catkin/src/testrobots/scripts/darknet
+
+.catkin_workspace
+
