@@ -24,3 +24,9 @@ test_catkin/src/testrobots/scripts/darknet
 
 .catkin_workspace
 
+
+test_catkin/src/turtlebot3_msgs
+
+test_catkin/src/turtlebot3
+
+test_catkin/src/testrobots/CMakeLists.txt
