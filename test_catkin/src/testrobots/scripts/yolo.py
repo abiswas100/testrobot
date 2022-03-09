@@ -16,7 +16,7 @@ import time
 def Yolo_imp(img_data): 
     start_time = time.perf_counter ()
     # os.chdir(r"/home/avhi/Desktop/ROS_Yolo/Yolo_imp")
-    
+
     net = cv2.dnn.readNet('yolov3.cfg','yolov3.weights')
     classes = []
 
@@ -25,7 +25,7 @@ def Yolo_imp(img_data):
         classes = f.read().splitlines()
 
     # img_name = name1 = input("Enter name of the image file: ")
-    # img  = cv2.imread('img_name')
+    # img_data  = cv2.imread('image.jpeg')  ## read the image from file
     height,width,_ = img_data.shape
 
     blob = cv2.dnn.blobFromImage(img_data, 1/255, (256, 256), (0,0,0), swapRB=True, crop=False)
@@ -78,7 +78,7 @@ def Yolo_imp(img_data):
             cv2.rectangle(img_data,(x,y), (x+w, y+h), color, 2)
             cv2.putText(img_data, label + " " + confidence, (x, y+20), font, 2, (255,255,255), 2)
         print("------------------------")
-
+    # cv2.imwrite('yolo_img.jpeg',img_data)  ## write the image into a file
     end_time = time.perf_counter ()
     print(end_time - start_time, "seconds")
     print("------------------------")
