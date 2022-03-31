@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-#!/usr/bin/env python3
 import rospy
 from sensor_msgs.msg import Image
 from std_msgs.msg import String

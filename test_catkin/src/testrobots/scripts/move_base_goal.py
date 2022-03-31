@@ -1,9 +1,10 @@
-#!/usr/bin/env python
 #!/usr/bin/env python3
 
 import rospy
 import actionlib 
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+from sensor_msgs.msg import Image
+
 
 def move():
     
@@ -13,7 +14,7 @@ def move():
     goal = MoveBaseGoal()
     goal.target_pose.header.frame_id = "map"
     goal.target_pose.header.stamp = rospy.Time.now()
-    goal.target_pose.pose.position.x = 0.5
+    goal.target_pose.pose.position.x = 1.864
     goal.target_pose.pose.orientation.w = 1.0
     
     client.send_goal(goal)
