@@ -34,3 +34,5 @@ test_catkin/src/testrobots/CMakeLists.txt
 test_catkin/src/rtamt4ros/
 
 test_catkin/src/rtamt/
+
+test_catkin/src/realsense
