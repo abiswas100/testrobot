@@ -16,7 +16,6 @@ import time
 import csv
 def Yolo_imp(img_data): 
     start_time = time.perf_counter ()
-    # os.chdir(r"/home/avhi/Desktop/ROS_Yolo/Yolo_imp")
 
     net = cv2.dnn.readNet('yolov3.cfg','yolov3.weights')
     classes = []
@@ -29,7 +28,7 @@ def Yolo_imp(img_data):
     # img_data  = cv2.imread('image.jpeg')
     # print(img_data)
     height,width,_ = img_data.shape
-
+    # print(height,width)
     blob = cv2.dnn.blobFromImage(img_data, 1/255, (256, 256), (0,0,0), swapRB=True, crop=False)
 
 
@@ -68,27 +67,28 @@ def Yolo_imp(img_data):
     font = cv2.FONT_HERSHEY_PLAIN
     colors = np.random.uniform(0, 255, size=(len(boxes), 3))
     if len(indexes)>0:
-        # print(indexes.flatten())
-        # print(classes)
-        # print(class_ids)
+
         for i in indexes.flatten():
             x,y,w,h = boxes[i]
             label = str(classes[class_ids[i]])
             confidence = str(round(confidences[i], 2))
             area = 0
+            print("")
+            print("")
+            print("------------------------")
             print("label -",label,
             ", confidence", confidence,
-            ", area - ",w*h)
+            ", area of Bounding Box  - ",w*h)
             print("")
-            print("area of image - ",256*256)
-          
+            print("Area of Image - ",height*width)
+            
             # if label == 'person':
             #     area = w*h
 
             color = colors[i]
             cv2.rectangle(img_data,(x,y), (x+w, y+h), color, 2)
             cv2.putText(img_data, label + " " + confidence, (x, y+20), font, 2, (255,255,255), 2)
-        print("------------------------")
+        
     try:
         object_label = label
     except UnboundLocalError: 
@@ -96,7 +96,7 @@ def Yolo_imp(img_data):
 
     # object_label = "person"
     end_time = time.perf_counter ()
+    print("")
     print(end_time - start_time, "seconds")
     cv2.imwrite('yolo_img.jpeg', img_data)
-    print("------------------------")
     return img_data, object_label 
