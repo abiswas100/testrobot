@@ -64,7 +64,7 @@ def Yolo_imp(img_data):
     # print(len(boxes))
     indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
     # print(indexes.flatten())
-
+    object_label = ""
     font = cv2.FONT_HERSHEY_PLAIN
     colors = np.random.uniform(0, 255, size=(len(boxes), 3))
     if len(indexes)>0:
@@ -81,18 +81,22 @@ def Yolo_imp(img_data):
             ", area - ",w*h)
             print("")
             print("area of image - ",256*256)
-
-            
-            if label == 'person':
-                area = w*h
+          
+            # if label == 'person':
+            #     area = w*h
 
             color = colors[i]
             cv2.rectangle(img_data,(x,y), (x+w, y+h), color, 2)
             cv2.putText(img_data, label + " " + confidence, (x, y+20), font, 2, (255,255,255), 2)
         print("------------------------")
+    try:
+        object_label = label
+    except UnboundLocalError: 
+        print("no label")
 
+    # object_label = "person"
     end_time = time.perf_counter ()
-    # print(end_time - start_time, "seconds")
+    print(end_time - start_time, "seconds")
     cv2.imwrite('yolo_img.jpeg', img_data)
     print("------------------------")
-    return img_data
+    return img_data, object_label 

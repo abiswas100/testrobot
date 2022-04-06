@@ -7,24 +7,33 @@ from sensor_msgs.msg import LaserScan
 import csv
 from cv_bridge import CvBridge
 import yolo as Yolo
-# from testrobots.msg import H_detection
+from testrobots.msg import H_detection  
 bridge = CvBridge()  
 
 
-pub = rospy.Publisher("H_Detection_image", Image, queue_size=1)    
-        
+pub = rospy.Publisher("H_Detection_image", Image, queue_size=10)    
+msg_pub = rospy.Publisher("H_Detection_msg", H_detection, queue_size=1)
+
 def yolo_processing(cv_img):       
     ''' yolo processing node computes detection 
         and returns new image with detection and 
         human_flag which turns true if the human is detected
     '''
-    yolo_output= Yolo.Yolo_imp(cv_img)
+    yolo_output, object_label= Yolo.Yolo_imp(cv_img)
     output = bridge.cv2_to_imgmsg(yolo_output)
     human_flag = 0
+    
+    if(object_label == 'person'): human_flag = 1    
     '''
     Add a custom msg called Human Detected -
     It is published if a human is detected 
-    # '''
+    '''
+    msg = H_detection
+    if human_flag ==  1:
+        rospy.loginfo_once("Human Detected on Camera")
+        msg.signal = 1 
+        msg_pub.publish(msg)
+
     pub.publish(output)
         
         
