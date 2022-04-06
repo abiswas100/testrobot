@@ -19,34 +19,42 @@ def yolo_processing(cv_img):
         and returns new image with detection and 
         human_flag which turns true if the human is detected
     '''
+    msg = H_detection()
+    msg.signal = -1
     yolo_output, object_label= Yolo.Yolo_imp(cv_img)
     output = bridge.cv2_to_imgmsg(yolo_output)
-    human_flag = 0
     
-    if(object_label == 'person'): human_flag = 1    
     '''
     Add a custom msg called Human Detected -
     It is published if a human is detected 
     '''
-    msg = H_detection
-    if human_flag ==  1:
-        rospy.loginfo_once("Human Detected on Camera")
+    if(object_label == 'person'):
+        rospy.logwarn("Human Detected on Camera")
         msg.signal = 1 
-        msg_pub.publish(msg)
-
-    pub.publish(output)
         
+    rospy.logwarn(msg.signal)
+    
+    #publish the message and the image
+    msg_pub.publish(msg)
+    pub.publish(output)
+    
         
 def image_callback(data):
     # print("here in callbaack")
     cv_img =  bridge.imgmsg_to_cv2(data)
     yolo_processing(cv_img)
 
+def DepthCamSub(data):
+    depth_cv_img =  bridge.imgmsg_to_cv2(data)
+    
+
+
 def main():
     rospy.init_node('Human_Detection', anonymous=False)
-    print("in main")
+    
     ### Depth Camera Input Subscribers
     rospy.Subscriber("/camera/rgb/image_raw", Image, image_callback,queue_size=10)
+    rospy.Subscriber("/camera/depth/image_raw", Image, DepthCamSub)
     while not rospy.is_shutdown():
         rospy.spin()
 if __name__ == "__main__":
