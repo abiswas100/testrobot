@@ -29,7 +29,7 @@ def Yolo_imp(img_data):
     # print(img_data)
     height,width,_ = img_data.shape
     # print(height,width)
-    blob = cv2.dnn.blobFromImage(img_data, 1/255, (256, 256), (0,0,0), swapRB=True, crop=False)
+    blob = cv2.dnn.blobFromImage(img_data, 1/255, (256, 256), (0,0,0), swapRB=False, crop=False)
 
 
     net.setInput(blob)
@@ -47,12 +47,22 @@ def Yolo_imp(img_data):
             scores = detection[5:]
             class_id = np.argmax(scores)
             confidence = scores[class_id]
-            if confidence > 0.5:
+        # filter out weak predictions by ensuring the detected
+		# probability is greater than the minimum probability
+            '''
+                scale the bounding box coordinates back relative to the
+			    size of the image, keeping in mind that YOLO actually
+			    returns the center (x, y)-coordinates of the bounding
+			    box followed by the boxes' width and height
+            '''
+            if confidence > 0.5:                                
                 center_x = int(detection[0]*width)
                 center_y = int(detection[1]*height)
                 w = int(detection[2]*width)
                 h = int(detection[3]*height)
-                
+                '''
+                    use the center (x, y)-coordinates to derive the top and left corner of the bounding box
+                '''
                 x = int(center_x - w/2)
                 y = int(center_y - h/2)
                 
