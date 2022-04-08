@@ -41,7 +41,7 @@ def Yolo_imp(img_data):
     boxes = []
     confidences = []
     class_ids = []
-
+    center_pixels = []
     for output in layerOutputs:
         for detection in output:
             scores = detection[5:]
@@ -69,11 +69,16 @@ def Yolo_imp(img_data):
                 boxes.append([x,y,w,h])
                 confidences.append(float(confidence))
                 class_ids.append(class_id)
-                
+                # print(class_id)
+                if class_id == 0:
+                    center_pixels.append([center_x,center_y])
+    
+    print(center_pixels)
     # print(len(boxes))
     indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
     # print(indexes.flatten())
     object_label = ""
+    
     font = cv2.FONT_HERSHEY_PLAIN
     colors = np.random.uniform(0, 255, size=(len(boxes), 3))
     if len(indexes)>0:
@@ -109,4 +114,4 @@ def Yolo_imp(img_data):
     print("")
     print(end_time - start_time, "seconds")
     cv2.imwrite('yolo_img.jpeg', img_data)
-    return img_data, object_label 
+    return img_data, object_label, center_pixels 

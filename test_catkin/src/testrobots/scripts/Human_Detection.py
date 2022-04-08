@@ -4,11 +4,19 @@
 import rospy
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import LaserScan 
+from sensor_msgs.msg import PointCloud2 as pc2
 import csv
+import cv2
+import pyrealsense2
+import pcl_ros 
+import pcl
 from cv_bridge import CvBridge
 import yolo as Yolo
+import numpy as np
 from testrobots.msg import H_detection  
 bridge = CvBridge()  
+
+center_pixel = []
 
 
 pub = rospy.Publisher("H_Detection_image", Image, queue_size=10)    
@@ -21,7 +29,9 @@ def yolo_processing(cv_img):
     '''
     msg = H_detection()
     msg.signal = -1
-    yolo_output, object_label= Yolo.Yolo_imp(cv_img)
+    yolo_output, object_label, center_pixels = Yolo.Yolo_imp(cv_img)
+    center_pixel = center_pixels[0]
+    print("center_pixel - ", center_pixel)
     output = bridge.cv2_to_imgmsg(yolo_output)
     
     '''
@@ -42,19 +52,36 @@ def yolo_processing(cv_img):
 def image_callback(data):
     # print("here in callbaack")
     cv_img =  bridge.imgmsg_to_cv2(data)
+    # print("Dimensions of camera img- ",cv_img.shape)
     yolo_processing(cv_img)
 
 def DepthCamSub(data):
     depth_cv_img =  bridge.imgmsg_to_cv2(data)
+    print("Dimensions - ",depth_cv_img.shape)
+
+def Depthcloud(msg ):
+    points_list = []
+    for data in msg.data:
+        # print(data)
+        points_list.append(data)
     
+    # print(len(points_list))
 
-
+    #set the data into an array of 61440, 1080
+    a = np.array(points_list)
+    points_array = np.reshape(a,(61440,1080))
+    # print(np.shape(points_array))
+    # print(points_array)
+    
+    
+    
 def main():
     rospy.init_node('Human_Detection', anonymous=False)
     
     ### Depth Camera Input Subscribers
     rospy.Subscriber("/camera/rgb/image_raw", Image, image_callback,queue_size=10)
-    rospy.Subscriber("/camera/depth/image_raw", Image, DepthCamSub)
+    # rospy.Subscriber("/camera/depth/image_raw", Image, DepthCamSub)
+    rospy.Subscriber("/camera/depth/points",pc2, Depthcloud, queue_size=1)
     while not rospy.is_shutdown():
         rospy.spin()
 if __name__ == "__main__":
