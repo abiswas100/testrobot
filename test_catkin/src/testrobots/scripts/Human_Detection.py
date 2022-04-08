@@ -30,8 +30,13 @@ def yolo_processing(cv_img):
     msg = H_detection()
     msg.signal = -1
     yolo_output, object_label, center_pixels = Yolo.Yolo_imp(cv_img)
-    center_pixel = center_pixels[0]
-    print("center_pixel - ", center_pixel)
+    print("image dimensions")
+    try:
+        center_pixel = center_pixels[0]
+        print("center_pixel - ", center_pixel)
+    except IndexError: 
+        print("no center pixel ...")
+        
     output = bridge.cv2_to_imgmsg(yolo_output)
     
     '''
@@ -58,6 +63,10 @@ def image_callback(data):
 def DepthCamSub(data):
     depth_cv_img =  bridge.imgmsg_to_cv2(data)
     print("Dimensions - ",depth_cv_img.shape)
+    # print(depth_cv_img[400][235])
+    print(center_pixel[1],center_pixel[0])
+    # print(depth_cv_img(center_pixel[0],center_pixel[1]))    
+    print("---------------------------------------------------------------------------------")
 
 def Depthcloud(msg ):
     points_list = []
@@ -75,13 +84,14 @@ def Depthcloud(msg ):
     
     
     
+    
 def main():
     rospy.init_node('Human_Detection', anonymous=False)
     
     ### Depth Camera Input Subscribers
     rospy.Subscriber("/camera/rgb/image_raw", Image, image_callback,queue_size=10)
     # rospy.Subscriber("/camera/depth/image_raw", Image, DepthCamSub)
-    rospy.Subscriber("/camera/depth/points",pc2, Depthcloud, queue_size=1)
+    # rospy.Subscriber("/camera/depth/points",pc2, Depthcloud, queue_size=1)
     while not rospy.is_shutdown():
         rospy.spin()
 if __name__ == "__main__":
