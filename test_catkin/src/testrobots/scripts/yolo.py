@@ -89,13 +89,11 @@ def Yolo_imp(img_data):
             confidence = str(round(confidences[i], 2))
             area = 0
             print("")
-            print("")
             print("------------------------")
             print("label -",label,
             ", confidence", confidence,
             ", area of Bounding Box  - ",w*h)
-            print("")
-            print("Area of Image - ",height*width)
+
             
             # if label == 'person':
             #     area = w*h
@@ -112,6 +110,6 @@ def Yolo_imp(img_data):
     # object_label = "person"
     end_time = time.perf_counter ()
     print("")
-    print(end_time - start_time, "seconds")
+    # print(end_time - start_time, "seconds")
     cv2.imwrite('yolo_img.jpeg', img_data)
     return img_data, object_label, center_pixels 

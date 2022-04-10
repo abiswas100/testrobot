@@ -30,7 +30,7 @@ def yolo_processing(cv_img):
     msg = H_detection()
     msg.signal = -1
     yolo_output, object_label, center_pixels = Yolo.Yolo_imp(cv_img)
-    print("image dimensions")
+    # print("yolo image dimensions", yolo_output.shape)
     try:
         center_pixel = center_pixels[0]
         print("center_pixel - ", center_pixel)
@@ -62,28 +62,19 @@ def image_callback(data):
 
 def DepthCamSub(data):
     depth_cv_img =  bridge.imgmsg_to_cv2(data)
-    print("Dimensions - ",depth_cv_img.shape)
+    # print("Dimensions - ",depth_cv_img.shape)
     # print(depth_cv_img[400][235])
-    print(center_pixel[1],center_pixel[0])
+    if center_pixel == []: 
+        print("passing")
+        pass
+    else:    
+        a,b = center_pixel[0], center_pixel[1]
+        print("center pixel in depthcam",center_pixel)
+        print("a,b",a,b)
+        print("depth coordinates",depth_cv_img[b][a])
     # print(depth_cv_img(center_pixel[0],center_pixel[1]))    
-    print("---------------------------------------------------------------------------------")
+    print("----------------------------------------xo------------------")
 
-def Depthcloud(msg ):
-    points_list = []
-    for data in msg.data:
-        # print(data)
-        points_list.append(data)
-    
-    # print(len(points_list))
-
-    #set the data into an array of 61440, 1080
-    a = np.array(points_list)
-    points_array = np.reshape(a,(61440,1080))
-    # print(np.shape(points_array))
-    # print(points_array)
-    
-    
-    
     
 def main():
     rospy.init_node('Human_Detection', anonymous=False)
@@ -106,6 +97,21 @@ if __name__ == "__main__":
     
     
     
+    
+    
+    # def Depthcloud(msg ):
+    #     points_list = []
+#     for data in msg.data:
+#         # print(data)
+#         points_list.append(data)
+    
+#     # print(len(points_list))
+
+#     #set the data into an array of 61440, 1080
+#     a = np.array(points_list)
+#     points_array = np.reshape(a,(61440,1080))
+#     # print(np.shape(points_array))
+#     # print(points_array)
     
     
     
