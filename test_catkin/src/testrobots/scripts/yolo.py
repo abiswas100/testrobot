@@ -72,8 +72,8 @@ def Yolo_imp(img_data):
                 # print(class_id)
                 if class_id == 0:
                     center_pixels.append([center_x,center_y])
-    
-    print(center_pixels)
+    print("---------------------------------------------------")
+    print("center pixels in yolo",center_pixels)
     # print(len(boxes))
     indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
     # print(indexes.flatten())
@@ -89,7 +89,7 @@ def Yolo_imp(img_data):
             confidence = str(round(confidences[i], 2))
             area = 0
             print("")
-            print("------------------------")
+            
             print("label -",label,
             ", confidence", confidence,
             ", area of Bounding Box  - ",w*h)
