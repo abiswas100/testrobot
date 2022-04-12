@@ -14,7 +14,11 @@ import pcl
 from cv_bridge import CvBridge
 import yolo as Yolo
 import numpy as np
+
+
 from testrobots.msg import H_detection  
+
+
 bridge = CvBridge() 
 
 
@@ -24,7 +28,7 @@ class Detection(object):
     def __init__(self):
         self.central_pixel = 0
         rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=10)
-        rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=10)
+        rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
         # rospy.Subscriber("/camera/depth/points",pc2, Depthcloud, queue_size=1)
 
         # publishing topics
@@ -47,7 +51,7 @@ class Detection(object):
             self.center_pixel = center_pixels[0]
             print("center_pixel in yolo processing- ", self.center_pixel)
         except IndexError or AttributeError: 
-            print("no center pixel ...")
+            print("no center pixel in yolo_processing...")
             
         output = bridge.cv2_to_imgmsg(yolo_output)
         
@@ -78,8 +82,11 @@ class Detection(object):
         # print("depth at -",depth_cv_img[400][235])
         try:
             print("center pixel in depthcam",self.center_pixel)
+            print("distance of human in depthcam", depth_cv_img[self.center_pixel[1]][self.center_pixel[0]])
+            rospy.sleep(0.5)
+            # print()
         except AttributeError:
-            print("no centers")
+            print("no centers in depth")
 def main():
     rospy.init_node('Human_Detection', anonymous=False)
     sn = Detection()
