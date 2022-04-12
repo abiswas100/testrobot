@@ -23,13 +23,13 @@ class Detection(object):
 
     def __init__(self):
         self.central_pixel = 0
-        rospy.Subscriber("/camera/rgb/image_raw", Image, image_callback,queue_size=10)
-        rospy.Subscriber("/camera/depth/image_raw", Image, DepthCamSub)
+        rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=10)
+        rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=10)
         # rospy.Subscriber("/camera/depth/points",pc2, Depthcloud, queue_size=1)
 
         # publishing topics
-        pub = rospy.Publisher("H_Detection_image", Image, queue_size=10)    
-        msg_pub = rospy.Publisher("H_Detection_msg", H_detection, queue_size=1)
+        self.pub = rospy.Publisher("H_Detection_image", Image, queue_size=10)    
+        self.msg_pub = rospy.Publisher("H_Detection_msg", H_detection, queue_size=1)
     
 
 
@@ -41,12 +41,12 @@ class Detection(object):
         '''
         msg = H_detection()
         msg.signal = -1
-        yolo_output, object_label, center_pixels = Yolo.Yolo_imp(self.cv_img)
+        yolo_output, object_label, center_pixels = Yolo.Yolo_imp(cv_img)
         
         try:
             self.center_pixel = center_pixels[0]
             print("center_pixel in yolo processing- ", self.center_pixel)
-        except IndexError: 
+        except IndexError or AttributeError: 
             print("no center pixel ...")
             
         output = bridge.cv2_to_imgmsg(yolo_output)
@@ -66,18 +66,20 @@ class Detection(object):
         self.pub.publish(output)
     
         
-def image_callback(self,data):
-    # print("here in callbaack")
-    cv_img =  bridge.imgmsg_to_cv2(self.data)
-    # print("Dimensions of camera img- ",cv_img.shape)
-    self.yolo_processing(cv_img)
+    def image_callback(self,data):
+        # print("here in callbaack")
+        cv_img =  bridge.imgmsg_to_cv2(data)
+        # print("Dimensions of camera img- ",cv_img.shape)
+        self.yolo_processing(cv_img)
 
-def DepthCamSub(self,depth_data):
-    depth_cv_img =  bridge.imgmsg_to_cv2(self,depth_data)
-    # print("Dimensions - ",depth_cv_img.shape)
-    # print("depth at -",depth_cv_img[400][235])
-    print("center pixel in depthcam",self.center_pixel)
-    
+    def DepthCamSub(self,depth_data):
+        depth_cv_img =  bridge.imgmsg_to_cv2(depth_data)
+        # print("Dimensions - ",depth_cv_img.shape)
+        # print("depth at -",depth_cv_img[400][235])
+        try:
+            print("center pixel in depthcam",self.center_pixel)
+        except AttributeError:
+            print("no centers")
 def main():
     rospy.init_node('Human_Detection', anonymous=False)
     sn = Detection()
