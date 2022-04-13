@@ -4,78 +4,115 @@
 import rospy
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import LaserScan 
-
-
-from testrobots.msg import H_detection
-try:
-    import cv2
-except ImportError:
-    import sys
-    ros_path = '/opt/ros/kinetic/lib/python2.7/dist-packages'
-    sys.path.remove(ros_path)
-    import cv2
-    sys.path.append(ros_path)
+from sensor_msgs.msg import PointCloud2 as pc2
+import csv
+import cv2
+import pyrealsense2
+import pcl_ros 
+import pcl
 from cv_bridge import CvBridge
+import yolo as Yolo
+import numpy as np
+from testrobots.msg import H_detection  
+bridge = CvBridge()  
 
-rospy.init_node('Human_Detection', anonymous=False)
-bridge = CvBridge()    
+center_pixel = []
+
+
+pub = rospy.Publisher("H_Detection_image", Image, queue_size=10)    
+msg_pub = rospy.Publisher("H_Detection_msg", H_detection, queue_size=1)
 
 def yolo_processing(cv_img):       
     ''' yolo processing node computes detection 
         and returns new image with detection and 
         human_flag which turns true if the human is detected
     '''
-    yolo_output = Yolo.Yolo_imp(cv_img)
+    msg = H_detection()
+    msg.signal = -1
+    yolo_output, object_label, center_pixels = Yolo.Yolo_imp(cv_img)
+    
+    try:
+        center_pixel = center_pixels[0]
+        print("center_pixel in yolo processing- ", center_pixel)
+    except IndexError: 
+        print("no center pixel ...")
+        
     output = bridge.cv2_to_imgmsg(yolo_output)
-    human_flag = 0
+    
     '''
     Add a custom msg called Human Detected -
     It is published if a human is detected 
     '''
-
-    while not rospy.is_shutdown():
-        pub_Image.publish(output)
-        # if human_flag is 1:
-        #     rospy.loginfo_once("Human Detected on Camera")
-        #     msg.signal = 1 
-        #     msg_pub.publish(msg)
-
+    if(object_label == 'person'):
+        rospy.logwarn("Human Detected on Camera")
+        msg.signal = 1 
         
-def image_callback(msg: Image):
-    cv_img =  bridge.imgmsg_to_cv2(msg)
+    rospy.logwarn(msg.signal)
+    
+    #publish the message and the image
+    msg_pub.publish(msg)
+    pub.publish(output)
+    
+        
+def image_callback(data):
+    # print("here in callbaack")
+    cv_img =  bridge.imgmsg_to_cv2(data)
+    # print("Dimensions of camera img- ",cv_img.shape)
     yolo_processing(cv_img)
 
+def DepthCamSub(data):
+    depth_cv_img =  bridge.imgmsg_to_cv2(data)
+    # print("Dimensions - ",depth_cv_img.shape)
+    # print("depth at -",depth_cv_img[400][235])
+    print("center pixel in depthcam",center_pixel)
+    
+    try :
+        center_pixel == [] 
+        a,b = center_pixel[0], center_pixel[1]
+    except IndexError:
+        a,b = 0,0     
+        print("a,b",a,b)
+        print("depth coordinates",depth_cv_img[b][a])
+    
+    print("----------------------------------------xo------------------")
 
-def talker():
-    msg_pub = rospy.Publisher("H_Detection_msg", H_detection)
-    r = rospy.Rate(10)
     
-    msg = H_detection()
-    msg.signal = 0 
-    
-    # human_flag = 1
-    
-    # if human_flag == 1:
-    #     # rospy.loginfo_once("Human Detected on Camera")
-
-            
-    msg_pub.publish(msg)
-        
-        
+def main():
+    rospy.init_node('Human_Detection', anonymous=False)
     
     ### Depth Camera Input Subscribers
-    # rospy.Subscriber("/camera", Image, Image_callback)
-    
+    rospy.Subscriber("/camera/rgb/image_raw", Image, image_callback,queue_size=10)
+    rospy.Subscriber("/camera/depth/image_raw", Image, DepthCamSub)
+    # rospy.Subscriber("/camera/depth/points",pc2, Depthcloud, queue_size=1)
+    while not rospy.is_shutdown():
+        rospy.spin()
 if __name__ == "__main__":
-    try:
-        talker()
-    except rospy.ROSInterruptException: pass
-    rospy.spin()
+    # try:
+    #     talker()
+    # except rospy.ROSInterruptException: pass
+
+    main()
     
     
     
     
     
+    
+    
+    
+    # def Depthcloud(msg ):
+    #     points_list = []
+#     for data in msg.data:
+#         # print(data)
+#         points_list.append(data)
+    
+#     # print(len(points_list))
+
+#     #set the data into an array of 61440, 1080
+#     a = np.array(points_list)
+#     points_array = np.reshape(a,(61440,1080))
+#     # print(np.shape(points_array))
+#     # print(points_array)
     
     
     
@@ -95,7 +132,30 @@ if __name__ == "__main__":
 
 
 
- 
+# bridge = CvBridge()  
 
         
+# def yolo_processing(cv_img):       
+#     ''' yolo processing node computes detection 
+#         and returns new image with detection and 
+#         human_flag which turns true if the human is detected
+#     '''
+#     yolo_output = Yolo.Yolo_imp(cv_img)
+#     output = bridge.cv2_to_imgmsg(yolo_output)
+#     human_flag = 0
+#     '''
+#     Add a custom msg called Human Detected -
+#     It is published if a human is detected 
+#     '''
 
+#     while not rospy.is_shutdown():
+#         pub_Image.publish(output)
+#         # if human_flag is 1:
+#         #     rospy.loginfo_once("Human Detected on Camera")
+#         #     msg.signal = 1 
+#         #     msg_pub.publish(msg)
+
+        
+# def image_callback(msg: Image):
+#     cv_img =  bridge.imgmsg_to_cv2(msg)
+#     yolo_processing(cv_img)

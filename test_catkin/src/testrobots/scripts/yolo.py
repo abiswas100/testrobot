@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import PIL as pillow
 import rospy
@@ -5,17 +6,16 @@ try:
     import cv2
 except ImportError:
     import sys
-    ros_path = '/opt/ros/kinetic/lib/python2.7/dist-packages'
+    ros_path = '/opt/ros/neotic/lib/python2.7/dist-packages'
     sys.path.remove(ros_path)
     import cv2
     sys.path.append(ros_path)
 from os import chdir
 import numpy as np
 import time
-
+import csv
 def Yolo_imp(img_data): 
     start_time = time.perf_counter ()
-    # os.chdir(r"/home/avhi/Desktop/ROS_Yolo/Yolo_imp")
 
     net = cv2.dnn.readNet('yolov3.cfg','yolov3.weights')
     classes = []
@@ -25,10 +25,11 @@ def Yolo_imp(img_data):
         classes = f.read().splitlines()
 
     # img_name = name1 = input("Enter name of the image file: ")
-    # img_data  = cv2.imread('image.jpeg')  ## read the image from file
+    # img_data  = cv2.imread('image.jpeg')
+    # print(img_data)
     height,width,_ = img_data.shape
-
-    blob = cv2.dnn.blobFromImage(img_data, 1/255, (256, 256), (0,0,0), swapRB=True, crop=False)
+    # print(height,width)
+    blob = cv2.dnn.blobFromImage(img_data, 1/255, (256, 256), (0,0,0), swapRB=False, crop=False)
 
 
     net.setInput(blob)
@@ -40,46 +41,75 @@ def Yolo_imp(img_data):
     boxes = []
     confidences = []
     class_ids = []
-
+    center_pixels = []
     for output in layerOutputs:
         for detection in output:
             scores = detection[5:]
             class_id = np.argmax(scores)
             confidence = scores[class_id]
-            if confidence > 0.5:
+        # filter out weak predictions by ensuring the detected
+		# probability is greater than the minimum probability
+            '''
+                scale the bounding box coordinates back relative to the
+			    size of the image, keeping in mind that YOLO actually
+			    returns the center (x, y)-coordinates of the bounding
+			    box followed by the boxes' width and height
+            '''
+            if confidence > 0.5:                                
                 center_x = int(detection[0]*width)
                 center_y = int(detection[1]*height)
                 w = int(detection[2]*width)
                 h = int(detection[3]*height)
-                
+                '''
+                    use the center (x, y)-coordinates to derive the top and left corner of the bounding box
+                '''
                 x = int(center_x - w/2)
                 y = int(center_y - h/2)
                 
                 boxes.append([x,y,w,h])
                 confidences.append(float(confidence))
                 class_ids.append(class_id)
-                
+                # print(class_id)
+                if class_id == 0:
+                    center_pixels.append([center_x,center_y])
+    print("---------------------------------------------------")
+    print("center pixels in yolo",center_pixels)
     # print(len(boxes))
     indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
     # print(indexes.flatten())
-
+    object_label = ""
+    
     font = cv2.FONT_HERSHEY_PLAIN
     colors = np.random.uniform(0, 255, size=(len(boxes), 3))
     if len(indexes)>0:
-        # print(indexes.flatten())
-        # print(classes)
-        # print(class_ids)
+
         for i in indexes.flatten():
             x,y,w,h = boxes[i]
             label = str(classes[class_ids[i]])
             confidence = str(round(confidences[i], 2))
-            print(label, confidence)
+            area = 0
+            print("")
+            
+            print("label -",label,
+            ", confidence", confidence,
+            ", area of Bounding Box  - ",w*h)
+
+            
+            # if label == 'person':
+            #     area = w*h
+
             color = colors[i]
             cv2.rectangle(img_data,(x,y), (x+w, y+h), color, 2)
             cv2.putText(img_data, label + " " + confidence, (x, y+20), font, 2, (255,255,255), 2)
-        print("------------------------")
-    # cv2.imwrite('yolo_img.jpeg',img_data)  ## write the image into a file
+        
+    try:
+        object_label = label
+    except UnboundLocalError: 
+        print("no label")
+
+    # object_label = "person"
     end_time = time.perf_counter ()
-    print(end_time - start_time, "seconds")
-    print("------------------------")
-    return img_data
+    print("")
+    # print(end_time - start_time, "seconds")
+    cv2.imwrite('yolo_img.jpeg', img_data)
+    return img_data, object_label, center_pixels 

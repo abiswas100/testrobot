@@ -30,3 +30,9 @@ test_catkin/src/turtlebot3_msgs
 test_catkin/src/turtlebot3
 
 test_catkin/src/testrobots/CMakeLists.txt
+
+test_catkin/src/rtamt4ros/
+
+test_catkin/src/rtamt/
+
+test_catkin/src/realsense
