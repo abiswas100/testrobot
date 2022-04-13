@@ -2,19 +2,17 @@
 #!/usr/bin/env python3
 
 
+from numpy import NaN
 import rospy
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import LaserScan 
 from sensor_msgs.msg import PointCloud2 as pc2
 import csv
 import cv2
-import pyrealsense2
-import pcl_ros 
-import pcl
 from cv_bridge import CvBridge
 import yolo as Yolo
 import numpy as np
-
+import os
 
 from testrobots.msg import H_detection  
 
@@ -34,8 +32,16 @@ class Detection(object):
         # publishing topics
         self.pub = rospy.Publisher("H_Detection_image", Image, queue_size=10)    
         self.msg_pub = rospy.Publisher("H_Detection_msg", H_detection, queue_size=1)
-    
-
+        
+        #initialize csv file
+        self.path = os.getcwd()
+        self.path = self.path+"/human_motion.csv"
+        # open the file in the write mode
+        
+        header = ['center_x', 'center_y', 'Distance']
+        self.csv_file = open(self.path, 'w')
+        self.writer = csv.writer(self.csv_file)
+        self.writer.writerow(header)
 
     def yolo_processing(self,cv_img):       
         ''' 
@@ -81,11 +87,26 @@ class Detection(object):
         # print("Dimensions - ",depth_cv_img.shape)
         # print("depth at -",depth_cv_img[400][235])
         try:
-            print("center pixel in depthcam",self.center_pixel)
+            # print("center pixel in depthcam",self.center_pixel)
+            center_x = self.center_pixel[1]
+            center_y = self.center_pixel[0]
+
+            depth = depth_cv_img[self.center_pixel[1]][self.center_pixel[0]]
+            
+            #changing Nan Values to 0
+            if depth == NaN:
+                depth = 0
+
             print("distance of human in depthcam", depth_cv_img[self.center_pixel[1]][self.center_pixel[0]])
+            
+            data_to_write = [center_x,center_y,depth]
+
+            self.writer.writerow(data_to_write)
+            
+            
             rospy.sleep(0.5)
-            # print()
-        except AttributeError:
+            
+        except AttributeError or IndexError:
             print("no centers in depth")
 def main():
     rospy.init_node('Human_Detection', anonymous=False)
