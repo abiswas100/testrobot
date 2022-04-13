@@ -14,13 +14,10 @@ import yolo as Yolo
 import numpy as np
 import os
 
-from testrobots.msg import H_detection  
-
+from testrobots.msg import H_detection
+from testrobots.msg import stop  
 
 bridge = CvBridge() 
-
-
-
 class Detection(object):
 
     def __init__(self):
@@ -32,6 +29,8 @@ class Detection(object):
         # publishing topics
         self.pub = rospy.Publisher("H_Detection_image", Image, queue_size=10)    
         self.msg_pub = rospy.Publisher("H_Detection_msg", H_detection, queue_size=1)
+        self.stop_msg =  rospy.Publisher("Stop_msg", stop, queue_size=1)
+        self.vector_pub = rospy.Publisher("H_Vector", Image, queue_size=1)
         
         #initialize csv file
         self.path = os.getcwd()
@@ -42,6 +41,12 @@ class Detection(object):
         self.csv_file = open(self.path, 'w')
         self.writer = csv.writer(self.csv_file)
         self.writer.writerow(header)
+        
+    def image_callback(self,data):
+        # print("here in callbaack")
+        cv_img =  bridge.imgmsg_to_cv2(data)
+        # print("Dimensions of camera img- ",cv_img.shape)
+        self.yolo_processing(cv_img)
 
     def yolo_processing(self,cv_img):       
         ''' 
@@ -75,12 +80,6 @@ class Detection(object):
         self.msg_pub.publish(msg)
         self.pub.publish(output)
     
-        
-    def image_callback(self,data):
-        # print("here in callbaack")
-        cv_img =  bridge.imgmsg_to_cv2(data)
-        # print("Dimensions of camera img- ",cv_img.shape)
-        self.yolo_processing(cv_img)
 
     def DepthCamSub(self,depth_data):
         depth_cv_img =  bridge.imgmsg_to_cv2(depth_data)
@@ -93,21 +92,32 @@ class Detection(object):
 
             depth = depth_cv_img[self.center_pixel[1]][self.center_pixel[0]]
             
+            msg = stop()
+            msg.stop = 1            
+            
             #changing Nan Values to 0
-            if depth == NaN:
+            if depth == "nan":
                 depth = 0
-
-            print("distance of human in depthcam", depth_cv_img[self.center_pixel[1]][self.center_pixel[0]])
+            
             
             data_to_write = [center_x,center_y,depth]
 
             self.writer.writerow(data_to_write)
             
+            if depth <= 1.5 : 
+                rospy.logwarn("Human too close ... Stop Immediately")
+                msg.stop = -1
             
-            rospy.sleep(0.5)
+            rospy.sleep(0.1)
+    
+            rospy.logwarn(msg.signal)
+            print("distance of human in depthcam", depth_cv_img[self.center_pixel[1]][self.center_pixel[0]])
+            
             
         except AttributeError or IndexError:
             print("no centers in depth")
+                
+            
 def main():
     rospy.init_node('Human_Detection', anonymous=False)
     sn = Detection()
