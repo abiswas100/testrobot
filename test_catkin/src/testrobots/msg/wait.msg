@@ -1,2 +1,2 @@
 Header header
-int32 signal
+int32 value

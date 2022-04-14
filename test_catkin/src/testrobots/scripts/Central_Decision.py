@@ -13,6 +13,7 @@ from testrobots.msg import move
 from testrobots.msg import stop
 from testrobots.msg import tracking_updates
 
+
 rospy.init_node('Central_Decision', anonymous=True)
 move_msg = rospy.Publisher("movement_msg", move)
 # import asyncio
