@@ -86,25 +86,32 @@ class Detection(object):
         self.past_center = self.center_pixel
       
     def human_motion_tracking(self, cv_img):
-        center_x = self.center_pixel[1]
-        center_y = self.center_pixel[0]
-        
-        past_center_x = self.past_center_pixel[1]
-        past_center_y = self.past_center_pixel[0]
-        
-        start_point = (center_x,center_y)
-        
-        end_point = (past_center_x, past_center_y)
-        
-        #red color in BGR
-        color = (0, 0 , 255)
-        
-        thickness = 2
-        
-        image = cv2.arrowedLine(cv_img, start_point, end_point,
-                                     color, thickness)
-        self.pub.publish(image)
+        try:
+            center_x = self.center_pixel[1]
+            center_y = self.center_pixel[0]
+            
+            past_center_x = self.past_center_pixel[1]
+            past_center_y = self.past_center_pixel[0]
+            
+            start_point = (center_x,center_y)
+            
+            end_point = (past_center_x, past_center_y)
+            
+            #red color in BGR
+            color = (0, 0 , 255)
+            
+            thickness = 2
+            
+            image = cv2.arrowedLine(cv_img, start_point, end_point,
+                                        color, thickness)
+            
+            output = bridge.cv2_to_imgmsg(image)
+            self.pub.publish(output)
 
+        except AttributeError or IndexError:
+            output = bridge.cv2_to_imgmsg(cv_img)
+            self.pub.publish(output)
+        
         
     def DepthCamSub(self,depth_data):
         depth_cv_img =  bridge.imgmsg_to_cv2(depth_data)
