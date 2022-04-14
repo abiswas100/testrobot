@@ -49,6 +49,7 @@ class Detection(object):
         cv_img =  bridge.imgmsg_to_cv2(data)
         # print("Dimensions of camera img- ",cv_img.shape)
         self.yolo_processing(cv_img)
+        self.human_motion_tracking(cv_img)
 
     def yolo_processing(self,cv_img):       
         ''' 
@@ -84,7 +85,7 @@ class Detection(object):
         
         self.past_center = self.center_pixel
       
-    def human_motion_tracking(self):
+    def human_motion_tracking(self, cv_img):
         center_x = self.center_pixel[1]
         center_y = self.center_pixel[0]
         
@@ -92,10 +93,19 @@ class Detection(object):
         past_center_y = self.past_center_pixel[0]
         
         start_point = (center_x,center_y)
-        end_point = ()
-        pass      
-    
+        
+        end_point = (past_center_x, past_center_y)
+        
+        #red color in BGR
+        color = (0, 0 , 255)
+        
+        thickness = 2
+        
+        image = cv2.arrowedLine(cv_img, start_point, end_point,
+                                     color, thickness)
+        self.pub.publish(image)
 
+        
     def DepthCamSub(self,depth_data):
         depth_cv_img =  bridge.imgmsg_to_cv2(depth_data)
         # print("Dimensions - ",depth_cv_img.shape)
@@ -108,7 +118,7 @@ class Detection(object):
             depth = depth_cv_img[self.center_pixel[1]][self.center_pixel[0]]
             
             msg = stop()
-            msg.stop = 1            
+            msg.stop = -1            
             
             #changing Nan Values to 0
             if depth == "nan":
@@ -124,11 +134,11 @@ class Detection(object):
             
             if depth <= 1.5 : 
                 rospy.logwarn("Human too close ... Stop Immediately")
-                msg.stop = -1
-                rospy.logwarn(msg.signal)            
+                msg.stop = 1
+                rospy.logwarn(msg.stop)            
             
             self.stop_msg.publish(msg)            
-
+            print("stop signal value", msg.stop)
         except AttributeError or IndexError:
             print("no centers in depth")
                 
