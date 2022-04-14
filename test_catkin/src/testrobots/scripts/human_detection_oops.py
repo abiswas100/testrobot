@@ -82,8 +82,10 @@ class Detection(object):
         #publish the message and the image
         self.msg_pub.publish(msg)
         self.pub.publish(output)
-        
-        self.past_center = self.center_pixel
+
+        try:
+            self.past_center = self.center_pixel
+        except AttributeError: pass
       
     def human_motion_tracking(self, cv_img):
         try:
