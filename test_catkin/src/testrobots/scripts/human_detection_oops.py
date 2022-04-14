@@ -21,7 +21,9 @@ bridge = CvBridge()
 class Detection(object):
 
     def __init__(self):
-        self.central_pixel = 0
+        
+        self.central_pixel = []
+        self.past_center = []        
         rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=10)
         rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
         # rospy.Subscriber("/camera/depth/points",pc2, Depthcloud, queue_size=1)
@@ -79,6 +81,19 @@ class Detection(object):
         #publish the message and the image
         self.msg_pub.publish(msg)
         self.pub.publish(output)
+        
+        self.past_center = self.center_pixel
+      
+    def human_motion_tracking(self):
+        center_x = self.center_pixel[1]
+        center_y = self.center_pixel[0]
+        
+        past_center_x = self.past_center_pixel[1]
+        past_center_y = self.past_center_pixel[0]
+        
+        start_point = (center_x,center_y)
+        end_point = ()
+        pass      
     
 
     def DepthCamSub(self,depth_data):
@@ -104,16 +119,16 @@ class Detection(object):
 
             self.writer.writerow(data_to_write)
             
+
+            print("distance of human in depthcam", depth_cv_img[self.center_pixel[1]][self.center_pixel[0]])
+            
             if depth <= 1.5 : 
                 rospy.logwarn("Human too close ... Stop Immediately")
                 msg.stop = -1
+                rospy.logwarn(msg.signal)            
             
-            rospy.sleep(0.1)
-    
-            rospy.logwarn(msg.signal)
-            print("distance of human in depthcam", depth_cv_img[self.center_pixel[1]][self.center_pixel[0]])
-            
-            
+            self.stop_msg.publish(msg)            
+
         except AttributeError or IndexError:
             print("no centers in depth")
                 
