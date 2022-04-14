@@ -108,11 +108,11 @@ class Detection(object):
                                         color, thickness)
             
             output = bridge.cv2_to_imgmsg(image)
-            self.pub.publish(output)
+            self.vector_pub.publish(output)
 
         except AttributeError or IndexError:
             output = bridge.cv2_to_imgmsg(cv_img)
-            self.pub.publish(output)
+            self.vector_pub.publish(output)
         
         
     def DepthCamSub(self,depth_data):
@@ -139,7 +139,7 @@ class Detection(object):
             self.writer.writerow(data_to_write)
             
 
-            print("distance of human in depthcam", depth_cv_img[self.center_pixel[1]][self.center_pixel[0]])
+            print("distance of human in depthcam - ", depth_cv_img[self.center_pixel[1]][self.center_pixel[0]])
             
             if depth <= 1.5 : 
                 rospy.logwarn("Human too close ... Stop Immediately")
@@ -148,8 +148,10 @@ class Detection(object):
             
             self.stop_msg.publish(msg)            
             print("stop signal value", msg.stop)
+            rospy.sleep(0.5)
         except AttributeError or IndexError:
             print("no centers in depth")
+            rospy.sleep(0.5)
                 
             
 def main():
