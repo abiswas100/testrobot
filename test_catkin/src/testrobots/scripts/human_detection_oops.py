@@ -60,6 +60,8 @@ class Detection(object):
         '''
         msg = H_detection()
         msg.signal = -1
+
+        
         yolo_output, object_label, center_pixels = self.Yolo_imp(cv_img)
         
         try:
@@ -152,9 +154,11 @@ class Detection(object):
                 
 
     def Yolo_imp(self,img_data): 
-        start_time = time.perf_counter ()
+        start_time = time.perf_counter()
+                #switching directories from .ros to test..scripts file
         current_path = os.getcwd()
-        scripts_path = "/home/tran/testrobot/test_catkin/src/testrobots/scripts"
+        home_path = current_path[:-4]
+        scripts_path = home_path + "testrobot/test_catkin/src/testrobots/scripts"
         
         os.chdir(scripts_path)
         
