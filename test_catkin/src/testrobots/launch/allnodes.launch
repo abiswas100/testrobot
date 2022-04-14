@@ -17,7 +17,7 @@
   <group name="action nodes">
 
     <node pkg="testrobots" name= "Human_Detection" type="H_detection_OOPS_launch.py"/>
-    <node pkg="testrobots" name= "movebase_client" type="move_base_goal.py"/>   
+    <!-- <node pkg="testrobots" name= "movebase_client" type="move_base_goal.py"/>    -->
     </group>
 
 </launch>
