@@ -16,7 +16,7 @@
 
 
     <node pkg="testrobots" name= "Human_Detection" type="human_detection_oops.py"/>
-    <!-- <node pkg="testrobots" name= "movebase_client" type="move_base_goal.py"/>    -->
+    <node pkg="testrobots" name= "movebase_client" type="move_base_goal.py"/>   
  
     </group>
 
