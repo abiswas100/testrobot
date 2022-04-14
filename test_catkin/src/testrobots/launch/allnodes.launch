@@ -7,21 +7,18 @@
 
     <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_house_me_human.launch" />
     <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch" args="map_file:=/home/apramani/testrobot/test_catkin/src/turtlebot3/turtlebot3_navigation/maps/building4.yaml"/>
-    
+    <node name="ros_stl_monitor" pkg="rtamt4ros" type="ros_stl_monitor.py" output="screen" args="--stl $(find rtamt4ros)/specs/spec.stl --period 1 --unit s"/>
+    <node name="ros_stl_monitor2" pkg="rtamt4ros" type="ros_stl_monitor.py" output="screen" args="--stl $(find rtamt4ros)/specs/spec2.stl --period 1 --unit s"/>
+    <node name="rob_plot" pkg="rqt_plot" type="rqt_plot" args="/rtamt/out1 /rtamt/out2"/> -->
   </group>
 
   <!-- ALL ACTION/PLANNING NODES GETS LAUNCHED HERE -->
 
   <group name="action nodes">
 
-    <node pkg="testrobots" name= "Human_Detection" type="H_detectopm_OOPS_launch.py"/>
+    <node pkg="testrobots" name= "Human_Detection" type="H_detection_OOPS_launch.py"/>
     <node pkg="testrobots" name= "movebase_client" type="move_base_goal.py"/>   
-    <node name="ros_stl_monitor" pkg="rtamt4ros" type="ros_stl_monitor.py" output="screen" args="--stl $(find rtamt4ros)/specs/spec.stl --period 1 --unit s"/>
-    <node name="ros_stl_monitor2" pkg="rtamt4ros" type="ros_stl_monitor.py" output="screen" args="--stl $(find rtamt4ros)/specs/spec2.stl --period 1 --unit s"/>
-    <node name="rob_plot" pkg="rqt_plot" type="rqt_plot" args="/rtamt/out1 /rtamt/out2"/>
-
     </group>
 
 </launch>
-
  <!-- <include file="$(find rtamt4ros)/launch/ros_stl_monitor.launch" /> -->
