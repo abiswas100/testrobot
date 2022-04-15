@@ -32,7 +32,7 @@ class Detection(object):
         # publishing topics
         self.pub = rospy.Publisher("H_Detection_image", Image, queue_size=1)    
         self.msg_pub = rospy.Publisher("H_Detection_msg", H_detection, queue_size=1)
-        # self.stop_msg =  rospy.Publisher("Stop_msg", stop, queue_size=1)
+        self.stop_msg =  rospy.Publisher("Stop_msg", stop, queue_size=1)
         self.vector_pub = rospy.Publisher("H_Vector", Image, queue_size=1)
         
         #initialize csv file
@@ -134,13 +134,13 @@ class Detection(object):
     def DepthCamSub(self,depth_data):
         depth_cv_img =  bridge.imgmsg_to_cv2(depth_data)
 
-        if (self.center_pixel) == 0:
+        if len(self.center_pixel) == 0:
             print("no centers in depth")
             rospy.sleep(0.5)
-    
-            pass
+            
         else:
-            print("center pixel in depthcam",self.center_pixel)
+            print("center_pixel in depth- ", self.center_pixel, "length of center pixel", len(self.center_pixel))
+            # print("center pixel in depthcam",self.center_pixel)
             center_x = self.center_pixel[1]
             center_y = self.center_pixel[0]
 
