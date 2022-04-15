@@ -162,7 +162,7 @@ class Detection(object):
             print("distance of human in depthcam - ", depth_cv_img[self.center_pixel[1]][self.center_pixel[0]])
             
             if depth <= 1.5 : 
-                rospy.logwarn("Human too close ... Stop Immediately")
+                rospy.logfatal("Human too close ... Stop Immediately")
                 msg.stop = 1
                 rospy.logwarn(msg.stop)            
             
