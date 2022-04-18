@@ -18,7 +18,7 @@
 
     <node pkg="testrobots" name= "Human_Detection" type="H_detection_OOPS_launch.py"/>
     <!-- <node pkg="testrobots" name= "movebase_client" type="move_base_goal.py"/>    -->
-    </group>
+  </group>
 
 </launch>
  <!-- <include file="$(find rtamt4ros)/launch/ros_stl_monitor.launch" /> -->

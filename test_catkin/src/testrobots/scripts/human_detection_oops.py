@@ -18,7 +18,7 @@ from testrobots.msg import H_detection
 from testrobots.msg import stop  
 
 bridge = CvBridge() 
-class Detection(object):
+class Detection(object):        
 
     def __init__(self):
         

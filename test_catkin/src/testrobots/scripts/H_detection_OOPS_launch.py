@@ -129,7 +129,7 @@ class Detection(object):
             depth = depth_cv_img[self.center_pixel[1]][self.center_pixel[0]]
             
             msg = stop()
-            msg.stop = -1            
+            msg.signal = -1            
             
             #changing Nan Values to 0
             if depth == "nan": depth = 0
@@ -144,28 +144,36 @@ class Detection(object):
             #checking safety of robot and human
             if depth <= 1.5 : 
                 rospy.logwarn("Human too close ... Stop Immediately")
-                msg.stop = 1
-                rospy.logwarn(msg.stop)            
+                msg.signal = 1
             
-            self.stop_msg.publish(msg)            
-            print("stop signal value", msg.stop)
+            rospy.logwarn(msg.signal)            
+            
+            self.stop_msg.publish(msg) 
+            rospy.logerr(msg.signal)
+        
         except AttributeError or IndexError:
             print("no centers in depth")
                 
 
     def Yolo_imp(self,img_data): 
         start_time = time.perf_counter()
-                #switching directories from .ros to test..scripts file
+        
+        #switching directories from .ros to test..scripts file
         current_path = os.getcwd()
         home_path = current_path[:-4]
         scripts_path = home_path + "testrobot/test_catkin/src/testrobots/scripts"
+        # print(os.getcwd())
         
-        os.chdir(scripts_path)
+        if current_path == '/home/apramani/testrobot/test_catkin/src/testrobots/scripts':
+            pass
+        else:
+            os.chdir(scripts_path)
         
         cfg = scripts_path+"/yolov3.cfg"
         weights = scripts_path + "/yolov3.weights"
         
         net = cv2.dnn.readNet(cfg,weights)
+        # net = cv2.dnn.readNet('yolov3.cfg', 'yolov3.weights')
         classes = []
 
         with open('coco.names', 'r') as f:
