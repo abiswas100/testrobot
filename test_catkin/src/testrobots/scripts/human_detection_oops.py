@@ -51,7 +51,7 @@ class Detection(object):
         # print("Dimensions of camera img- ",cv_img.shape)
         tracking_img = cv_img
         self.human_motion_tracking(tracking_img)
-        tracking_img = cv_img
+        
         
         self.yolo_processing(cv_img)
         
