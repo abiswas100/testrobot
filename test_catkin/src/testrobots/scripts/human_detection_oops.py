@@ -24,8 +24,8 @@ class Detection(object):
         self.queue = []
         self.queue.append([0,0])
         self.center_pixel = []
-        
-        rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=10)
+        4
+        rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=1)
         rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
         # rospy.Subscriber("/camera/depth/points",pc2, Depthcloud, queue_size=1)
 
