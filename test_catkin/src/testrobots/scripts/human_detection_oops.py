@@ -21,10 +21,12 @@ bridge = CvBridge()
 class Detection(object):
 
     def __init__(self):
-        self.queue = []
-        self.queue.append([0,0])
+        
+        self.queue_center = []
+        self.queue_center.append([0,0])
+        
         self.center_pixel = []
-        4
+        self.corners = []
         rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=1)
         rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
         # rospy.Subscriber("/camera/depth/points",pc2, Depthcloud, queue_size=1)
@@ -64,7 +66,9 @@ class Detection(object):
         '''
         msg = H_detection()
         msg.signal = -1
-        yolo_output, object_label, center_pixels = Yolo.Yolo_imp(cv_img)
+        
+        #yolo returning center and corners
+        yolo_output, object_label, center_pixels, self.corners = Yolo.Yolo_imp(cv_img)
 
         # checking center_pixels and setting center_pixel to 0         
         if len(center_pixels) == 0: 
@@ -94,7 +98,7 @@ class Detection(object):
         # checking if center_pixels is empty and then setting the past center
         if len(self.center_pixel) == 0: pass
         else:
-            self.queue.append(self.center_pixel)
+            self.queue_center.append(self.center_pixel)
     
     def human_motion_tracking(self, tracking_img):
         if len(self.center_pixel) == 0: 
@@ -107,10 +111,10 @@ class Detection(object):
             center_y = self.center_pixel[0]
 
             # check if stack is empty 
-            if len(self.queue) == 0: pass
+            if len(self.queue_center) == 0: pass
             else: 
-                past = self.queue.pop(0)
-                print("past value", past)
+                past = self.queue_center.pop(0)
+                print("past center value", past)
 
             past_center_x = past[1]
             past_center_y = past[0]
@@ -124,7 +128,7 @@ class Detection(object):
             
             thickness = 20
             
-            image = cv2.arrowedLine(tracking_img, start_point, end_point,
+            image = cv2.arrowedLine(tracking_img, end_point, start_point,
                                         color, thickness)
             
             output = bridge.cv2_to_imgmsg(image)
