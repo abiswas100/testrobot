@@ -22,10 +22,13 @@ bridge = CvBridge()
 class Detection(object):
 
     def __init__(self):
-        self.queue = []
-        self.queue.append([0,0])        
-        self.central_pixel = []
-       
+        
+        self.corner_queue = []
+        self.queue_center = []
+        
+        self.center_pixel = [] 
+        self.corners = 0   # list containing lists of corners for current timestamp - recieved from 
+
         rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=1)
         rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
         # rospy.Subscriber("/camera/depth/points",pc2, Depthcloud, queue_size=1)
@@ -179,7 +182,7 @@ class Detection(object):
 
     def Yolo_imp(self,img_data): 
         start_time = time.perf_counter()
-        
+        corners = []
         #switching directories from .ros to test..scripts file
         current_path = os.getcwd()
         home_path = current_path[:-4]
@@ -238,23 +241,21 @@ class Detection(object):
                     center_y = int(detection[1]*height)
                     w = int(detection[2]*width)
                     h = int(detection[3]*height)
-                    
                     '''
                         use the center (x, y)-coordinates to derive the top and left corner of the bounding box
                     '''
-
                     x = int(center_x - w/2)
                     y = int(center_y - h/2)
                     
                     boxes.append([x,y,w,h])
                     confidences.append(float(confidence))
                     class_ids.append(class_id)
-                    
-                    if class_id == 0:                   # 0 belongs to label person
-                        center_pixels.append([center_x,center_y])
-
+                    # print(class_id)
+                    # if class_id == 0:
+                        # center_pixels.append([center_x,center_y])
         print("---------------------------------------------------")
-        print("center pixels in yolo",center_pixels)
+        # print("center pixels in yolo",center_pixels)
+
         
         indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
         
@@ -265,19 +266,34 @@ class Detection(object):
         if len(indexes)>0:
 
             for i in indexes.flatten():
-                x,y,w,h = boxes[i]
-                label = str(classes[class_ids[i]])
-                confidence = str(round(confidences[i], 2))
-                area = 0
-                print("")
-                
-                print("label -",label,
-                ", confidence", confidence,
-                ", area of Bounding Box  - ",w*h)
+                        x,y,w,h = boxes[i]
+                        label = str(classes[class_ids[i]])
+                        confidence = str(round(confidences[i], 2))
+                        area = 0
+                        print("")
+                        
+                        print("label -",label,
+                        ", confidence", confidence,
+                        ", area of Bounding Box  - ",w*h)
 
-                color = colors[i]
-                cv2.rectangle(img_data,(x,y), (x+w, y+h), color, 2)
-                cv2.putText(img_data, label + " " + confidence, (x, y+20), font, 2, (255,255,255), 2)
+                        color = colors[i]
+                        
+                        leftbottom_corner = (x,y)
+                        rightbottom_corner = (x+w,y)
+                        lefttop_corner = (x,y+h)
+                        righttop_corner =  (x+w,y+h)
+                        
+                        # probable_center = (center_x, center_y)
+                        center_pixels.append([center_x,center_y])
+                        print("center pixels in yolo",center_pixels)
+                        
+                        corners.append([leftbottom_corner,rightbottom_corner,lefttop_corner,righttop_corner])
+                        
+                        print("corners in yolo", leftbottom_corner,rightbottom_corner,lefttop_corner,righttop_corner)
+                        
+                        cv2.rectangle(img_data,(x,y), (x+w, y+h), color, 2)
+                        cv2.putText(img_data, label + " " + confidence, (x, y+20), font, 2, (255,255,255), 2)
+
             
         try:
             object_label = label
@@ -293,7 +309,7 @@ class Detection(object):
         #changing directory to .ROS folder
         os.chdir(current_path)
         
-        return img_data, object_label, center_pixels 
+        return img_data, object_label, center_pixels, corners 
 
 
 def main():
