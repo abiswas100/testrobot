@@ -24,14 +24,11 @@ class Detection(object):
         self.corner_queue = []
         self.queue_center = []
         
-        self.queue_center.append([0,0])
-        
-        
         self.center_pixel = [] 
         self.corners = 0   # list containing lists of corners for current timestamp - recieved from 
         
         rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=1)
-        rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
+        # rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
         # rospy.Subscriber("/camera/depth/points",pc2, Depthcloud, queue_size=1)
 
         # publishing topics
@@ -72,15 +69,15 @@ class Detection(object):
         
         #yolo returning center and corners
         yolo_output, object_label, center_pixels, self.corners = Yolo.Yolo_imp(cv_img)
-        # print("self.corners", self.corners[0]) 
+        
         
         # checking center_pixels and setting center_pixel to 0         
         if len(center_pixels) == 0: 
             self.center_pixel = []
-            print("no center pixel in yolo_processing...",self.center_pixel,"length of center pixel", len(self.center_pixel))
+            print("no center pixel in yolo_processing...",self.center_pixel)
         else:
             self.center_pixel = center_pixels[0]
-            print("center_pixel in yolo processing- ", self.center_pixel, "length of center pixel", len(self.center_pixel))
+            
 
         #making the yolo output into a ros image version        
         output = bridge.cv2_to_imgmsg(yolo_output)
@@ -106,8 +103,6 @@ class Detection(object):
             self.queue_center.append(self.center_pixel)
             self.corner_queue.append(self.corners[0])
         
-        print("corner_queue in yolo processing", self.corner_queue)
-            
             
     def human_motion_tracking(self, tracking_img):
         
@@ -116,20 +111,19 @@ class Detection(object):
             self.vector_pub.publish(output)
 
         else:
-            print("current center pixel in human",self.center_pixel)    
+            print("current center pixel in human tracking",self.center_pixel)    
             center_x = self.center_pixel[1]
             center_y = self.center_pixel[0]
             
             # check if stack is empty 
             if len(self.queue_center) == 0: pass
             else: 
-                past = self.queue_center.pop(0)
+                past = self.queue_center[0]
                 print("past center value", past)
                 
                 past_corner = self.corner_queue[0] #getting the last value
                 current_corner = self.corners[0]
                 
-                # print("past_corners", past_corner)
                 
                 past_leftbottom_corner = past_corner[0]
                 past_rightbottom_corner = past_corner[1]
@@ -141,7 +135,7 @@ class Detection(object):
                 current_lefttop_corner = current_corner[2]
                 current_righttop_corner = current_corner[3]                        
                 
-                
+
             past_center_x = past[1]
             past_center_y = past[0]
             
@@ -159,10 +153,11 @@ class Detection(object):
             
             output = bridge.cv2_to_imgmsg(image)
             
-            #pop the previous corner values
+            #pop the previous corner and center values
             if len(self.corner_queue) > 1:     
-                popped = self.corner_queue.pop(0) # the value is used so now  deleteing the last value
-
+                popped_corner = self.corner_queue.pop(0) # the value is used so now  deleteing the last value
+                popper_center = self.queue_center.pop(0)
+                
             self.vector_pub.publish(output)
 
 
