@@ -127,13 +127,19 @@ class Detection(object):
                 print("past center value", past)
                 
                 past_corner = self.corner_queue[0] #getting the last value
-                print("past_corners", past_corner)
+                current_corner = self.corners[0]
+                
+                # print("past_corners", past_corner)
                 
                 past_leftbottom_corner = past_corner[0]
                 past_rightbottom_corner = past_corner[1]
                 past_lefttop_corner = past_corner[2]
                 past_righttop_corner = past_corner[3]                        
                 
+                current_leftbottom_corner = current_corner[0]
+                current_rightbottom_corner = current_corner[1]
+                current_lefttop_corner = current_corner[2]
+                current_righttop_corner = current_corner[3]                        
                 
                 
             past_center_x = past[1]
