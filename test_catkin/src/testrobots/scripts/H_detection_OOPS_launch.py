@@ -22,7 +22,7 @@ bridge = CvBridge()
 class Detection(object):
 
     def __init__(self):
-        
+
         self.corner_queue = []
         self.queue_center = []
         
@@ -50,12 +50,13 @@ class Detection(object):
         self.writer.writerow(header)
         
     def image_callback(self,data):
-        # print("here in callbaack")
+        
         cv_img =  bridge.imgmsg_to_cv2(data)
         
         tracking_img = cv_img
 
         self.yolo_processing(cv_img)
+        
         self.human_motion_tracking(tracking_img)
 
     def yolo_processing(self,cv_img):       
@@ -66,17 +67,18 @@ class Detection(object):
         '''
         msg = H_detection()
         msg.signal = -1
-
         
-        yolo_output, object_label, center_pixels = self.Yolo_imp(cv_img)
+        #yolo returning center and corners
+        yolo_output, object_label, center_pixels, self.corners = self.Yolo_imp(cv_img)
         
-       # checking center_pixels and setting center_pixel to 0         
+        
+        # checking center_pixels and setting center_pixel to 0         
         if len(center_pixels) == 0: 
             self.center_pixel = []
-            print("no center pixel in yolo_processing...",self.center_pixel,"length of center pixel", len(self.center_pixel))
+            print("no center pixel in yolo_processing...",self.center_pixel)
         else:
             self.center_pixel = center_pixels[0]
-            print("center_pixel in yolo processing- ", self.center_pixel, "length of center pixel", len(self.center_pixel))
+            
 
         #making the yolo output into a ros image version        
         output = bridge.cv2_to_imgmsg(yolo_output)
@@ -85,7 +87,7 @@ class Detection(object):
         Add a custom msg called Human Detected -
         It is published if a human is detected 
         '''
-
+        # changing the msg value only if the label is == person
         if(object_label == 'person'):
             rospy.logwarn("Human Detected on Camera")
             msg.signal = 1 
@@ -95,13 +97,12 @@ class Detection(object):
         #publish the message and the image
         self.msg_pub.publish(msg)
         self.pub.publish(output)
-        
+
         # checking if center_pixels is empty and then setting the past center
         if len(self.center_pixel) == 0: pass
         else:
-            self.queue.append(self.center_pixel)
-
-
+            self.queue_center.append(self.center_pixel)
+            self.corner_queue.append(self.corners[0])
 
     def human_motion_tracking(self, tracking_img):
         
