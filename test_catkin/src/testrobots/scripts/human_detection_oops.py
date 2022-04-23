@@ -136,7 +136,6 @@ class Detection(object):
                 else:
                     past_corner = self.corner_queue[0]
                 
-                
                 current_corner = self.corners[0]
                 
                 # print("")
@@ -155,7 +154,7 @@ class Detection(object):
                 # current_lefttop_corner = current_corner[2]
                 # current_righttop_corner = current_corner[3]                        
                 
-                
+            
 
             past_center_x = past[1]
             past_center_y = past[0]
@@ -169,20 +168,30 @@ class Detection(object):
             
             thickness = 20
             
-            image = cv2.arrowedLine(tracking_img, end_point, start_point,
-                                        color, thickness)
-            image = cv2.rectangle(image,past_leftbottom_corner, past_righttop_corner, color, 15)
-            
-            
-            
-            output = bridge.cv2_to_imgmsg(image)
-            
             #pop the previous corner and center values
             if len(self.corner_queue) > 5:     
                 popped_corner = self.corner_queue.pop(0) # the value is used so now  deleteing the last value
                 popper_center = self.queue_center.pop(0)
                 print("")
-                # print("popped corner", popped_corner)
+            
+            image = cv2.arrowedLine(tracking_img, end_point, start_point,
+                                        color, thickness)
+            
+            for corner in self.corner_queue:
+                leftbottom_corner = corner[0]
+                righttop_corner = corner[3]
+                
+                print(leftbottom_corner,righttop_corner)
+                
+                image = cv2.rectangle(image,leftbottom_corner, righttop_corner, color, 15)    
+                
+            # image = cv2.rectangle(image,past_leftbottom_corner, past_righttop_corner, color, 15)
+            
+
+            
+            output = bridge.cv2_to_imgmsg(image)
+            
+            
             
             
             self.vector_pub.publish(output)
