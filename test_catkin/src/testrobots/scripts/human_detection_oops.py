@@ -28,7 +28,7 @@ class Detection(object):
         self.corners = 0   # list containing lists of corners for current timestamp - recieved from 
         
         rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=1)
-        rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
+        # rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
         # rospy.Subscriber("/camera/depth/points",pc2, Depthcloud, queue_size=1)
 
         # publishing topics
@@ -119,21 +119,42 @@ class Detection(object):
             if len(self.queue_center) == 0: pass
             else: 
                 past = self.queue_center[0]
-                print("past center value", past)
+                # print("past center value", past)
                 
-                past_corner = self.corner_queue[0] #getting the last value
+                print("")
+                
+                for i in self.corner_queue:
+                    print("self. corner_queue in HT",i)
+                    
+                ''' Getting the last last corner value    
+                    this is done when the queue is just 
+                    starting and there is no penaltimate value
+                '''
+                
+                if len(self.corner_queue) > 2 or len(self.corner_queue) == 2:  
+                    past_corner = self.corner_queue[len(self.corner_queue) - 2] 
+                else:
+                    past_corner = self.corner_queue[0]
+                
+                
                 current_corner = self.corners[0]
                 
+                # print("")
+                # print("past corner value", past_corner)
                 
                 past_leftbottom_corner = past_corner[0]
                 past_rightbottom_corner = past_corner[1]
                 past_lefttop_corner = past_corner[2]
                 past_righttop_corner = past_corner[3]                        
                 
-                current_leftbottom_corner = current_corner[0]
-                current_rightbottom_corner = current_corner[1]
-                current_lefttop_corner = current_corner[2]
-                current_righttop_corner = current_corner[3]                        
+                
+                # Get the current corners from the current_corner                 
+                
+                # current_leftbottom_corner = current_corner[0]
+                # current_rightbottom_corner = current_corner[1]
+                # current_lefttop_corner = current_corner[2]
+                # current_righttop_corner = current_corner[3]                        
+                
                 
 
             past_center_x = past[1]
@@ -150,14 +171,20 @@ class Detection(object):
             
             image = cv2.arrowedLine(tracking_img, end_point, start_point,
                                         color, thickness)
+            image = cv2.rectangle(image,past_leftbottom_corner, past_righttop_corner, color, 15)
+            
+            
             
             output = bridge.cv2_to_imgmsg(image)
             
             #pop the previous corner and center values
-            if len(self.corner_queue) > 1:     
+            if len(self.corner_queue) > 5:     
                 popped_corner = self.corner_queue.pop(0) # the value is used so now  deleteing the last value
                 popper_center = self.queue_center.pop(0)
-                
+                print("")
+                # print("popped corner", popped_corner)
+            
+            
             self.vector_pub.publish(output)
 
 
