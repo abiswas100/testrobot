@@ -16,7 +16,7 @@ import time
 import csv
 def Yolo_imp(img_data): 
     start_time = time.perf_counter ()
-
+    corners = []
     net = cv2.dnn.readNet('yolov3.cfg','yolov3.weights')
     classes = []
 
@@ -47,6 +47,7 @@ def Yolo_imp(img_data):
             scores = detection[5:]
             class_id = np.argmax(scores)
             confidence = scores[class_id]
+            
         # filter out weak predictions by ensuring the detected
 		# probability is greater than the minimum probability
             '''
@@ -70,13 +71,13 @@ def Yolo_imp(img_data):
                 confidences.append(float(confidence))
                 class_ids.append(class_id)
                 # print(class_id)
-                if class_id == 0:
-                    center_pixels.append([center_x,center_y])
+                # if class_id == 0:
+                    # center_pixels.append([center_x,center_y])
     print("---------------------------------------------------")
-    print("center pixels in yolo",center_pixels)
-    # print(len(boxes))
+    # print("center pixels in yolo",center_pixels)
+
     indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
-    # print(indexes.flatten())
+
     object_label = ""
     
     font = cv2.FONT_HERSHEY_PLAIN
@@ -94,14 +95,24 @@ def Yolo_imp(img_data):
             ", confidence", confidence,
             ", area of Bounding Box  - ",w*h)
 
-            
-            # if label == 'person':
-            #     area = w*h
-
             color = colors[i]
+            
+            leftbottom_corner = (x,y)
+            rightbottom_corner = (x+w,y)
+            lefttop_corner = (x,y+h)
+            righttop_corner =  (x+w,y+h)
+            
+            # probable_center = (center_x, center_y)
+            center_pixels.append([center_x,center_y])
+            print("center pixels in yolo",center_pixels)
+             
+            corners.append([leftbottom_corner,rightbottom_corner,lefttop_corner,righttop_corner])
+             
+            print("corners in yolo", leftbottom_corner,rightbottom_corner,lefttop_corner,righttop_corner)
+            
             cv2.rectangle(img_data,(x,y), (x+w, y+h), color, 2)
             cv2.putText(img_data, label + " " + confidence, (x, y+20), font, 2, (255,255,255), 2)
-        
+
     try:
         object_label = label
     except UnboundLocalError: 
@@ -112,4 +123,4 @@ def Yolo_imp(img_data):
     print("")
     # print(end_time - start_time, "seconds")
     cv2.imwrite('yolo_img.jpeg', img_data)
-    return img_data, object_label, center_pixels 
+    return img_data, object_label, center_pixels,  corners 
