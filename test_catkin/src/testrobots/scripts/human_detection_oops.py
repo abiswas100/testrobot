@@ -25,7 +25,7 @@ class Detection(object):
         self.queue_center = []
         
         self.queue_center.append([0,0])
-        # self.corner_queue.append([(0,0),(0,0),(0,0),(0,0)])
+        
         
         self.center_pixel = [] 
         self.corners = 0   # list containing lists of corners for current timestamp - recieved from 
@@ -72,14 +72,15 @@ class Detection(object):
         
         #yolo returning center and corners
         yolo_output, object_label, center_pixels, self.corners = Yolo.Yolo_imp(cv_img)
-        print("self.corners", self.corners[0]) 
+        # print("self.corners", self.corners[0]) 
+        
         # checking center_pixels and setting center_pixel to 0         
         if len(center_pixels) == 0: 
             self.center_pixel = []
-            # print("no center pixel in yolo_processing...",self.center_pixel,"length of center pixel", len(self.center_pixel))
+            print("no center pixel in yolo_processing...",self.center_pixel,"length of center pixel", len(self.center_pixel))
         else:
             self.center_pixel = center_pixels[0]
-            # print("center_pixel in yolo processing- ", self.center_pixel, "length of center pixel", len(self.center_pixel))
+            print("center_pixel in yolo processing- ", self.center_pixel, "length of center pixel", len(self.center_pixel))
 
         #making the yolo output into a ros image version        
         output = bridge.cv2_to_imgmsg(yolo_output)
@@ -88,6 +89,7 @@ class Detection(object):
         Add a custom msg called Human Detected -
         It is published if a human is detected 
         '''
+        # changing the msg value only if the label is == person
         if(object_label == 'person'):
             rospy.logwarn("Human Detected on Camera")
             msg.signal = 1 
@@ -107,8 +109,8 @@ class Detection(object):
         print("corner_queue in yolo processing", self.corner_queue)
             
             
-            
     def human_motion_tracking(self, tracking_img):
+        
         if len(self.center_pixel) == 0: 
             output = bridge.cv2_to_imgmsg(tracking_img)
             self.vector_pub.publish(output)
@@ -117,9 +119,6 @@ class Detection(object):
             print("current center pixel in human",self.center_pixel)    
             center_x = self.center_pixel[1]
             center_y = self.center_pixel[0]
-
-            
-            
             
             # check if stack is empty 
             if len(self.queue_center) == 0: pass
@@ -127,10 +126,14 @@ class Detection(object):
                 past = self.queue_center.pop(0)
                 print("past center value", past)
                 
-                past_corners = self.corner_queue[0] #getting the last value
-                print("past_corners", past_corners)
+                past_corner = self.corner_queue[0] #getting the last value
+                print("past_corners", past_corner)
                 
-            
+                past_leftbottom_corner = past_corner[0]
+                past_rightbottom_corner = past_corner[1]
+                past_lefttop_corner = past_corner[2]
+                past_righttop_corner = past_corner[3]                        
+                
                 
                 
             past_center_x = past[1]

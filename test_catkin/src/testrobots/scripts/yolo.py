@@ -108,7 +108,7 @@ def Yolo_imp(img_data):
              
             corners.append([leftbottom_corner,rightbottom_corner,lefttop_corner,righttop_corner])
              
-            # print("corners in yolo", leftbottom_corner,rightbottom_corner,lefttop_corner,righttop_corner)
+            print("corners in yolo", leftbottom_corner,rightbottom_corner,lefttop_corner,righttop_corner)
             
             cv2.rectangle(img_data,(x,y), (x+w, y+h), color, 2)
             cv2.putText(img_data, label + " " + confidence, (x, y+20), font, 2, (255,255,255), 2)
