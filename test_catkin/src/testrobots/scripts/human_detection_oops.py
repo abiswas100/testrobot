@@ -163,9 +163,10 @@ class Detection(object):
             start_point = (center_x,center_y)
         
             end_point = (past_center_x, past_center_y)
-            #red color in BGR
-            color = (0, 255 , 0)
             
+            # color in BGR
+            color = (0, 255 , 0)
+            colors = [(235,14,202),(67,232,25), (232,25,25), (14, 235, 235),(37,33,255)]
             thickness = 20
             
             #pop the previous corner and center values
@@ -177,23 +178,20 @@ class Detection(object):
             image = cv2.arrowedLine(tracking_img, end_point, start_point,
                                         color, thickness)
             
-            for corner in self.corner_queue:
+            for i in range(len(self.corner_queue) - 1):
+                corner = self.corner_queue[i]
                 leftbottom_corner = corner[0]
                 righttop_corner = corner[3]
                 
                 print(leftbottom_corner,righttop_corner)
                 
+                color = colors[i]
                 image = cv2.rectangle(image,leftbottom_corner, righttop_corner, color, 15)    
                 
-            # image = cv2.rectangle(image,past_leftbottom_corner, past_righttop_corner, color, 15)
-            
 
-            
+            #converting to ROS format and publishing 
             output = bridge.cv2_to_imgmsg(image)
-            
-            
-            
-            
+                        
             self.vector_pub.publish(output)
 
 
