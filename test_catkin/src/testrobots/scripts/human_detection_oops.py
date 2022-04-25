@@ -124,7 +124,7 @@ class Detection(object):
                 print("")
                 
                 for i in self.corner_queue:
-                    print("self. corner_queue in HT",i)
+                    print("self. corner_queue in Human Tracking",i)
                     
                 ''' Getting the last last corner value    
                     this is done when the queue is just 
@@ -153,7 +153,10 @@ class Detection(object):
                 # current_rightbottom_corner = current_corner[1]
                 # current_lefttop_corner = current_corner[2]
                 # current_righttop_corner = current_corner[3]                        
-                
+            
+                '''
+                Add code to find the center from the coordinates
+                '''    
             
 
             past_center_x = past[1]
