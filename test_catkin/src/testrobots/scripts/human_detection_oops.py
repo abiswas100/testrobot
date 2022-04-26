@@ -13,6 +13,7 @@ from cv_bridge import CvBridge
 import yolo as Yolo
 import numpy as np
 import os
+import math
 
 from testrobots.msg import H_detection
 from testrobots.msg import stop  
@@ -28,7 +29,7 @@ class Detection(object):
         self.corners = 0   # list containing lists of corners for current timestamp - recieved from 
         
         rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=1)
-        # rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
+        rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
         # rospy.Subscriber("/camera/depth/points",pc2, Depthcloud, queue_size=1)
 
         # publishing topics
@@ -146,30 +147,33 @@ class Detection(object):
                 past_lefttop_corner = past_corner[2]
                 past_righttop_corner = past_corner[3]                        
                 
+                # past_width = past_leftbottom_corner[0] - past_rightbottom_corner[0]
+            
                 
                 # Get the current corners from the current_corner                 
                 
-                # current_leftbottom_corner = current_corner[0]
-                # current_rightbottom_corner = current_corner[1]
-                # current_lefttop_corner = current_corner[2]
-                # current_righttop_corner = current_corner[3]                        
-            
-                '''
-                Add code to find the center from the coordinates
-                '''    
-            
+                current_leftbottom_corner = current_corner[0]
+                current_rightbottom_corner = current_corner[1]
+                current_lefttop_corner = current_corner[2]
+                current_righttop_corner = current_corner[3]                        
+
+                current_width = int(current_leftbottom_corner[0]) - int(current_rightbottom_corner[0])
+                print("current width w1", math.ceil(current_width))
+                
 
             past_center_x = past[1]
             past_center_y = past[0]
             
-            #draw the arrow on the image            
+            
+            # Computer Vision Part - draw the arrow on the image            
             start_point = (center_x,center_y)
         
             end_point = (past_center_x, past_center_y)
             
-            # color in BGR
+            # color and thickness in BGR for Computer Vision
+            bbcenter = (0,0,0)
             color = (0, 255 , 0)
-            colors = [(235,14,202),(67,232,25), (232,25,25), (14, 235, 235),(37,33,255)]
+            # colors = [(235,14,202),(67,232,25), (232,25,25), (14, 235, 235),(37,33,255)]
             thickness = 20
             
             #pop the previous corner and center values
@@ -178,9 +182,13 @@ class Detection(object):
                 popper_center = self.queue_center.pop(0)
                 print("")
             
-            image = cv2.arrowedLine(tracking_img, end_point, start_point,
-                                        color, thickness)
+            # image = cv2.arrowedLine(tracking_img, end_point, start_point,
+            #                             color, thickness)
             
+            # drawing a circle at the center
+            image = cv2.circle(tracking_img,start_point, 10, bbcenter, thickness)
+
+            # drawing the past 5 bounding boxes
             for i in range(len(self.corner_queue) - 1):
                 corner = self.corner_queue[i]
                 leftbottom_corner = corner[0]
@@ -188,7 +196,7 @@ class Detection(object):
                 
                 print(leftbottom_corner,righttop_corner)
                 
-                color = colors[i]
+                # color = colors[i]
                 image = cv2.rectangle(image,leftbottom_corner, righttop_corner, color, 15)    
                 
 
