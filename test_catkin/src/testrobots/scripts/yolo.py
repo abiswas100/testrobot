@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import os
-import PIL as pillow
+
 import rospy
 try:
     import cv2
@@ -10,6 +10,7 @@ except ImportError:
     sys.path.remove(ros_path)
     import cv2
     sys.path.append(ros_path)
+    
 from os import chdir
 import numpy as np
 import time
