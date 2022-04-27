@@ -124,8 +124,8 @@ class Detection(object):
                 
                 print("")
                 
-                for i in self.corner_queue:
-                    print("self. corner_queue in Human Tracking",i)
+                # for i in self.corner_queue:
+                #     print("self. corner_queue in Human Tracking",i)
                     
                 ''' Getting the last last corner value    
                     this is done when the queue is just 
@@ -139,7 +139,7 @@ class Detection(object):
                 
                 current_corner = self.corners[0]
                 
-                # print("")
+                
                 # print("past corner value", past_corner)
                 
                 past_leftbottom_corner = past_corner[0]
@@ -158,7 +158,7 @@ class Detection(object):
                 current_righttop_corner = current_corner[3]                        
 
                 current_width = int(current_leftbottom_corner[0]) - int(current_rightbottom_corner[0])
-                print("current width w1", math.ceil(current_width))
+                print("current width w1", abs(current_width))
                 
 
             past_center_x = past[1]
@@ -194,7 +194,6 @@ class Detection(object):
                 leftbottom_corner = corner[0]
                 righttop_corner = corner[3]
                 
-                print(leftbottom_corner,righttop_corner)
                 
                 # color = colors[i]
                 image = cv2.rectangle(image,leftbottom_corner, righttop_corner, color, 15)    
@@ -242,7 +241,6 @@ class Detection(object):
                 rospy.logwarn(msg.stop)            
             
             self.stop_msg.publish(msg)            
-            print("stop signal value", msg.stop)
             rospy.sleep(0.5)
             
             
