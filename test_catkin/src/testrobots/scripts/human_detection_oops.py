@@ -174,6 +174,7 @@ class Detection(object):
             bbcenter = (0,0,0)
             color = (0, 255 , 0)
             # colors = [(235,14,202),(67,232,25), (232,25,25), (14, 235, 235),(37,33,255)]
+            colors = [(0, 255 , 0),(0, 215 , 0),(0, 185 , 0),(0, 145 , 0),(0, 145, 0)]
             thickness = 20
             
             #pop the previous corner and center values
@@ -186,7 +187,7 @@ class Detection(object):
             #                             color, thickness)
             
             # drawing a circle at the center
-            image = cv2.circle(tracking_img,start_point, 10, bbcenter, thickness)
+            image = cv2.circle(tracking_img,start_point, 10, bbcenter, 1)
 
             # drawing the past 5 bounding boxes
             for i in range(len(self.corner_queue) - 1):
@@ -195,7 +196,7 @@ class Detection(object):
                 righttop_corner = corner[3]
                 
                 
-                # color = colors[i]
+                color = colors[i]
                 image = cv2.rectangle(image,leftbottom_corner, righttop_corner, color, 15)    
                 
 
