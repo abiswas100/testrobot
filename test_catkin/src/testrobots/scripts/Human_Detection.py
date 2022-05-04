@@ -74,7 +74,7 @@ def DepthCamSub(data):
         print("a,b",a,b)
         print("depth coordinates",depth_cv_img[b][a])
     
-    print("----------------------------------------xo------------------")
+    print("----------------------------------------------------------")
 
     
 def main():
@@ -114,48 +114,3 @@ if __name__ == "__main__":
 #     # print(np.shape(points_array))
 #     # print(points_array)
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-
-
-
-
-# bridge = CvBridge()  
-
-        
-# def yolo_processing(cv_img):       
-#     ''' yolo processing node computes detection 
-#         and returns new image with detection and 
-#         human_flag which turns true if the human is detected
-#     '''
-#     yolo_output = Yolo.Yolo_imp(cv_img)
-#     output = bridge.cv2_to_imgmsg(yolo_output)
-#     human_flag = 0
-#     '''
-#     Add a custom msg called Human Detected -
-#     It is published if a human is detected 
-#     '''
-
-#     while not rospy.is_shutdown():
-#         pub_Image.publish(output)
-#         # if human_flag is 1:
-#         #     rospy.loginfo_once("Human Detected on Camera")
-#         #     msg.signal = 1 
-#         #     msg_pub.publish(msg)
-
-        
-# def image_callback(msg: Image):
-#     cv_img =  bridge.imgmsg_to_cv2(msg)
-#     yolo_processing(cv_img)

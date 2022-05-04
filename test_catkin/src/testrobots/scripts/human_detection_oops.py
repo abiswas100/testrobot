@@ -7,6 +7,10 @@ import rospy
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import LaserScan 
 from sensor_msgs.msg import PointCloud2 as pc2
+
+import tf
+from geometry_msgs.msg import Point, PointStamped
+
 import csv
 import cv2
 from cv_bridge import CvBridge
@@ -28,15 +32,20 @@ class Detection(object):
         self.center_pixel = [] 
         self.corners = 0   # list containing lists of corners for current timestamp - recieved from 
         
+        self.center_depth_point = Point()
+        self.depth = 0
+        
+        
         rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=1)
         rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
-        # rospy.Subscriber("/camera/depth/points",pc2, Depthcloud, queue_size=1)
+        rospy.Subscriber("/camera/depth/points",pc2, self.Depthcloud, queue_size=1)
 
         # publishing topics
         self.pub = rospy.Publisher("H_Detection_image", Image, queue_size=1)    
         self.msg_pub = rospy.Publisher("H_Detection_msg", H_detection, queue_size=1)
         self.stop_msg =  rospy.Publisher("Stop_msg", stop, queue_size=1)
         self.vector_pub = rospy.Publisher("H_Vector", Image, queue_size=1)
+        self.point_pub = rospy.Publisher('/center_point', PointStamped, queue_size=1)
         
         #initialize csv file
         self.path = os.getcwd()
@@ -219,7 +228,7 @@ class Detection(object):
             center_x = self.center_pixel[1]
             center_y = self.center_pixel[0]
 
-            depth = depth_cv_img[self.center_pixel[1]][self.center_pixel[0]]
+            self.depth = depth_cv_img[self.center_pixel[1]][self.center_pixel[0]]
             
             msg = stop()
             msg.stop = -1            
@@ -233,7 +242,7 @@ class Detection(object):
 
             self.writer.writerow(data_to_write)
             
-
+            
             print("distance of human in depthcam - ", depth_cv_img[self.center_pixel[1]][self.center_pixel[0]])
             
             if depth <= 1.5 : 
@@ -243,7 +252,43 @@ class Detection(object):
             
             self.stop_msg.publish(msg)            
             rospy.sleep(0.5)
+    
+    def transform_depth(self):
+        
+        listener = tf.TransformBroadcaster()
+        listener.waitForTransform("camera_depth_optical_frame","map", rospy.Time(0), rospy.Duration(0.5))
+
+        rate = rospy.Rate(10)
+        self.center_depth_point.x = self.depth
+        while not rospy.is_shutdown():
             
+            self.distance_point = PointStamped()
+            self.distance_point.header.frame_id = "camera_depth_optical_frame"
+            self.distance_point.header.stamp = rospy.Time(0)
+            self.distance_point.point = self.center_depth_point
+            
+            try:
+                p = listener.transformPoint("map",self.distance_point)
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                continue
+                
+            self.point_pub.publish()
+    
+    
+    def Depthcloud(self,msg):
+        points_list = []
+        for data in msg.data:
+            # print(data)
+            points_list.append(data)
+        
+        # print(len(points_list))
+
+        #set the data into an array of 61440, 1080
+        a = np.array(points_list)
+        points_array = np.reshape(a,(61440,1080))
+        # print(np.shape(points_array))
+        # print(points_array)
+                
             
 def main():
     rospy.init_node('Human_Detection', anonymous=False)
