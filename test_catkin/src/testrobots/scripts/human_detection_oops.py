@@ -8,7 +8,7 @@ from sensor_msgs.msg import Image
 from sensor_msgs.msg import LaserScan 
 from sensor_msgs.msg import PointCloud2 as pc2
 
-import tf
+import tf, tf2_ros
 from geometry_msgs.msg import Point, PointStamped
 
 import csv
@@ -38,7 +38,7 @@ class Detection(object):
         
         rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=1)
         rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
-        rospy.Subscriber("/camera/depth/points",pc2, self.Depthcloud, queue_size=1)
+        # rospy.Subscriber("/camera/depth/points",pc2, self.Depthcloud, queue_size=1)
 
         # publishing topics
         self.pub = rospy.Publisher("H_Detection_image", Image, queue_size=1)    
@@ -234,45 +234,58 @@ class Detection(object):
             msg.stop = -1            
             
             #changing Nan Values to 0
-            if depth == "nan":
-                depth = 0
+            if self.depth == "nan":
+                self.depth = 0
             
             
-            data_to_write = [center_x,center_y,depth]
+            data_to_write = [center_x,center_y,self.depth]
 
             self.writer.writerow(data_to_write)
             
             
             print("distance of human in depthcam - ", depth_cv_img[self.center_pixel[1]][self.center_pixel[0]])
             
-            if depth <= 1.5 : 
+            if self.depth <= 1.5 : 
                 rospy.logfatal("Human too close ... Stop Immediately")
                 msg.stop = 1
                 rospy.logwarn(msg.stop)            
+            
+
             
             self.stop_msg.publish(msg)            
             rospy.sleep(0.5)
     
     def transform_depth(self):
         
-        listener = tf.TransformBroadcaster()
-        listener.waitForTransform("camera_depth_optical_frame","map", rospy.Time(0), rospy.Duration(0.5))
-
+        listener = tf.TransformListener()
+        try:
+            listener.waitForTransform("map","camera_link", rospy.Time(0), rospy.Duration(0.5))
+        except (tf2_ros.TransformException,tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                pass
+                        
         rate = rospy.Rate(10)
         self.center_depth_point.x = self.depth
         while not rospy.is_shutdown():
             
-            self.distance_point = PointStamped()
-            self.distance_point.header.frame_id = "camera_depth_optical_frame"
-            self.distance_point.header.stamp = rospy.Time(0)
-            self.distance_point.point = self.center_depth_point
+            # self.distance_point = PointStamped()
+            # self.distance_point.header.frame_id = "/map"
+            # self.distance_point.header.stamp = rospy.Time(0)
+            # self.distance_point.point = self.center_depth_point
+            
+            point_msg = PointStamped()
+            point_msg.header.frame_id = "camera_link"
+            point_msg.header.stamp = rospy.Time(0)
+            point_msg.point = self.center_depth_point
+            
+            print(point_msg)
             
             try:
-                p = listener.transformPoint("map",self.distance_point)
+                p = listener.transformPoint('map',point_msg) 
+                
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 continue
                 
-            self.point_pub.publish()
+            self.point_pub.publish(p)
     
     
     def Depthcloud(self,msg):
