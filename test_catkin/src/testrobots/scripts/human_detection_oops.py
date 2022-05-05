@@ -99,6 +99,7 @@ class Detection(object):
         # changing the msg value only if the label is == person
         if(object_label == 'person'):
             rospy.logwarn("Human Detected on Camera")
+            # if human is detected find the transform and the point
             msg.signal = 1 
             
         rospy.logwarn(msg.signal)
@@ -112,6 +113,9 @@ class Detection(object):
         else:
             self.queue_center.append(self.center_pixel)
             self.corner_queue.append(self.corners[0])
+            
+                        
+            
         
             
     def human_motion_tracking(self, tracking_img):
@@ -233,7 +237,7 @@ class Detection(object):
             msg = stop()
             msg.stop = -1            
             
-            #changing Nan Values to 0
+            #changing Nan Values to 0 
             if self.depth == "nan":
                 self.depth = 0
             
@@ -249,8 +253,6 @@ class Detection(object):
                 rospy.logfatal("Human too close ... Stop Immediately")
                 msg.stop = 1
                 rospy.logwarn(msg.stop)            
-            
-
             
             self.stop_msg.publish(msg)            
             rospy.sleep(0.5)
@@ -273,14 +275,14 @@ class Detection(object):
             # self.distance_point.point = self.center_depth_point
             
             point_msg = PointStamped()
-            point_msg.header.frame_id = "camera_link"
+            point_msg.header.frame_id = "map"
             point_msg.header.stamp = rospy.Time(0)
             point_msg.point = self.center_depth_point
             
             print(point_msg)
             
             try:
-                p = listener.transformPoint('map',point_msg) 
+                p = listener.transformPoint('camera_link',point_msg) 
                 
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 continue
