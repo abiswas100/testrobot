@@ -10,7 +10,7 @@ from sensor_msgs.msg import PointCloud2 as pc2
 
 import tf, tf2_ros
 from geometry_msgs.msg import Point, PointStamped
-
+from nav_msgs.msg import OccupancyGrid
 import csv
 import cv2
 from cv_bridge import CvBridge
@@ -18,7 +18,11 @@ import yolo as Yolo
 import numpy as np
 import os
 import math
-
+import pcl
+import pcl_ros
+import ros_numpy
+import open3d as o3d
+from open3d_ros_helper import open3d_ros_helper as orh
 from testrobots.msg import H_detection
 from testrobots.msg import stop  
 
@@ -36,10 +40,10 @@ class Detection(object):
         self.depth = 0
         
         
-        rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=1)
-        rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
-        # rospy.Subscriber("/camera/depth/points",pc2, self.Depthcloud, queue_size=1)
-
+        # rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=1)
+        # rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
+        rospy.Subscriber("/camera/depth/points",pc2, self.Depthcloud, queue_size=1)
+        rospy.Subscriber("/map",OccupancyGrid,self.Occupancy, queue_size=1)
         # publishing topics
         self.pub = rospy.Publisher("H_Detection_image", Image, queue_size=1)    
         self.msg_pub = rospy.Publisher("H_Detection_msg", H_detection, queue_size=1)
@@ -57,6 +61,29 @@ class Detection(object):
         self.writer = csv.writer(self.csv_file)
         self.writer.writerow(header)
         
+    def Depthcloud(self,msg):
+        points_list = []
+        for data in msg.data:
+            # print(data)
+            points_list.append(data)
+        # print(len(points_list))
+        # print(len(points_list))
+
+        # pc_np = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(msg)  # remove_nans=True
+        # print(np.shape(pc_np))
+        # # print(pc_np)
+        o3dpc = orh.rospc_to_o3dpc(msg) 
+              
+        
+    
+    def Occupancy(self,msg):
+        # occupancy  =  ros_numpy.occupancy_grid.occupancygrid_to_numpy(msg)
+        # print(occupancy)
+        # print(np.shape(o
+        # ccupancy))
+        # print(msg.MapMetaData)
+        pass
+     
     def image_callback(self,data):
         # print("here in callbaack")
         cv_img =  bridge.imgmsg_to_cv2(data)
@@ -65,7 +92,7 @@ class Detection(object):
 
         self.yolo_processing(cv_img)
         
-        self.human_motion_tracking(tracking_img)
+        # self.human_motion_tracking(tracking_img)
         
 
     def yolo_processing(self,cv_img):       
@@ -100,7 +127,12 @@ class Detection(object):
         if(object_label == 'person'):
             rospy.logwarn("Human Detected on Camera")
             # if human is detected find the transform and the point
-            self.transform_depth()
+            
+            '''
+            change made for the time being
+            '''
+            
+            # self.transform_depth()
             msg.signal = 1 
             
         rospy.logwarn(msg.signal)
@@ -294,20 +326,7 @@ class Detection(object):
         
     
     
-    def Depthcloud(self,msg):
-        points_list = []
-        for data in msg.data:
-            # print(data)
-            points_list.append(data)
-        
-        # print(len(points_list))
-
-        #set the data into an array of 61440, 1080
-        a = np.array(points_list)
-        points_array = np.reshape(a,(61440,1080))
-        # print(np.shape(points_array))
-        # print(points_array)
-                
+             
             
 def main():
     rospy.init_node('Human_Detection', anonymous=False)

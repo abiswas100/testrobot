@@ -1,0 +1,70 @@
+   1 <launch>
+   2   <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
+   3 
+   4   <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
+   5   <node pkg="nodelet" type="nodelet" name="voxel_grid" args="load pcl/VoxelGrid pcl_manager" output="screen">
+   6     <remap from="~input" to="/camera/depth/points" />
+   7     <rosparam>
+   8       filter_field_name: z
+   9       filter_limit_min: 0.01
+  10       filter_limit_max: 1.5
+  11       filter_limit_negative: False
+  12       leaf_size: 0.01
+  13     </rosparam>
+  14   </node>
+  15 
+  16   <!-- Estimate point normals -->
+  17   <node pkg="nodelet" type="nodelet" name="normal_estimation" args="load pcl/NormalEstimation pcl_manager" output="screen">
+  18     <remap from="~input" to="/voxel_grid/output" />
+  19     <rosparam>
+  20       # -[ Mandatory parameters
+  21       k_search: 0
+  22       radius_search: 0.015
+  23       # Set the spatial locator. Possible values are: 0 (ANN), 1 (FLANN), 2 (organized)
+  24       spatial_locator: 0
+  25     </rosparam>
+  26   </node>
+  27 
+  28   <!-- Segment the table plane -->
+  29   <node pkg="nodelet" type="nodelet" name="planar_segmentation" args="load pcl/SACSegmentationFromNormals pcl_manager" output="screen">
+  30     <remap from="~input"   to="/voxel_grid/output" />
+  31     <remap from="~normals" to="/normal_estimation/output" />
+  32     <rosparam>
+  33       # -[ Mandatory parameters
+  34       # model_type:
+  35       # 0: SACMODEL_PLANE
+  36       # 1: SACMODEL_LINE
+  37       # 2: SACMODEL_CIRCLE2D
+  38       # 3: SACMODEL_CIRCLE3D
+  39       # 4: SACMODEL_SPHERE
+  40       # 5: SACMODEL_CYLINDER
+  41       # 6: SACMODEL_CONE
+  42       # 7: SACMODEL_TORUS
+  43       # 8: SACMODEL_PARALLEL_LINE
+  44       # 9: SACMODEL_PERPENDICULAR_PLANE
+         # 10: SACMODEL_PARALLEL_LINES
+         # 11: SACMODEL_NORMAL_PLANE
+         # 12: SACMODEL_NORMAL_SPHERE
+         # 13: SACMODEL_REGISTRATION
+         # 14: SACMODEL_REGISTRATION_2D
+         # 15: SACMODEL_PARALLEL_PLANE
+         # 16: SACMODEL_NORMAL_PARALLEL_PLANE
+         # 17: SACMODEL_STICK
+         model_type: 11
+         distance_threshold: 0.1
+         max_iterations: 1000
+         method_type: 0
+         optimize_coefficients: true
+         normal_distance_weight: 0.1
+         eps_angle: 0.09
+       </rosparam>
+     </node>
+   
+     <node pkg="nodelet" type="nodelet" name="extract_plane_indices" args="load pcl/ExtractIndices pcl_manager" output="screen">
+       <remap from="~input"   to="/voxel_grid/output" />
+       <remap from="~indices" to="/planar_segmentation/inliers" />
+       <rosparam>
+         negative: true
+       </rosparam>
+     </node>
+  </launch>  
