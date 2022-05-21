@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<package>
+  <name>unl_smart_robotic_home</name>
+  <version>0.1.0</version>
+  <description>A package that implements a smart home (structure) as a URDF file within an empty world</description>
+  <license>BSD</license>
+
+  <author email="matt.peavy@unl.edu">Matt Peavy</author>
+  <maintainer email="matt.peavy@unl.edu">Matt Peavy</maintainer>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>message_generation</build_depend>
+
+  <build_depend>pluginlib</build_depend>
+  <build_depend>eigen</build_depend>
+  <build_depend>interactive_markers</build_depend>
+  <build_depend>geometric_shapes</build_depend>
+  <build_depend>rosbag</build_depend>
+  <build_depend>tf2_ros</build_depend>
+  <build_depend>tf2_eigen</build_depend>
+  <build_depend>tf2_geometry_msgs</build_depend>
+
+  <run_depend>pluginlib</run_depend>
+  <run_depend>interactive_markers</run_depend>
+  <run_depend>moveit_visual_tools</run_depend>
+  <run_depend>rosbag</run_depend>
+  <run_depend>tf2_ros</run_depend>
+  <run_depend>tf2_eigen</run_depend>
+  <run_depend>tf2_geometry_msgs</run_depend>
+
+  <run_depend>message_runtime</run_depend>
+
+</package>

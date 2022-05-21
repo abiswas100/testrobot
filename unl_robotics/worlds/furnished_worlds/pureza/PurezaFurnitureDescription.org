@@ -1,0 +1,12 @@
+
+Symlink to:   pureza_furniture.world
+
+| Name                 | Cloned | Description                                                         |
+|----------------------+--------+---------------------------------------------------------------------|
+| pureza_furniture_v00 |        | Empty - no furniture. Can use a starting point for adding furniture |
+| pureza_furniture_v01 |        | 1 couch along N wall of living room                                 |
+| pureza_furniture_v02 | v01    | With 2nd couch at angle in dining room                              |
+| pureza_furniture_v03 | v02    | With dining chair                                                   |
+| pureza_furniture_v04 |        | No couch, with construction equipment / supplies                    |
+| pureza_furniture_v05 |        | With white couch (sofa_pureza) in the dining room                   |
+|                      |        |                                                                     |

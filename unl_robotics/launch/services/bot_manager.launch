@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+  <!-- NOTE: this should be launch from within the unl_smart_robotic_home directory -->
+  <node name="move_base_director" pkg="unl_smart_robotic_home" type="move_base_director" />  
+  <node name="bot_manager" pkg="unl_smart_robotic_home" type="bot_manager" />  
+  
+</launch>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <asset>
+    <contributor>
+      <author>Blender User</author>
+      <authoring_tool>Blender 2.92.0 commit date:2021-02-24, commit time:16:25, hash:02948a2cab44</authoring_tool>
+    </contributor>
+    <created>2021-12-17T09:01:39</created>
+    <modified>2021-12-17T09:01:39</modified>
+    <unit name="meter" meter="1"/>
+    <up_axis>Z_UP</up_axis>
+  </asset>
+  <library_images/>
+  <library_geometries>
+    <geometry id="Basic_Wall_Generic_-_8___358127__Geometry-mesh" name="Basic Wall Generic - 8&quot; [358127] Geometry">
+      <mesh>
+        <source id="Basic_Wall_Generic_-_8___358127__Geometry-mesh-positions">
+          <float_array id="Basic_Wall_Generic_-_8___358127__Geometry-mesh-positions-array" count="24">40.36601 40.49206 0 40.36601 20.82539 0 40.36601 20.82539 10 40.36601 40.49206 10 41.03268 40.49206 0 41.03268 40.49206 10 41.03268 20.82539 10 41.03268 20.82539 0</float_array>
+          <technique_common>
+            <accessor source="#Basic_Wall_Generic_-_8___358127__Geometry-mesh-positions-array" count="8" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Basic_Wall_Generic_-_8___358127__Geometry-mesh-normals">
+          <float_array id="Basic_Wall_Generic_-_8___358127__Geometry-mesh-normals-array" count="18">-1 0 0 1 0 0 0 0 -1 0 -1 0 0 0 1 0 1 0</float_array>
+          <technique_common>
+            <accessor source="#Basic_Wall_Generic_-_8___358127__Geometry-mesh-normals-array" count="6" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="Basic_Wall_Generic_-_8___358127__Geometry-mesh-map-0">
+          <float_array id="Basic_Wall_Generic_-_8___358127__Geometry-mesh-map-0-array" count="72">0.3333333 10 0.3333333 0 20 10 20 0 20 10 0.3333333 0 -20 10 -20 0 -0.3333333 0 -0.3333333 0 -0.3333333 10 -20 10 20 0.3333333 0.3333333 0.3333333 0.3333333 -0.3333333 0.3333333 -0.3333333 20 -0.3333333 20 0.3333333 -0.3333333 10 -0.3333333 0 0.3333333 0 0.3333333 0 0.3333333 10 -0.3333333 10 0.333334 -0.3333333 20 -0.3333333 20 0.3333333 20 0.3333333 0.333334 0.3333333 0.333334 -0.3333333 -0.3333327 0 0.3333333 0 0.3333333 10 0.3333333 10 -0.3333327 10 -0.3333327 0</float_array>
+          <technique_common>
+            <accessor source="#Basic_Wall_Generic_-_8___358127__Geometry-mesh-map-0-array" count="36" stride="2">
+              <param name="S" type="float"/>
+              <param name="T" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="Basic_Wall_Generic_-_8___358127__Geometry-mesh-vertices">
+          <input semantic="POSITION" source="#Basic_Wall_Generic_-_8___358127__Geometry-mesh-positions"/>
+        </vertices>
+        <triangles count="12">
+          <input semantic="VERTEX" source="#Basic_Wall_Generic_-_8___358127__Geometry-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#Basic_Wall_Generic_-_8___358127__Geometry-mesh-normals" offset="1"/>
+          <input semantic="TEXCOORD" source="#Basic_Wall_Generic_-_8___358127__Geometry-mesh-map-0" offset="2" set="0"/>
+          <p>3 0 0 0 0 1 2 0 2 1 0 3 2 0 4 0 0 5 6 1 6 7 1 7 4 1 8 4 1 9 5 1 10 6 1 11 1 2 12 0 2 13 4 2 14 4 2 15 7 2 16 1 2 17 2 3 18 1 3 19 7 3 20 7 3 21 6 3 22 2 3 23 3 4 24 2 4 25 6 4 26 6 4 27 5 4 28 3 4 29 4 5 30 0 5 31 3 5 32 3 5 33 5 5 34 4 5 35</p>
+        </triangles>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="Basic_Wall_Generic_-_8___358127_" name="Basic Wall Generic - 8&quot; [358127]" type="NODE">
+        <matrix sid="transform">0.3048 0 0 0 0 0.3048 0 0 0 0 0.3048 0 0 0 0 1</matrix>
+        <instance_geometry url="#Basic_Wall_Generic_-_8___358127__Geometry-mesh" name="Basic Wall Generic - 8&quot; [358127]"/>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>

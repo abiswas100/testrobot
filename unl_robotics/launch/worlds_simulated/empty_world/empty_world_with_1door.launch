@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Peavy -->
+<launch>
+
+  <!-- Launch a turtlebot robot and building "robot" in the same world.
+       And then control them using different controllers -->
+
+  
+  <!-- === Utilities === -->
+  <arg name="rviz" default="true"/>
+  
+  
+  <!-- === Spawn Gazebo === -->
+  
+  <!-- Declare the world in which we want to start -->
+  <arg name="world_name" default="$(find unl_smart_robotic_home)/worlds/empty.world"/>
+
+  <!--Gazebo Variables--> 
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+  
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world_name)"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="debug" value="$(arg debug)"/>
+  </include>
+
+
+  <!-- ===   A static TF  (world -> map)  to align these 2 TFs   === -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="world_map_tf_broadcaster"
+        args="0   0   0   0   0   0   world   map" />
+
+  
+  <!-- === Spawn the "robot" doors ===-->
+
+  <!-- Door 1 -->
+  <arg name="door1_name" value="door_bot1"/>           <!-- The model name for this door robot -->
+  <arg name="door1_namespace" value="door_bot1_ns"/>   <!-- Namespace used for this door robot -->
+  <group ns="$(arg door1_namespace)">
+    <param name="tf_prefix" value="$(arg door1_namespace)" />
+    <param name="robot_description"
+           command="$(find xacro)/xacro --inorder '$(find unl_smart_robotic_home)/urdf/doors/pr2_door_parameterized.urdf.xacro'
+                    robot_name:=$(arg door1_name)
+                    door_bot_namespace:=$(arg door1_namespace)
+                    hinge_x:=-3.76
+                    hinge_y:=-2.26
+                    init_door_orientation:=-1.570796
+                    door_width:=0.73
+                    door_height:=2.4"/>
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model"
+          args="-urdf -param /$(arg door1_namespace)/robot_description -model $(arg door1_name)"
+          respawn="false" output="screen" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="$(arg door1_name)_tf_broadcaster" args="0   0   0   0   0   0   world  $(arg door1_namespace)/world" />
+  </group>
+  <include file="$(find unl_smart_robotic_home)/launch/controllers/pr2_door_controllers.launch">
+    <arg name="door_bot_namespace" value="$(arg door1_namespace)"/>
+  </include>
+
+  
+  <!-- === RViz support ===-->
+  <group if="$(arg rviz)">
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find unl_smart_robotic_home)/rviz/building4_bot.rviz"/>
+  </group>
+  
+</launch>

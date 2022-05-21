@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UNL_Robotics>
+  <Facility_Plan>
+    <Room_Plan>
+      <Room_Definition>
+         <Room_ID>1</Room_ID>
+         <Center_Location>
+            <X>-1.4607</X>
+            <Y>-2.2042</Y>
+         </Center_Location>
+         <Floor_Finish>Carpet</Floor_Finish>
+         <Start_Date>2021_03_01</Start_Date>
+         <Finish_Date>2021_03_08</Finish_Date>
+         <Subcontractor_ID>A</Subcontractor_ID>
+      </Room_Definition>
+      <Room_Definition>
+         <Room_ID>2</Room_ID>
+         <Center_Location>
+            <X>-0.5157</X>
+            <Y>-5.7469</Y>
+         </Center_Location>
+         <Floor_Finish>Wood</Floor_Finish>
+         <Start_Date>2021_03_01</Start_Date>
+         <Finish_Date>2021_03_15</Finish_Date>
+         <Subcontractor_ID>B</Subcontractor_ID>
+      </Room_Definition>
+    </Room_Plan>    
+  </Facility_Plan>
+</UNL_Robotics>
+

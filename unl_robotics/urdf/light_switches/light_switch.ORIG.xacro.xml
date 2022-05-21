@@ -1,0 +1,50 @@
+<!-- Xacro XML snippet for light switches
+
+Example:
+	<xacro:include filename="$(find cme_description)/urdf/light_switch.xacro.xml" />
+	<xacro:lightswitch id="1" parent="wall-1">
+		<origin xyz="0 0 0" rpy="0 0 0" />
+	</xacro:lightswitch>
+
+ -->
+
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+<xacro:macro name="light_switch" params="id parent xyz rpy:='0 0 0'">
+	<!--
+
+	-->
+	<!-- the faceplate -->
+	<link name="light_switch_${id}">
+		<visual>
+			<geometry>
+				<box size="0.1 0.001 0.2"/>
+			</geometry>
+			<material name="white" />
+		</visual>
+	</link>
+	<joint name="light_switch_${id}_faceplate_joint" type="fixed">
+		<origin xyz="${xyz}" rpy="${rpy}"/>
+		<parent link="${parent}" />
+		<child link="light_switch_${id}" />
+	</joint>
+
+	<!-- the switch -->
+	<link name="light_switch_${id}_switch">
+		<visual>
+			<origin xyz="0.02 0 0" rpy="0 ${pi/2} 0" />
+			<geometry>
+				<box size="0.015 0.015 0.04" />
+			</geometry>
+			<material name="blue" />
+		</visual>
+		<!-- collision -->
+	</link>
+	<joint name="light_switch_${id}_switch_joint" type="revolute">
+		<origin xyz="0 -0.005 0" rpy="0 0 ${pi/2}" />
+		<axis xyz="0 -1 0" />
+		<limit lower="-${pi/4}" upper="${pi/4}" effort="1000" velocity="10" />
+		<parent link="light_switch_${id}" />
+		<child link="light_switch_${id}_switch" />
+	</joint>
+</xacro:macro>
+</robot>

@@ -1,0 +1,26 @@
+| Item               | Classification |
+|--------------------+----------------|
+| person             | transient      |
+| cat                | transient      |
+| dog                | transient      |
+| robot              | transient      |
+| backpack           | short          |
+| glass              | short          |
+| chair              | short          |
+| clothes            | short          |
+| sofa               | long           |
+| bench              | long           |
+| bed                | long           |
+| table              | long           |
+| desk               | long           |
+| piano              | long           |
+| cabinent           | permanent      |
+| oven               | permanent      |
+| refrigerator       | permanent      |
+| door               | stato_morphic  |
+| window             | stato_morphic  |
+| drawer             | stato_morphic  |
+| murphy_bed         | stato_morphic  |
+| standing_desk      | stato_morphic  |
+| retractable_screen | stato_morphic  |
+|                    |                |

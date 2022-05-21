@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+  <!-- Launches the controller and does remapping for the door_joint controller -->
+  
+  <!-- Set the namespace:   e.g., door_bot1  -->
+  <!-- This NS must be *unique* for each door in order to get controller mapping correct -->
+  <arg name="door_bot_namespace" default="door_bot_ns"/>
+
+  
+  <!-- Load controller yaml onto the param server. Allow the the namespace to be passed and
+       used in the YAML file with the  subst_value  attribute-->
+  <rosparam file="$(find unl_smart_robotic_home)/controllers/pr2_door_controllers.yaml"
+            command="load"
+            subst_value="true" />
+
+
+  <!-- Start the controller. Use the namespace attribute. -->
+  <node name="controller_spawner_door_bot"
+        pkg="controller_manager"
+        type="spawner"
+        respawn="false"
+	      output="screen"
+        ns="$(arg door_bot_namespace)"
+        args="joint_state_controller
+              door_joint_position_controller">
+  </node>
+
+  <!-- Start the robot state publisher. Note that the joint_states topic and the
+       robot_description are already in the namespace provided (using the ns
+       attribute), and therefore do not need to be remapped.  -->
+  <node name="robot_state_publisher"
+        pkg="robot_state_publisher"
+        type="robot_state_publisher"
+	      respawn="false" output="screen"
+        ns="$(arg door_bot_namespace)">
+    <param name="tf_prefix" value="$(arg door_bot_namespace)" />
+  </node>
+  
+</launch>

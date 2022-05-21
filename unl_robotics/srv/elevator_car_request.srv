@@ -1,0 +1,3 @@
+int8 floor       #The distination floor number. Can be negative for basement floors.
+---
+bool result      #Whether the open/close was completed successfully
