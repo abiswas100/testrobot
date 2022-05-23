@@ -10,6 +10,7 @@
 
 namespace UNL_Robotics {
 
+//apala:create structure for bounding box
   struct BoundingBox {
     unsigned xmin;
     unsigned xmax;
@@ -19,12 +20,23 @@ namespace UNL_Robotics {
 
   enum class Normal {eX =0, eY, eZ};
   
+
+  //apala:create class SegmentationPipeline
   class SegmentationPipeline {
-  public:
-    SegmentationPipeline(pcl::PointCloud <pcl::PointXYZ>::Ptr pointCloud);
+  public: //apala: access specifier
+
+
+    SegmentationPipeline(pcl::PointCloud <pcl::PointXYZ>::Ptr pointCloud); 
+    //apala:pcl::PointCloud <pcl::PointXYZ>::Ptr pointCloud
+    // it is a wrapper around a pointer that manages it's lifetime 
+    //shared_ptr is a smart pointer that shares ownership  
+    //It is reference counted so it can see when the last copy of it goes out 
+    //of scope and then it frees the object managed.
+
     SegmentationPipeline(const std::string& baseName,
                          const BoundingBox& yoloIdentifiedBoundingBox,
                          pcl::PointCloud <pcl::PointXYZ>::Ptr pointCloud);
+
     SegmentationPipeline(const std::string& baseName,
                          const BoundingBox& yoloIdentifiedBoundingBox,
                          std::string pcdFilepath);
@@ -43,7 +55,7 @@ namespace UNL_Robotics {
     void resetCloudToPostPlaneExtractionAndBB(const std::string& newBaseName,
                                               const BoundingBox& newBoundingBox);
 
-    //////////////
+   
     //Calculations
     double calculateObjectAngleOffset() const;
     double calculateDepths() const;
@@ -61,6 +73,8 @@ namespace UNL_Robotics {
     void extractObjectInBoundingBox(double cropPercentage); 
     void extractObjectInBoundingBox(double cropPercentage, pcl::PointCloud<pcl::PointXYZ>::Ptr destination);
     
+
+    //*********************************************************************************************************************************************
     //Use a statistical outlier remover
     void removeOutliers(double meanK, double stddevMulThresh);
 
@@ -75,6 +89,7 @@ namespace UNL_Robotics {
     //Print the minimum and maximum points of the entire cloud at this point in the pipeline
     void printMinMax();
     void printMinMax(pcl::PointCloud<pcl::PointXYZ>::Ptr);
+    //***********************************************************************************************************************************************
     
   private:
     pcl::PCDWriter m_writer;
