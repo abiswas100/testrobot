@@ -25,7 +25,7 @@ namespace UNL_Robotics {
   class SegmentationPipeline {
   public: //apala: access specifier
 
-
+  
     SegmentationPipeline(pcl::PointCloud <pcl::PointXYZ>::Ptr pointCloud); 
     //apala:pcl::PointCloud <pcl::PointXYZ>::Ptr pointCloud
     // it is a wrapper around a pointer that manages it's lifetime 
