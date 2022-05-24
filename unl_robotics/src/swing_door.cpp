@@ -1,4 +1,6 @@
 
+// Avhishek - not needed for our implementation
+
 /////////////////
 // A very simple pub node that commands the door to swing back and forth.
 // Pass in the robot's namespace

@@ -91,137 +91,129 @@ UNL_Robotics::bot_manager::bot_manager(ros::NodeHandle& nodeHandle,
   ////////////////
 
   ROS_INFO_STREAM("Checking whether worker nodes are ready.");
-
-  //Check the move_base_director status
-  ros::ServiceClient moveClientReady = nodeHandle.serviceClient<unl_smart_robotic_home::node_ready>("move_base_director/node_ready");
-  unl_smart_robotic_home::node_ready move_base_director_ready_msg;
-  bool done=false;
-  unsigned second =0;
-  unsigned maxSeconds =10;
-  do {
-    moveClientReady.call(move_base_director_ready_msg);
-    if(move_base_director_ready_msg.response.ready == true) {
-      done = true;
-      ROS_INFO_STREAM("move_base_director reports ready after " << second << " second" << add_s(second));
-    }
-    else {
-      ++second;
-      if(second == maxSeconds) {
-        ROS_ERROR_STREAM("Waited " << second << " second" << add_s(second) << ", which is the maximum. Cannot continue without the move_base_director. Will now abort");
-        exit(EXIT_FAILURE);
-      }
-      else {
-        ros::Duration(1.0).sleep();  //Sleep for a second
-        ROS_INFO_STREAM("Waiting for move_base_director to be ready. So far waited for " << second << " of " << maxSeconds << " second" << add_s(maxSeconds));
-      }
-    }
-  } while(!done);
-
-  //Set the maximum robot velocity used. This is done in the planner.
-  double max_vel_x = 0.2;
-  double max_rot_vel = 1.0;
-  dynamic_reconfigure::ReconfigureRequest srv_req;
-  dynamic_reconfigure::ReconfigureResponse srv_resp;
-  dynamic_reconfigure::DoubleParameter vel_x_param;
-  dynamic_reconfigure::DoubleParameter vel_rot_param;
-  dynamic_reconfigure::Config conf;
-  vel_x_param.name = "max_vel_x";
-  vel_x_param.value = max_vel_x;
-  conf.doubles.push_back(vel_x_param);
-  vel_rot_param.name = "max_rot_vel";
-  vel_rot_param.value = max_rot_vel;
-  conf.doubles.push_back(vel_rot_param);
-  srv_req.config = conf;
-  ros::service::call("/move_base/DWAPlannerROS/set_parameters", srv_req, srv_resp);
-  
-  //Now that the worker nodes are certified ready, set up their client service interfaces
-  m_absoluteMoveClient = nodeHandle.serviceClient<unl_smart_robotic_home::move_absolute>("move_base_director/move_absolute");
-  m_relativeMoveClient = nodeHandle.serviceClient<unl_smart_robotic_home::move_relative>("move_base_director/move_relative");
-  
-  ROS_INFO_STREAM("Worker nodes are ready");
-  ROS_INFO_STREAM("The bot manager node is ready");
-  m_nodeReady = true;
-}
-
-////  PRIVATE   ////
-
-bool UNL_Robotics::bot_manager::node_ready_request(unl_smart_robotic_home::node_ready::Request&  request, 
-                                                     unl_smart_robotic_home::node_ready::Response& response)
-{
-  ROS_INFO_STREAM("Responded to node ready request with response: " << std::boolalpha << m_nodeReady);
-  response.ready = m_nodeReady;
-  return true;
-}
-
-bool UNL_Robotics::bot_manager::executePlan(unl_smart_robotic_home::execute_plan::Request&  request, 
-                                                unl_smart_robotic_home::execute_plan::Response& response)
-{
-  response.result = true;
-  ROS_INFO_STREAM("Received execute plan request. Starting inspection routine");
-
-  std::string planFilename = request.plan_filename;
-  
-  //Load up the management plan
-  std::string fullPath = m_planFileDirectory + planFilename;
-  std::ifstream in_mp(fullPath.c_str());
-  if(!in_mp) {
-    ROS_ERROR_STREAM("Can't open management plan file with path: " << fullPath << "  -- Consider setting the ROS_HOME environment variable so that the management file can be loaded, or running launch script from the catkin workspace prepended with:   ROS_HOME=`pwd`");
-    ROS_FATAL("No management plan available, so must exit");
-    exit(EXIT_FAILURE);
-  }
-  ROS_INFO_STREAM("Opened management plan file with path: " << fullPath);
-  
-  std::tuple<bool, InspectionRoute> routeTuple = parseInspectionRoute(in_mp);
-  bool parseResult = std::get<0>(routeTuple);
-  if(!parseResult) {
-    ROS_FATAL("Error parsing inspection plan file. Can't continue");
-    exit(EXIT_FAILURE);
-  }
     
-  InspectionRoute route = std::get<1>(routeTuple);
-  ROS_INFO_STREAM("Parsed inspection plan file successfully. Number of rooms = " << route.size());
+  //Check the move_base_director status
+//   ros::ServiceClient moveClientReady = nodeHandle.serviceClient<unl_smart_robotic_home::node_ready>("move_base_director/node_ready");
+//   unl_smart_robotic_home::node_ready move_base_director_ready_msg;
+//   bool done=false;
+//   unsigned second =0;longTermOond" << add_s(second));
+//     }
+//     else {
+//       ++second;
+//       if(second == maxSeconds) {
+//         ROS_ERROR_STREAM("Waited " << second << " second" << add_s(second) << ", which is the maximum. Cannot continue without the move_base_director. Will now abort");
+//         exit(EXIT_FAILURE);
+//       }
+//       else {
+//         ros::Duration(1.0).sleep();  //Sleep for a second
+//         ROS_INFO_STREAM("Waiting for move_base_director to be ready. So far waited for " << second << " of " << maxSeconds << " second" << add_s(maxSeconds));
+//       }
+//     }
+//   } while(!done);
 
-  //For debugging!!
-  //Dump the file back out to verify that we're reading what we think we're reading
-  //std::string debugFilePath  = m_planFileDirectory + planFilename + ".DEBUG.txt";
-  //std::ofstream out(debugFilePath.c_str());
-  //if(!out) {
-  //  ROS_ERROR_STREAM("Can't open output debug inspection plan file with path: " << debugFilePath);
-  //}
-  //else {
-  //  out << "# This is a debug file generated as a mirror of the inspection route data read in." << std::endl;
-  //  out << "# It serves to verify that the data is being accurately read from the input file." << std::endl;
-  //  out << std::endl;
-  //  out << route;
-  //}
+//   //Set the maximum robot velocity used. This is done in the planner.
+//   double max_vel_x = 0.2;
+//   double max_rot_vel = 1.0;
+//   dynamic_reconfigure::ReconfigureRequest srv_req;
+//   dynamic_reconfigure::ReconfigureResponse srv_resp;
+//   dynamic_reconfigure::DoubleParameter vel_x_param;
+//   dynamic_reconfigure::DoubleParameter vel_rot_param;
+//   dynamic_reconfigure::Config conf;
+//   vel_x_param.name = "max_vel_x";
+//   vel_x_param.value = max_vel_x;
+//   conf.doubles.push_back(vel_x_param);
+//   vel_rot_param.name = "max_rot_vel";
+//   vel_rot_param.value = max_rot_vel;
+//   conf.doubles.push_back(vel_rot_param);
+//   srv_req.config = conf;
+//   ros::service::call("/move_base/DWAPlannerROS/set_parameters", srv_req, srv_resp);
+  
+//   //Now that the worker nodes are certified ready, set up their client service interfaces
+//   m_absoluteMoveClient = nodeHandle.serviceClient<unl_smart_robotic_home::move_absolute>("move_base_director/move_absolute");
+//   m_relativeMoveClient = nodeHandle.serviceClient<unl_smart_robotic_home::move_relative>("move_base_director/move_relative");
+  
+//   ROS_INFO_STREAM("Worker nodes are ready");
+//   ROS_INFO_STREAM("The bot manager node is ready");
+//   m_nodeReady = true;
+// }
+
+// ////  PRIVATE   ////
+
+// bool UNL_Robotics::bot_manager::node_ready_request(unl_smart_robotic_home::node_ready::Request&  request, 
+//                                                      unl_smart_robotic_home::node_ready::Response& response)
+// {
+//   ROS_INFO_STREAM("Responded to node ready request with response: " << std::boolalpha << m_nodeReady);
+//   response.ready = m_nodeReady;
+//   return true;
+// }
+
+// bool UNL_Robotics::bot_manager::executePlan(unl_smart_robotic_home::execute_plan::Request&  request, 
+//                                                 unl_smart_robotic_home::execute_plan::Response& response)
+// {
+//   response.result = true;
+//   ROS_INFO_STREAM("Received execute plan request. Starting inspection routine");
+
+//   std::string planFilename = request.plan_filename;
+  
+//   //Load up the management plan
+//   std::string fullPath = m_planFileDirectory + planFilename;
+//   std::ifstream in_mp(fullPath.c_str());
+//   if(!in_mp) {
+//     ROS_ERROR_STREAM("Can't open management plan file with path: " << fullPath << "  -- Consider setting the ROS_HOME environment variable so that the management file can be loaded, or running launch script from the catkin workspace prepended with:   ROS_HOME=`pwd`");
+//     ROS_FATAL("No management plan available, so must exit");
+//     exit(EXIT_FAILURE);
+//   }
+//   ROS_INFO_STREAM("Opened management plan file with path: " << fullPath);
+  
+//   std::tuple<bool, InspectionRoute> routeTuple = parseInspectionRoute(in_mp);
+//   bool parseResult = std::get<0>(routeTuple);
+//   if(!parseResult) {recordMaxOccupancyResult
+//   }
+    
+//   InspectionRoute route = std::get<1>(routeTuple);
+//   ROS_INFO_STREAM("Parsed inspection plan file successfully. Number of rooms = " << route.size());
+
+//   //For debugging!!
+//   //Dump the file back out to verify that we're reading what we think we're reading
+//   //std::string debugFilePath  = m_planFileDirectory + planFilename + ".DEBUG.txt";
+//   //std::ofstream out(debugFilePath.c_str());
+//   //if(!out) {
+//   //  ROS_ERROR_STREAM("Can't open output debug inspection plan file with path: " << debugFilePath);
+//   //}
+//   //else {
+//   //  out << "# This is a debug file generated as a mirror of the inspection route data read in." << std::endl;
+//   //  out << "# It serves to verify that the data is being accurately read from the input file." << std::endl;
+//   //  out << std::endl;
+// //   //  out << route;
+// //   //}
   
 
-  //Iterate over all the rooms to inspect
-  for(auto roomRoute : route) {
+//   //Iterate over all the rooms to inspect
+//   for(auto roomRoute : route) {
 
-    ROS_INFO_STREAM("Starting inspection routine for room #" << roomRoute.room().roomID);
+//     ROS_INFO_STREAM("Starting inspection routine for room #" << roomRoute.room().roomID);
   
-    unl_smart_robotic_home::move_absolute centerRoomMoveReq;
-    centerRoomMoveReq.request.x = roomRoute.room().roomCenter.x;
-    centerRoomMoveReq.request.y = roomRoute.room().roomCenter.y;
-    centerRoomMoveReq.request.theta = 0.0;
-    if(m_absoluteMoveClient.call(centerRoomMoveReq))  {
-      ROS_INFO("Move to center of the room successfully executed");
-      response.result = true;
-    }    
-    else {
-      ROS_ERROR("Move to center of the room not successfully executed");
-      response.result = false;
-      return false;
-    }
+//     unl_smart_robotic_home::move_absolute centerRoomMoveReq;
+//     centerRoomMoveReq.request.x = roomRoute.room().roomCenter.x;
+//     centerRoomMoveReq.request.y = roomRoute.room().roomCenter.y;
+//     centerRoomMoveReq.request.theta = 0.0;
+//     if(m_absoluteMoveClient.call(centerRoomMoveReq))  {
+//       ROS_INFO("Move to center of the room successfully executed");
+//       response.result = true;
+//     }    
+//     else {
+//       ROS_ERROR("Move to center of the room not successfully executed");
+//       response.result = false;
+//       return false;
+//     }
 
-    inspect(roomRoute.getNumRotations(), roomRoute.room().roomID,
-            roomRoute.room().roomName, roomRoute.room().maxOccupancy);
-  }
+//     inspect(roomRoute.getNumRotations(), roomRoute.room().roomID,
+//             roomRoute.room().roomName, roomRoute.room().maxOccupancy);
+//   }
  
-  ROS_INFO_STREAM("Finished inspection routine");
-  return response.result;
-}
+//   ROS_INFO_STREAM("Finished inspection routine");
+//   return response.result;
+// }
 
 void UNL_Robotics::bot_manager::inspect(unsigned numFullRotations, unsigned roomNumber, const std::string& roomName,
                                           unsigned maxOccupancy)
@@ -242,6 +234,7 @@ void UNL_Robotics::bot_manager::inspect(unsigned numFullRotations, unsigned room
   
   //Request to begin inspection. No images taken. The Inv.Clerk will wait (block) until the image is current
   ROS_INFO_STREAM("Instructing inventory clerk to begin inspection");
+  //define roomnumber and roomname as static
   m_inventoryClerk.beginInspection(roomNumber, roomName);
 
   unsigned numObservationPoints = numFullRotations * NUM_OBSERVATION_POINTS_PER_FULL_ROTATION;
@@ -312,53 +305,4 @@ void UNL_Robotics::bot_manager::inspect(unsigned numFullRotations, unsigned room
   m_inventoryClerk.recordMaxOccupancyResult(maxOccupancy);
   
   ROS_INFO("Room inspection successfully executed");
-}
-
-///// MAIN ////
-
-int main(int argc, char** argv)
-{
-  ros::init(argc, argv, "bot_manager");  //name of the node
-  ROS_INFO("Initializing the bot manager");
-
-  //Check if there was a command-line arg. If so, it is for re-setting the image topic.
-  std::vector<std::string> args = parseCL(argc, argv);
-  std::string imageTopic;
-  if(args.size() > 0) {
-    imageTopic = args[0];
-    ROS_INFO_STREAM("Command line request to override the image topic. Setting to " << imageTopic);
-  }
-    
-  //Print the working directory (for debuggin purposes)
-  //pwd();
-
-  uint32_t numThreads(4);
-  ros::AsyncSpinner spinner(numThreads);
-  spinner.start();
-
-  std::string planFileDirectory = "./inspection/plan/";
-  std::time_t now_time_t = std::time(nullptr);
-  std::stringstream ssTimestamp;
-  ssTimestamp << std::put_time(std::localtime(&now_time_t), "%Y%m%d_%H%M%S");
-  std::string inventoryFilePath = "./inspection/inventory/" + ssTimestamp.str();
-  if(!myMkdir(inventoryFilePath)) {
-    ROS_ERROR_STREAM("Couldn't make directory with path " << inventoryFilePath << " - must exit.");
-    return EXIT_FAILURE;
-  }
-  inventoryFilePath += "/";   //Add slash so the timestamp becomes a directory
-  std::stringstream ssInvFilename;
-  ssInvFilename << ssTimestamp.str() << "_InventoryList.txt";
-  ros::NodeHandle nodeHandle;
-  UNL_Robotics::bot_manager manager(nodeHandle,
-                                      planFileDirectory,
-                                      inventoryFilePath,
-                                      ssInvFilename.str(),
-                                      imageTopic
-                                      );
-  
-  //Rather than ros::spin(), use waitForShutdown() with the async spinner 
-  ros::waitForShutdown();
-
-  ROS_INFO("Finalizing the bot manager");
-  return EXIT_SUCCESS;
 }

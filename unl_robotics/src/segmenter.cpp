@@ -12,7 +12,7 @@
 #include <ctime>
 #include <iomanip>
 
-
+//this is for PCD
 //These are data sets that were previously run, with point-cloud files and Yolo recognition
 enum class PCDDataSet {
   set_20210608_133349 = 0,    //Simulation | Pureza | Couch

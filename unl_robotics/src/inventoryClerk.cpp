@@ -95,7 +95,7 @@ const double stddevMulThresh = 0.5;         // 0.5  to    1.0
 
 
 namespace {
-
+  // Avhishek - this is needed
   std::string timestamp()
   {
     std::time_t now_time_t = std::time(nullptr);
@@ -103,7 +103,7 @@ namespace {
     ss << std::put_time(std::localtime(&now_time_t), "%Y%m%d_%H%M%S");
     return ss.str();
   }
-
+  // Avhishek - this is needed
   UNL_Robotics::InventoryClerk::Pose getCurrentPose()
   {
     //Capture the current robot location
@@ -149,7 +149,7 @@ UNL_Robotics::InventoryClerk::InventoryClerk(ros::NodeHandle& nodeHandle,
     m_currentlyProcessingObject(false),
     m_useDownSampling(useDownSampling)
 {
-  std::cout << "IC 1" << std::endl;
+  std::cout << "IC 1" << std::endl;s
   ROS_INFO_STREAM("IC " << 1);
   
   if(!m_out) {
@@ -158,8 +158,8 @@ UNL_Robotics::InventoryClerk::InventoryClerk(ros::NodeHandle& nodeHandle,
     exit(EXIT_FAILURE);
   }
   //Avhishek - this is where the subscriptions are happening (darknet BB, darknet image)
-  m_objectDetectionSubscriber = nodeHandle.subscribe(TOPIC_DARKNET_BB, QUEUE, &InventoryClerk::objDetectionCallback, this);
-  m_detectionImageSubscriber = nodeHandle.subscribe(TOPIC_DARKNET_IMAGE, QUEUE, &InventoryClerk::detectionImageCallback, this);
+  m_objectDetectionSubscriber = nodeHandle.subscribe(TOPIC_DARKNET_BB, QUEUE, &InventoryClerk::objDetectionCallback, this); //bbcord.msg
+  m_detectionImageSubscriber = nodeHandle.subscribe(TOPIC_DARKNET_IMAGE, QUEUE, &InventoryClerk::detectionImageCallback, this); // H_detection_img
   //Avhishek - publisher here that publishes Yolo detected image
   m_yoloImagePublisher = nodeHandle.advertise<sensor_msgs::Image>(TOPIC_YOLO_IMAGE, 1);
     
@@ -197,7 +197,8 @@ void UNL_Robotics::InventoryClerk::inspectPosition(unsigned positionNumber)
   m_out << "-- Observation point # " << positionNumber << " --" << std::endl;
     std::time_t now_time_t = std::time(nullptr);
   m_out << std::put_time(std::localtime(&now_time_t), "%b %d %Y,  %H:%M:%S") << std::endl;
-
+  
+  // use this 
   ROS_INFO("Obtaining current robot pose");
   m_currentPose = getCurrentPose();
   ROS_INFO_STREAM("Current robot pose: " << m_currentPose);
@@ -213,14 +214,14 @@ void UNL_Robotics::InventoryClerk::inspectPosition(unsigned positionNumber)
   //The RGB image will be continuously broadcast specially for Yolo consumption
 
   ros::Duration maxWait(1.0); //Wait up to this amount of time for images/point cloud
-  
+  //raw image 
   boost::shared_ptr<sensor_msgs::Image const> rawImagePtr =
     ros::topic::waitForMessage<sensor_msgs::Image>(m_imageTopic, maxWait);
   if(rawImagePtr == NULL)
     ROS_ERROR_STREAM("No raw image messages received on " << m_imageTopic);
   else
     m_latestRGBImage = *rawImagePtr;
-
+  //pointcloud image
   boost::shared_ptr<sensor_msgs::PointCloud2 const> pointCloudPtr =
     ros::topic::waitForMessage<sensor_msgs::PointCloud2>(TOPIC_POINT_CLOUD, maxWait);
   if(pointCloudPtr == NULL)
@@ -237,6 +238,10 @@ void UNL_Robotics::InventoryClerk::inspectPosition(unsigned positionNumber)
   std::thread broadcastThread(&InventoryClerk::broadcastLatestImage, this);
   ROS_INFO("Broadcast image thread launched");
   
+
+  //Avhishek - needs to adjusted for Python yolo timing - 4sec on avg
+
+  // **************************************************************FIXED YOLO LAG ***************************************************************
   //Wait until Yolo catches up. Pause is currently true, so any object detection
   // callbacks are ignored during this nap time
   ROS_INFO_STREAM("Beginning nap for a time of " << (YOLO_IMAGE_REFRESH_LAG * NUM_REFRESHES_UNTIL_CURRENT) << " seconds");
@@ -246,6 +251,7 @@ void UNL_Robotics::InventoryClerk::inspectPosition(unsigned positionNumber)
   ROS_INFO_STREAM("Awoke from nap. Setting pause to false");
   m_pause = false;
 
+  // Avhishek - DO this loop if there is no yolo image recieved
   //Loop until the next object detection and processing has occurred
   do {
     ROS_INFO_STREAM("InventoryClerk in loop waiting for image to be processed. Waiting 1 second");
@@ -263,6 +269,7 @@ void UNL_Robotics::InventoryClerk::inspectPosition(unsigned positionNumber)
   m_YOLO_imageReceived = false;
   ROS_INFO_STREAM("InventoryClerk - finished inspecting position #" << positionNumber);
 }
+// **********************************************************************************************************************************************
 
 void UNL_Robotics::InventoryClerk::recordMaxOccupancyResult(unsigned maxOccupancy)
 {
