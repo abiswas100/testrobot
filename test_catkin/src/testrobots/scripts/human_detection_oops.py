@@ -23,8 +23,12 @@ import pcl_ros
 import ros_numpy
 import open3d as o3d
 from open3d_ros_helper import open3d_ros_helper as orh
+
+
 from testrobots.msg import H_detection
 from testrobots.msg import stop  
+from testrobots.msg import bbcord
+
 
 bridge = CvBridge() 
 class Detection(object):
@@ -60,6 +64,9 @@ class Detection(object):
         self.csv_file = open(self.path, 'w')
         self.writer = csv.writer(self.csv_file)
         self.writer.writerow(header)
+   
+   
+   
         
     def Depthcloud(self,msg):
         points_list = []
@@ -84,6 +91,8 @@ class Detection(object):
         # print(msg.MapMetaData)
         pass
      
+     
+     
     def image_callback(self,data):
         # print("here in callbaack")
         cv_img =  bridge.imgmsg_to_cv2(data)
@@ -101,12 +110,17 @@ class Detection(object):
         and returns new image with detection and 
         human_flag which turns true if the human is detected
         '''
+        # defining msgs for publishing
         msg = H_detection()
         msg.signal = -1
+        
+        bbcordmsg = bbcord()
         
         #yolo returning center and corners
         yolo_output, object_label, center_pixels, self.corners = Yolo.Yolo_imp(cv_img)
         
+        
+        print(self.corners)
         
         # checking center_pixels and setting center_pixel to 0         
         if len(center_pixels) == 0: 
@@ -146,8 +160,6 @@ class Detection(object):
         else:
             self.queue_center.append(self.center_pixel)
             self.corner_queue.append(self.corners[0])
-            
-                        
             
         
             
