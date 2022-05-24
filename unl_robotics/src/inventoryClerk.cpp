@@ -314,7 +314,7 @@ void UNL_Robotics::InventoryClerk::objDetectionCallback(const darknet_ros_msgs::
   ROS_INFO_STREAM("m_pause = " << m_pause << "  :  m_YOLO_imageReceived = " << m_YOLO_imageReceived <<
                   "m_currentlyProcessingObject = " << m_currentlyProcessingObject);
 
-  
+  // not needed for python BB***************
   std::string timeStamp = timestamp();
   unsigned numBoxes = msg->bounding_boxes.size();
   ROS_INFO_STREAM( "Detected " << numBoxes << " object" << (numBoxes > 1 ? "s" : "") );
@@ -322,7 +322,7 @@ void UNL_Robotics::InventoryClerk::objDetectionCallback(const darknet_ros_msgs::
   //Iterate over all the items that have been identified
   unsigned itemNum = 0;
   for(auto box : msg->bounding_boxes) {
-
+//*************************************************
     //Get out the object type and the bounding box information
     std::string objectName = box.Class;
     unsigned xmin = box.xmin;
@@ -331,13 +331,13 @@ void UNL_Robotics::InventoryClerk::objDetectionCallback(const darknet_ros_msgs::
     unsigned ymax = box.ymax;
     unsigned x_delta = xmax - xmin;
     unsigned y_delta = ymax - ymin; 
-    ROS_INFO_STREAM("  " << objectName  << "  -  Probability " << std::setprecision(4) << (box.probability*100) << "%" );
+    ROS_INFO_STREAM("  " << objectName  << "  -  Probability " << std::setprecision(4) << (box.probability*100) << "%" ); // not needed 
     ROS_INFO_STREAM("    " << "BB Min (x,y) = (" << xmin << ", " << ymin << ")" );
     ROS_INFO_STREAM("    " << "BB Max (x,y) = (" << xmax << ", " << ymax << ")" );
-    
+    // not needed************
     m_out << "*) Object type:  " << objectName << std::endl;
     m_out << "   Probability  " << std::setprecision(4) << (box.probability*100.0) << "%" << std::endl;
-
+//*******************
 
     // Avhishek - Don't know why  this is being done what is the use of calculating objectAngleOffset
 

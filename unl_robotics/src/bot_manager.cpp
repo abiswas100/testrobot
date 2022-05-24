@@ -323,12 +323,14 @@ int main(int argc, char** argv)
 
   //Check if there was a command-line arg. If so, it is for re-setting the image topic.
   std::vector<std::string> args = parseCL(argc, argv);
+
+  // not using it for now ***************************************************************************
   std::string imageTopic;
   if(args.size() > 0) {
     imageTopic = args[0];
     ROS_INFO_STREAM("Command line request to override the image topic. Setting to " << imageTopic);
   }
-    
+    // **********************************************************************************************
   //Print the working directory (for debuggin purposes)
   //pwd();
 

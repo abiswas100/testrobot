@@ -1,3 +1,89 @@
+void UNL_Robotics::InventoryClerk::inspectPosition(unsigned positionNumber)
+{
+  ROS_INFO_STREAM("InventoryClerk - inspecting position #" << positionNumber);
+  ROS_INFO_STREAM("m_pause = " << m_pause << "  :  m_YOLO_imageReceived = " << m_YOLO_imageReceived);
+
+  //Begin by setting the lont-germ object detection flag to false
+  m_longTermObjectDetectedAtThisPosition = false;
+  m_longTermObjects.clear();
+  
+  m_out << "-- Observation point # " << positionNumber << " --" << std::endl;
+    std::time_t now_time_t = std::time(nullptr);
+  m_out << std::put_time(std::localtime(&now_time_t), "%b %d %Y,  %H:%M:%S") << std::endl;
+  
+  // use this 
+  ROS_INFO("Obtaining current robot pose");
+  m_currentPose = getCurrentPose();
+  ROS_INFO_STREAM("Current robot pose: " << m_currentPose);
+  m_out << "Current robot pose (x,y,yaw): " << m_currentPose << std::endl << std::endl;
+
+  //Verify that we are set to pause
+  ROS_ASSERT(m_pause == true);
+
+  //Capture and store the latest depth image, RGB image, and point-cloud.
+  //This is done here once, and for the remainder of this loop, all 3 of those
+  // images will be used together. This guarantees that the images being processed
+  // by Yolo match the depth images being used for depth information.
+  //The RGB image will be continuously broadcast specially for Yolo consumption
+
+  ros::Duration maxWait(1.0); //Wait up to this amount of time for images/point cloud
+  //raw image 
+  boost::shared_ptr<sensor_msgs::Image const> rawImagePtr =
+    ros::topic::waitForMessage<sensor_msgs::Image>(m_imageTopic, maxWait);
+  if(rawImagePtr == NULL)
+    ROS_ERROR_STREAM("No raw image messages received on " << m_imageTopic);
+  else
+    m_latestRGBImage = *rawImagePtr;
+  //pointcloud image
+  boost::shared_ptr<sensor_msgs::PointCloud2 const> pointCloudPtr =
+    ros::topic::waitForMessage<sensor_msgs::PointCloud2>(TOPIC_POINT_CLOUD, maxWait);
+  if(pointCloudPtr == NULL)
+    ROS_ERROR_STREAM("No point clound messages received on " << TOPIC_POINT_CLOUD);
+  else
+    m_latestPointCloud = *pointCloudPtr;
+
+  ROS_INFO_STREAM("Most recent images captured");
+
+  //Begin broadcasting the most recent RGB image for Yolo to pick up
+  //Do this on a thread which will be destroyed at the end of this scope and
+  // therefore stop broadcasting
+  ROS_INFO("Launching broadcast image thread");
+  std::thread broadcastThread(&InventoryClerk::broadcastLatestImage, this);
+  ROS_INFO("Broadcast image thread launched");
+
+  //Avhishek - needs to adjusted for Python yolo timing - 4sec on avg
+
+  // **************************************************************FIXED YOLO LAG ***************************************************************
+  //Wait until Yolo catches up. Pause is currently true, so any object detection
+  // callbacks are ignored during this nap time
+  ROS_INFO_STREAM("Beginning nap for a time of " << (YOLO_IMAGE_REFRESH_LAG * NUM_REFRESHES_UNTIL_CURRENT) << " seconds");
+  ros::Duration(YOLO_IMAGE_REFRESH_LAG * NUM_REFRESHES_UNTIL_CURRENT).sleep();
+
+  //Now un-pause. We're ready to process whatever Yolo finds
+  ROS_INFO_STREAM("Awoke from nap. Setting pause to false");
+  m_pause = false;
+
+  // Avhishek - DO this loop if there is no yolo image recieved
+  //Loop until the next object detection and processing has occurred
+  do {
+    ROS_INFO_STREAM("InventoryClerk in loop waiting for image to be processed. Waiting 1 second");
+    ROS_INFO_STREAM("m_pause = " << m_pause << "  :  m_YOLO_imageReceived = " << m_YOLO_imageReceived);
+    ros::spinOnce();
+    ros::Duration(1.0).sleep();  //Sleep for a second
+  }
+  while(!m_YOLO_imageReceived);
+
+  //Wait for the thread to finish
+  broadcastThread.join();
+  
+  //Re-set to pause and image received status
+  m_pause = true;
+  m_YOLO_imageReceived = false;
+  ROS_INFO_STREAM("InventoryClerk - finished inspecting position #" << positionNumber);
+}
+
+//****************************************************************************************************************************
+
 void UNL_Robotics::InventoryClerk::objDetectionCallback(const darknet_ros_msgs::BoundingBoxes::ConstPtr& msg)
 {
   ROS_INFO_STREAM("InventoryClerk - object detected, in callback");
@@ -143,7 +229,7 @@ void UNL_Robotics::InventoryClerk::objDetectionCallback(const darknet_ros_msgs::
                   "m_currentlyProcessingObject = " << m_currentlyProcessingObject);
 }
 
-
+//****************************************************************************************************************************
 
 /*
   Avhishek - 
@@ -193,7 +279,7 @@ void UNL_Robotics::InventoryClerk::detectionImageCallback(const sensor_msgs::Ima
                   "m_currentlyProcessingObject = " << m_currentlyProcessingObject);
 }
 
-
+//****************************************************************************************************************************
 /*
   Avhishek - publishes the latest image 
 */
@@ -249,3 +335,5 @@ UNL_Robotics::InventoryClerk::InventoryClerk(ros::NodeHandle& nodeHandle,
     
   ROS_INFO_STREAM("m_pause = " << m_pause << "  :  m_YOLO_imageReceived = " << m_YOLO_imageReceived);
 }
+
+// **************************************************************************************************************************************
