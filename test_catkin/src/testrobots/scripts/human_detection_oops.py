@@ -64,10 +64,17 @@ class Detection(object):
         self.csv_file = open(self.path, 'w')
         self.writer = csv.writer(self.csv_file)
         self.writer.writerow(header)
+<<<<<<< Updated upstream
    
    
    
         
+=======
+    
+    '''
+        This is a callback for PointCloud message
+    '''    
+>>>>>>> Stashed changes
     def Depthcloud(self,msg):
         points_list = []
         for data in msg.data:
@@ -82,7 +89,9 @@ class Detection(object):
         o3dpc = orh.rospc_to_o3dpc(msg) 
               
         
-    
+    '''
+        This is a callback for Occupancy Grid message
+    '''
     def Occupancy(self,msg):
         # occupancy  =  ros_numpy.occupancy_grid.occupancygrid_to_numpy(msg)
         # print(occupancy)
@@ -90,9 +99,16 @@ class Detection(object):
         # ccupancy))
         # print(msg.MapMetaData)
         pass
+<<<<<<< Updated upstream
      
      
      
+=======
+    
+    '''
+        This is a callback for RGB Image message
+    '''
+>>>>>>> Stashed changes
     def image_callback(self,data):
         # print("here in callbaack")
         cv_img =  bridge.imgmsg_to_cv2(data)
