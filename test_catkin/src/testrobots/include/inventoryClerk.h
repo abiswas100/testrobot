@@ -18,8 +18,8 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h>                 //Point clouds
 //Darknet / Yolo
-#include "darknet_ros_msgs/BoundingBoxes.h"
-#include "darknet_ros_msgs/ObjectCount.h"
+// #include "darknet_ros_msgs/BoundingBoxes.h"
+// #include "darknet_ros_msgs/ObjectCount.h"
 //PCL
 #include <pcl_ros/point_cloud.h>                 //Point clouds
 //std
