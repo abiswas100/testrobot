@@ -133,4 +133,4 @@ def Yolo_imp(img_data):
     print("")
     # print(end_time - start_time, "seconds")
     cv2.imwrite('yolo_img.jpeg', img_data)
-    return img_data, object_label, center_pixels,  corners 
+    return img_data, object_label, center_pixels,  corners, confidence 

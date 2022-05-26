@@ -27,7 +27,8 @@ from open3d_ros_helper import open3d_ros_helper as orh
 
 from testrobots.msg import H_detection
 from testrobots.msg import stop  
-from testrobots.msg import bbcord
+from testrobots.msg import BoundingBox
+from testrobots.msg import BoundBoxes
 
 
 bridge = CvBridge() 
@@ -42,18 +43,19 @@ class Detection(object):
         
         self.center_depth_point = Point()
         self.depth = 0
+        self.confidence = 0.0
         
-        
-        # rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=1)
+        rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=1)
         # rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
-        rospy.Subscriber("/camera/depth/points",pc2, self.Depthcloud, queue_size=1)
-        rospy.Subscriber("/map",OccupancyGrid,self.Occupancy, queue_size=1)
+        # rospy.Subscriber("/camera/depth/points",pc2, self.Depthcloud, queue_size=1)
+        # rospy.Subscriber("/map",OccupancyGrid,self.Occupancy, queue_size=1)
         # publishing topics
         self.pub = rospy.Publisher("H_Detection_image", Image, queue_size=1)    
         self.msg_pub = rospy.Publisher("H_Detection_msg", H_detection, queue_size=1)
         self.stop_msg =  rospy.Publisher("Stop_msg", stop, queue_size=1)
         self.vector_pub = rospy.Publisher("H_Vector", Image, queue_size=1)
-        self.point_pub = rospy.Publisher('/center_point', PointStamped, queue_size=1)
+        # self.point_pub = rospy.Publisher('/center_point', PointStamped, queue_size=1)
+        self.boundingboxes = rospy.Publisher("BBox", BoundBoxes, queue_size=1)
         
         #initialize csv file
         self.path = os.getcwd()
@@ -70,17 +72,18 @@ class Detection(object):
     '''    
 
     def Depthcloud(self,msg):
-        points_list = []
-        for data in msg.data:
-            # print(data)
-            points_list.append(data)
+        # points_list = []
+        # for data in msg.data:
+        #     # print(data)
+        #     points_list.append(data)
         # print(len(points_list))
         # print(len(points_list))
 
         # pc_np = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(msg)  # remove_nans=True
         # print(np.shape(pc_np))
         # # print(pc_np)
-        o3dpc = orh.rospc_to_o3dpc(msg) 
+        # o3dpc = orh.rospc_to_o3dpc(msg) 
+        pass
               
         
     '''
@@ -120,12 +123,13 @@ class Detection(object):
         msg = H_detection()
         msg.signal = -1
         
-        bbcordmsg = bbcord()
-        
+        #defining message to create message for BoundingBox in Cpp        
+        bbcordmsg = BoundingBox()
+        bbcordmsgs = BoundBoxes()
         #yolo returning center and corners
-        yolo_output, object_label, center_pixels, self.corners = Yolo.Yolo_imp(cv_img)
+        yolo_output, object_label, center_pixels, self.corners, self.confidence = Yolo.Yolo_imp(cv_img)
         
-        
+       
         print(self.corners)
         
         # checking center_pixels and setting center_pixel to 0         
@@ -151,16 +155,40 @@ class Detection(object):
             '''
             change made for the time being
             '''
+            # open the corner pixel and get the xmin,xmax, ymin, max this is only done and published when there is a human   
             
-            # self.transform_depth()
+            corner = self.corners[0]
+            leftbottom_corner = corner[0]
+            rightbottom_corner = corner[1]
+            lefttop_corner = corner[2]
+            righttop_corner = corner[3]  
+            
+            xmin = leftbottom_corner[0]
+            xmax = rightbottom_corner[0]
+            ymin = lefttop_corner[1]
+            ymax = righttop_corner[1]
+            
+            #complete the bbcord message now
+            
+            bbcordmsg.Class = object_label
+            bbcordmsg.probability = self.confidence
+            bbcordmsg.xmin = xmin
+            bbcordmsg.xmax = xmax
+            bbcordmsg.ymin = ymin
+            bbcordmsg.ymax = ymax
+              
+            bbcordmsgs.bounding_boxes = bbcordmsg
+            # self.transform_depth() # this is to call the transform function 
             msg.signal = 1 
+            
             
         rospy.logwarn(msg.signal)
         
         #publish the message and the image
         self.msg_pub.publish(msg)
         self.pub.publish(output)
-
+        self.boundingboxes.publish(bbcordmsgs)
+        
         # checking if center_pixels is empty and then setting the past center
         if len(self.center_pixel) == 0: pass
         else:
@@ -308,8 +336,7 @@ class Detection(object):
             self.stop_msg.publish(msg)            
             rospy.sleep(0.5)
     
-    def transform_depth(self):
-        
+    def transform_depth(self):       
         listener = tf.TransformListener()
         try:
             listener.waitForTransform("map","camera_depth_optical_frame", rospy.Time(10), rospy.Duration(1.0))
