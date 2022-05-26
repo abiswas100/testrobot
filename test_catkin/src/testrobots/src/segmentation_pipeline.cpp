@@ -62,6 +62,7 @@
 #include <cstdlib>
 
 #include <testrobots/BoundingBoxes.h> // add a header file for the message or it will error 
+#include <testrobots/BoundingBox.h>
 
 ros::NodeHandle n;
 
@@ -217,9 +218,9 @@ void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // ch
   // for(auto box : msg->bounding_boxes) {  commenting for loop
 //*************************************************
   //Get out the object type and the bounding box information
-  auto box = msg->bounding_boxes ;//check
+  auto box = msg->BoundingBoxes ;//check
   
-  std::string objectName = box.classname(); //checkkkkkkkkkkkk errorrrrrrrrrrrrrrrrrr
+  std::string objectName = box.Class; //checkkkkkkkkkkkk errorrrrrrrrrrrrrrrrrr
   unsigned xmin = box.xmin;
   unsigned xmax = box.xmax;
   unsigned ymin = box.ymin;
@@ -277,7 +278,7 @@ void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // ch
     ssObjName << "item_" << itemNum << "_obj_" << objectName;
     ssObjPath << m_workingPath << timeStamp << "_" << ssObjName.str();
   
-    //Call the crop and save function. Save only the object in this loop
+    //Call the crop and save function. Save only the object in this loop //UNL_Robotics::
     UNL_Robotics::cropAndSaveImage(m_latestRGBImage, ssObjPath.str() + ".jpeg",
                       xmin, ymin, x_delta, y_delta);
   
