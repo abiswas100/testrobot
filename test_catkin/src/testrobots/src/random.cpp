@@ -553,3 +553,51 @@ double UNL_Robotics::SegmentationPipeline::calculateObjectAngleOffset() const
 
   return objectAngleOffset;
 }
+
+ // remove Nans is used in Eclidean extracion
+void removeNaNs(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::PointXYZ>::Ptr dest)
+{
+  // m_cloud->is_dense = false;
+  // boost::shared_ptr<std::vector<int>> indices(new std::vector<int>);
+  // pcl::removeNaNFromPointCloud(*m_cloud, *m_cloud, *indices);
+
+  /*
+  pcl::ExtractIndices<pcl::PointXYZ> extract;
+  extract.setInputCloud(m_cloud);
+  extract.setIndices(indices);
+  extract.setNegative(true);
+  extract.filter(*m_cloud);
+  */
+
+  for (pcl::PointCloud<pcl::PointXYZ>::const_iterator it = source->begin(); it != source->end(); ++it)
+  {
+
+    if (!(std::isnan(it->x) || std::isnan(it->y) || std::isnan(it->z)))
+    {
+      dest->push_back(*it);
+    }
+  }
+
+  pcl::PointXYZ pt = *source->begin();
+  cout << "pt = " << pt.x << " " << pt.y << " " << pt.z << std::endl;
+  cout << "is nan x : " << std::isnan(pt.x) << std::endl;
+  cout << "combined ! is nan :  " << !(std::isnan(pt.x) || std::isnan(pt.y) || std::isnan(pt.z)) << std::endl;
+
+  /*
+  std::copy_if(source->begin(), source->end(), dest->begin(),
+               [](pcl::PointXYZ pt)
+               {
+                 return(!(std::isnan(pt.x) || std::isnan(pt.y) || std::isnan(pt.z)));
+               });
+  */
+}
+
+
+// not really needing it right now
+void UNL_Robotics::SegmentationPipeline::resetCloudToPostPlaneExtraction()
+{
+  copyPointCloud(*m_postPlaneExtractedCloud, *m_cloud);
+  m_pipelineStepCount = 10; // Set this to 10, so that step numbering remaining sequential and consistent
+  std::cout << "     "
+            << "Post-plane extraction cloud reset to use as start cloud" << std::endl;
+}
