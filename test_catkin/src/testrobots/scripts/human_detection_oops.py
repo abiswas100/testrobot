@@ -27,8 +27,8 @@ from open3d_ros_helper import open3d_ros_helper as orh
 
 from testrobots.msg import H_detection
 from testrobots.msg import stop  
-from testrobots.msg import BoundingBox
-from testrobots.msg import BoundBoxes
+from testrobots.msg import Boundingbox
+from testrobots.msg import BoundingBoxes
 
 
 bridge = CvBridge() 
@@ -124,8 +124,8 @@ class Detection(object):
         msg.signal = -1
         
         #defining message to create message for BoundingBox in Cpp        
-        bbcordmsg = BoundingBox()
-        bbcordmsgs = BoundBoxes()
+        bbcordmsg = Boundingbox()
+        bbcordmsgs = BoundingBoxes()
         #yolo returning center and corners
         yolo_output, object_label, center_pixels, self.corners, self.confidence = Yolo.Yolo_imp(cv_img)
         

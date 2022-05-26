@@ -1,2 +1,2 @@
 Header header
-BoundingBox[] bounding_boxes
+Boundingbox[] bounding_boxes

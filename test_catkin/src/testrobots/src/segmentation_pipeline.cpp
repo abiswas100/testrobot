@@ -62,7 +62,7 @@
 #include <cstdlib>
 
 #include <testrobots/BoundingBoxes.h> // add a header file for the message or it will error 
-
+#include <testrobots/BoundingBox.h>
 ros::NodeHandle n;
 
 // added from Inventory Clerk header file
@@ -182,173 +182,173 @@ std::string printStepCount() //const std::string SegmentationPipeline::printStep
 
 // *********************************************************************************************************************************
 void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // check this line for any change needed for custom C++ messages
-{ 
-  /*
-    Avhishek - Below code is doing some printing but check from where m_Yolo_imagereceived is originating it is an important variable and we need to create it
-  */
+{     ROS_INFO(msg->bounding_boxes);
+//   /*
+//     Avhishek - Below code is doing some printing but check from where m_Yolo_imagereceived is originating it is an important variable and we need to create it
+//   */
 
 
-  // ****************************************************to check if image is received**************************************************************
-  ROS_INFO_STREAM("segmentation pipeline - object detected, in callback");
-  ROS_INFO_STREAM("m_pause = " << m_pause << "  :  m_YOLO_imageReceived = " << m_YOLO_imageReceived <<
-                  "m_currentlyProcessingObject = " << m_currentlyProcessingObject); 
+//   // ****************************************************to check if image is received**************************************************************
+//   ROS_INFO_STREAM("segmentation pipeline - object detected, in callback");
+//   ROS_INFO_STREAM("m_pause = " << m_pause << "  :  m_YOLO_imageReceived = " << m_YOLO_imageReceived <<
+//                   "m_currentlyProcessingObject = " << m_currentlyProcessingObject); 
 
-  //Set this flag to true to keep main thread from exiting before we are done processing
-  // this object. Otherwise, the long-term classification might not be set yet and the
-  // thread would continue prematurely
-  m_currentlyProcessingObject = true;  // comes from header file definitions
+//   //Set this flag to true to keep main thread from exiting before we are done processing
+//   // this object. Otherwise, the long-term classification might not be set yet and the
+//   // thread would continue prematurely
+//   m_currentlyProcessingObject = true;  // comes from header file definitions
   
 
-  // waits for the image to be recieved if no image them returns or else continues
-  if(m_pause) { 
-    ROS_INFO_STREAM("InventoryClerk - currently paused, so abandoning callback");
-    ROS_INFO_STREAM("m_pause = " << m_pause << "  :  m_YOLO_imageReceived = " << m_YOLO_imageReceived);
-    return;
-  }
+//   // waits for the image to be recieved if no image them returns or else continues
+//   if(m_pause) { 
+//     ROS_INFO_STREAM("InventoryClerk - currently paused, so abandoning callback");
+//     ROS_INFO_STREAM("m_pause = " << m_pause << "  :  m_YOLO_imageReceived = " << m_YOLO_imageReceived);
+//     return;
+//   }
 
-  ROS_INFO_STREAM("InventoryClerk - not paused so continuing with callback");
-  ROS_INFO_STREAM("m_pause = " << m_pause << "  :  m_YOLO_imageReceived = " << m_YOLO_imageReceived <<
-                  "m_currentlyProcessingObject = " << m_currentlyProcessingObject);
+//   ROS_INFO_STREAM("InventoryClerk - not paused so continuing with callback");
+//   ROS_INFO_STREAM("m_pause = " << m_pause << "  :  m_YOLO_imageReceived = " << m_YOLO_imageReceived <<
+//                   "m_currentlyProcessingObject = " << m_currentlyProcessingObject);
 
-  // ******************************************************************************************************************
+//   // ******************************************************************************************************************
 
-  //Iterate over all the items that have been identified
-  unsigned itemNum = 1; //apala: 1 for human only
-  // for(auto box : msg->bounding_boxes) {  commenting for loop
-//*************************************************
-  //Get out the object type and the bounding box information
-  auto box = msg->bounding_boxes ;//check
+//   //Iterate over all the items that have been identified
+//   unsigned itemNum = 1; //apala: 1 for human only
+//   // for(auto box : msg->bounding_boxes) {  commenting for loop
+// //*************************************************
+//   //Get out the object type and the bounding box information
+//   auto box = msg->bounding_boxes ;//check
   
-  std::string objectName = box.classname(); //checkkkkkkkkkkkk errorrrrrrrrrrrrrrrrrr
-  unsigned xmin = box.xmin;
-  unsigned xmax = box.xmax;
-  unsigned ymin = box.ymin;
-  unsigned ymax = box.ymax;
-  unsigned x_delta = xmax - xmin;
-  unsigned y_delta = ymax - ymin; 
-  ROS_INFO_STREAM("  " << objectName  << "  -  Probability " << std::setprecision(4) << (box.probability*100) << "%" ); // not needed 
-  ROS_INFO_STREAM("    " << "BB Min (x,y) = (" << xmin << ", " << ymin << ")" );
-  ROS_INFO_STREAM("    " << "BB Max (x,y) = (" << xmax << ", " << ymax << ")" );
-  // not needed ************
-  m_out << "*) Object type:  " << objectName << std::endl;
-  m_out << "   Probability  " << std::setprecision(4) << (box.probability*100.0) << "%" << std::endl;
-//*******************
+//   std::string objectName = box.Class; //checkkkkkkkkkkkk errorrrrrrrrrrrrrrrrrr
+//   unsigned xmin = box.xmin;
+//   unsigned xmax = box.xmax;
+//   unsigned ymin = box.ymin;
+//   unsigned ymax = box.ymax;
+//   unsigned x_delta = xmax - xmin;
+//   unsigned y_delta = ymax - ymin; 
+//   ROS_INFO_STREAM("  " << objectName  << "  -  Probability " << std::setprecision(4) << (box.probability*100) << "%" ); // not needed 
+//   ROS_INFO_STREAM("    " << "BB Min (x,y) = (" << xmin << ", " << ymin << ")" );
+//   ROS_INFO_STREAM("    " << "BB Max (x,y) = (" << xmax << ", " << ymax << ")" );
+//   // not needed ************
+//   m_out << "*) Object type:  " << objectName << std::endl;
+//   m_out << "   Probability  " << std::setprecision(4) << (box.probability*100.0) << "%" << std::endl;
+// //*******************
 
-  // Avhishek - Don't know why  this is being done what is the use of calculating objectAngleOffset
+//   // Avhishek - Don't know why  this is being done what is the use of calculating objectAngleOffset
 
-  //Calculate the angle offset of the picture relative to the center of the view port
-  unsigned x_centerBB = xmin + static_cast<unsigned>(x_delta/2);
-  unsigned y_centerBB = ymin + static_cast<unsigned>(y_delta/2);
-  int x_offset = static_cast<unsigned>(CAMERA_NUM_PIXELS_WIDTH/2) - x_centerBB;   //Can be negative! This orientation assumes CCW=+
-  double objectAngleOffset = CAMERA_HORIZONTAL_VIEW_ANGLE * (static_cast<double>(x_offset) / static_cast<double>(CAMERA_NUM_PIXELS_WIDTH));
+//   //Calculate the angle offset of the picture relative to the center of the view port
+//   unsigned x_centerBB = xmin + static_cast<unsigned>(x_delta/2);
+//   unsigned y_centerBB = ymin + static_cast<unsigned>(y_delta/2);
+//   int x_offset = static_cast<unsigned>(CAMERA_NUM_PIXELS_WIDTH/2) - x_centerBB;   //Can be negative! This orientation assumes CCW=+
+//   double objectAngleOffset = CAMERA_HORIZONTAL_VIEW_ANGLE * (static_cast<double>(x_offset) / static_cast<double>(CAMERA_NUM_PIXELS_WIDTH));
 
-  // Avhishek - m_out is being used for printing 
-  m_out << "   " << "Bounding Box (x,y):"
-        << "   Min = (" << xmin << ", " << ymin << ")"
-        << "   Max = (" << xmax << ", " << ymax << ")"
-        << "   Center = (" << x_centerBB << ", " << y_centerBB << ")" << std::endl;
-  m_out << "   In-image object angle offset = " << objectAngleOffset << " (rad)" << std::endl;
+//   // Avhishek - m_out is being used for printing 
+//   m_out << "   " << "Bounding Box (x,y):"
+//         << "   Min = (" << xmin << ", " << ymin << ")"
+//         << "   Max = (" << xmax << ", " << ymax << ")"
+//         << "   Center = (" << x_centerBB << ", " << y_centerBB << ")" << std::endl;
+//   m_out << "   In-image object angle offset = " << objectAngleOffset << " (rad)" << std::endl;
 
 
-  // Avhishek - 
-  //Convert the most recent ROS point cloud msg into a pcl::PointCloud
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>());
-  pcl::fromROSMsg(m_latestPointCloud, *pclCloud);
+//   // Avhishek - 
+//   //Convert the most recent ROS point cloud msg into a pcl::PointCloud
+//   pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>());
+//   pcl::fromROSMsg(m_latestPointCloud, *pclCloud);
 
-  //Assert a few things about our point cloud and RGB images. They should match sizes.
-  //If not, our bounding box values will not correspond
-  // Avhishek - 
-  ROS_ASSERT(m_latestRGBImage.height ==  pclCloud->height);
-  ROS_ASSERT(m_latestRGBImage.width  ==  pclCloud->width);
+//   //Assert a few things about our point cloud and RGB images. They should match sizes.
+//   //If not, our bounding box values will not correspond
+//   // Avhishek - 
+//   ROS_ASSERT(m_latestRGBImage.height ==  pclCloud->height);
+//   ROS_ASSERT(m_latestRGBImage.width  ==  pclCloud->width);
 
-  /*
-    Avhishek - Doing long term segmentation for only person
-  */
-  //Do long-term object classification 
-  // if((objectName == "sofa") || (objectName == "bench") || (objectName == "door"))
-  if(objectName == "person"){
+//   /*
+//     Avhishek - Doing long term segmentation for only person
+//   */
+//   //Do long-term object classification 
+//   // if((objectName == "sofa") || (objectName == "bench") || (objectName == "door"))
+//   if(objectName == "person"){
     
-    // m_longTermObjectDetectedAtThisPosition = true; // this will not be needed
+//     // m_longTermObjectDetectedAtThisPosition = true; // this will not be needed
   
-    //Save the RGB image of the object as a jpeg file and the point-cloud as a PCD
-    //First create the path based on the object name and its number in this series of bounding boxes
-    // (in the case that there is more than 1 object of the same type in the image, this will be unique)
-    std::stringstream ssObjName, ssObjPath;
-    ssObjName << "item_" << itemNum << "_obj_" << objectName;
-    ssObjPath << m_workingPath << timeStamp << "_" << ssObjName.str();
+//     //Save the RGB image of the object as a jpeg file and the point-cloud as a PCD
+//     //First create the path based on the object name and its number in this series of bounding boxes
+//     // (in the case that there is more than 1 object of the same type in the image, this will be unique)
+//     std::stringstream ssObjName, ssObjPath;
+//     ssObjName << "item_" << itemNum << "_obj_" << objectName;
+//     ssObjPath << m_workingPath << timeStamp << "_" << ssObjName.str();
   
-    //Call the crop and save function. Save only the object in this loop
-    UNL_Robotics::cropAndSaveImage(m_latestRGBImage, ssObjPath.str() + ".jpeg",
-                      xmin, ymin, x_delta, y_delta);
+//     //Call the crop and save function. Save only the object in this loop
+//     UNL_Robotics::cropAndSaveImage(m_latestRGBImage, ssObjPath.str() + ".jpeg",
+//                       xmin, ymin, x_delta, y_delta);
   
-    //Save the full room point cloud
-    std::stringstream ssPCD;
-    ssPCD << m_workingPath << timeStamp << "_fullPointCloud.pcd";
-    pcl::PCDWriter writer;
-    writer.write<pcl::PointXYZ>(ssPCD.str(), *pclCloud, false);
+//     //Save the full room point cloud
+//     std::stringstream ssPCD;
+//     ssPCD << m_workingPath << timeStamp << "_fullPointCloud.pcd";
+//     pcl::PCDWriter writer;
+//     writer.write<pcl::PointXYZ>(ssPCD.str(), *pclCloud, false);
 
-    BoundingBox boundingBox{xmin, xmax, ymin, ymax};
-    std::vector<UNL_Robotics::Point2D> hullPoints;
+//     BoundingBox boundingBox{xmin, xmax, ymin, ymax};
+//     std::vector<UNL_Robotics::Point2D> hullPoints;
 
-    /* Avhishek - think about how we can use these functions in the as we are not using any kind of classes just some functions
-          so creating any segmenter class is not needed .
+//     /* Avhishek - think about how we can use these functions in the as we are not using any kind of classes just some functions
+//           so creating any segmenter class is not needed .
 
-          Also, we don't need to do things different for specific objects, we are doing all this shenanigans for person and this node is active only for human
-    */
-    // we will be commenting this stuff out soon
-    // if(objectName == "door") {
+//           Also, we don't need to do things different for specific objects, we are doing all this shenanigans for person and this node is active only for human
+//     */
+//     // we will be commenting this stuff out soon
+//     // if(objectName == "door") {
 
       
-    //   //Note: In order for doors to be recognized, you  **MUST**  use a custom version
-    //   //      of Yolo that is trained for doors.  If this is not installed, door
-    //   //      recognition will not work.
+//     //   //Note: In order for doors to be recognized, you  **MUST**  use a custom version
+//     //   //      of Yolo that is trained for doors.  If this is not installed, door
+//     //   //      recognition will not work.
 
       
-    //   //DoorSegmentation segmenter(ssObjPath.str(), boundingBox, pclCloud);
-    //   //segmenter.doPlaneExtraction(normal, normalThreshold);
-    //   //segmenter.extractObjectInBoundingBox(cropPercentage);
-    //   //segmenter.removeOutliers(meanK, stddevMulThresh);
-    //   //segmenter.performEuclideanExtraction();
-    //   //hullPoints = segmenter.calcBoundingBoxInWorldCoords(m_currentPose.x,
-    //   //                                                    m_currentPose.y,
-    //   //                                                    m_currentPose.yaw);
-    // }
+//     //   //DoorSegmentation segmenter(ssObjPath.str(), boundingBox, pclCloud);
+//     //   //segmenter.doPlaneExtraction(normal, normalThreshold);
+//     //   //segmenter.extractObjectInBoundingBox(cropPercentage);
+//     //   //segmenter.removeOutliers(meanK, stddevMulThresh);
+//     //   //segmenter.performEuclideanExtraction();
+//     //   //hullPoints = segmenter.calcBoundingBoxInWorldCoords(m_currentPose.x,
+//     //   //                                                    m_currentPose.y,
+//     //   //                                                    m_currentPose.yaw);
+//     // }
 
 
 
-    // /*
-    //   Avhishek - Apala rewrite this as just functions call and we will be good to go, they have created objects here which we don't have and need
-    // */
+//     // /*
+//     //   Avhishek - Apala rewrite this as just functions call and we will be good to go, they have created objects here which we don't have and need
+//     // */
 
-    // else {
-    //   //Extract the object PCL knowing the bounding box
-    //   SegmentationPipeline segmenter(ssObjPath.str(), boundingBox, pclCloud);
-    //   segmenter.doPlaneExtraction(normal, normalThreshold);
-    //   segmenter.extractObjectInBoundingBox(cropPercentage);
-    //   segmenter.removeOutliers(meanK, stddevMulThresh);
-    //   segmenter.performEuclideanExtraction();
-    //   bool visualizeBB = false;
-    //   hullPoints = segmenter.calcBoundingBoxInWorldCoords(visualizeBB,
-    //                                                       m_currentPose.x,
-    //                                                       m_currentPose.y,
-    //                                                       m_currentPose.yaw);
-    // }
-    // LongTermObject lto {objectName, hullPoints};
-    // m_longTermObjects.push_back(lto);
-  }
+//     // else {
+//     //   //Extract the object PCL knowing the bounding box
+//     //   SegmentationPipeline segmenter(ssObjPath.str(), boundingBox, pclCloud);
+//     //   segmenter.doPlaneExtraction(normal, normalThreshold);
+//     //   segmenter.extractObjectInBoundingBox(cropPercentage);
+//     //   segmenter.removeOutliers(meanK, stddevMulThresh);
+//     //   segmenter.performEuclideanExtraction();
+//     //   bool visualizeBB = false;
+//     //   hullPoints = segmenter.calcBoundingBoxInWorldCoords(visualizeBB,
+//     //                                                       m_currentPose.x,
+//     //                                                       m_currentPose.y,
+//     //                                                       m_currentPose.yaw);
+//     // }
+//     // LongTermObject lto {objectName, hullPoints};
+//     // m_longTermObjects.push_back(lto);
+//   }
   
-  //Avhishek - Increment the item number not needed because only 1 item that is - person
-  // ++itemNum;    
-  // } commenting out the bracket for the for loop
+//   //Avhishek - Increment the item number not needed because only 1 item that is - person
+//   // ++itemNum;    
+//   // } commenting out the bracket for the for loop
  
-  //We're now finished processing this object, so set the processing flag to false
-  //This is checked in the main thread to ensure we're not moving on before this is done.
-  m_currentlyProcessingObject = false;
+//   //We're now finished processing this object, so set the processing flag to false
+//   //This is checked in the main thread to ensure we're not moving on before this is done.
+//   m_currentlyProcessingObject = false;
   
-  ROS_INFO_STREAM("InventoryClerk - finished processing object");
-  ROS_INFO_STREAM("m_pause = " << m_pause << "  :  m_YOLO_imageReceived = " << m_YOLO_imageReceived <<
-                  "m_currentlyProcessingObject = " << m_currentlyProcessingObject);
-}
+//   ROS_INFO_STREAM("InventoryClerk - finished processing object");
+//   ROS_INFO_STREAM("m_pause = " << m_pause << "  :  m_YOLO_imageReceived = " << m_YOLO_imageReceived <<
+//                   "m_currentlyProcessingObject = " << m_currentlyProcessingObject);
+ }
 
 
 void detectionImageCallback(const sensor_msgs::Image::ConstPtr& msg)
