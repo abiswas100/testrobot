@@ -20,8 +20,8 @@
 */
 
 
-#include "inventoryClerk.h"
-#include "segmentation_pipeline.h"
+// #include "inventoryClerk.h"
+// #include "segmentation_pipeline.h"
 #include "pclUtils.h"
 #include "gaussKernel.h"
 #include "convexHull.h"
@@ -56,7 +56,7 @@
 #include <sstream>
 #include <fstream>
 
-#include <testrobots/BoundingBox.h> // add a header file for the message or it will error 
+#include <testrobots/BoundingBoxes.h> // add a header file for the message or it will error 
 
 
 // added from Inventory Clerk header file
@@ -69,7 +69,7 @@ bool m_YOLO_imageReceived;   //Set to true whenever a Yolo image is received dur
 bool m_currentlyProcessingObject; //Set to true when we are processing a Yolo-recognized object
                                     //so that we allow the image processing to finish before going on.
 bool m_useDownSampling;      //Whether to use a downsampling filter on the cup
-Pose m_currentPose;          //Store current pose corresponding to the "latest" images/clouds below
+// Pose m_currentPose;          //Store current pose corresponding to the "latest" images/clouds below
 
 //The latest image/cloud messages
 sensor_msgs::Image m_latestRGBImage;
@@ -102,7 +102,7 @@ enum class Normal
 
 // Segmentation pipeline / object extraction parameters
 const double normalThreshold = 0.97;
-const UNL_Robotics::Normal normal = UNL_Robotics::Normal::eY;  // @Apala - can we remove the UNL_robotics thing - what is it for ??
+// normal = Normal::eY;  // @Apala - can we remove the UNL_robotics thing - what is it for ?? // error in this line -- need to call the enum class
 const double cropPercentage = 0.0;  // 0.00  to  0.20
 const double meanK = 50.0;          // 50.0  to  100.0
 const double stddevMulThresh = 0.5; // 0.5  to    1.0
@@ -127,8 +127,8 @@ unsigned MIN_CLUSTER_SIZE(10);
 pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud;
 
 //Convenience function to print the pipline step count formatted to 2 digits, padding from the front with a 0 if necessary
-std::string printStepCount() const;
-std::string printStepCount(unsigned addition) const;
+std::string printStepCount(); // const;
+std::string printStepCount(unsigned addition); //const;
 
 pcl::PCDWriter m_writer;
 unsigned m_pipelineStepCount;  //What step are we in the pipeline. Major steps by 10, minor by 1
@@ -218,7 +218,7 @@ void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // ch
   //Do long-term object classification
   if((objectName == "sofa") || (objectName == "bench") || (objectName == "door")) {
     
-    m_longTermObjectDetectedAtThisPosition = true;
+    m_longTermObjectDetectedAtThisPosition = true; // this will not be needed
   
     //Save the RGB image of the object as a jpeg file and the point-cloud as a PCD
     //First create the path based on the object name and its number in this series of bounding boxes
@@ -341,7 +341,7 @@ void detectionImageCallback(const sensor_msgs::Image::ConstPtr& msg)
 
 
 // this is added by Avhishek
-void pointcloudCallback(const sensor_msgs::Poincloud::ConstPtr& msg){
+void pointcloudCallback(const sensor_msgs::Poincloud2::ConstPtr& msg){
   // I will fill this function soon
 
 }
@@ -354,7 +354,7 @@ void pointcloudCallback(const sensor_msgs::Poincloud::ConstPtr& msg){
 //**********************************************************************************************************************************
 
 // this function will need m_pipelineStepCount find it and define it 
-std::string SegmentationPipeline::printStepCount() const
+std::string SegmentationPipeline::printStepCount() //const
 {
   std::stringstream ss;
   ss << std::setfill('0') << std::setw(2) << m_pipelineStepCount;
@@ -363,17 +363,17 @@ std::string SegmentationPipeline::printStepCount() const
 
 
 
-std::string printStepCount(unsigned addition) const
+std::string printStepCount(unsigned addition) //const
 {
   std::stringstream ss;
   ss << std::setfill('0') << std::setw(2) << (m_pipelineStepCount + addition);
   return ss.str();
 }
 
-void printMinMax()
-{
-  printMinMax(m_cloud);
-}
+// void printMinMax()
+// {
+//   printMinMax(m_cloud);
+// }
 /* Avhishek - Variable Description for PrintMinMax
   
   Inputs ----------------------------------------- 
@@ -710,11 +710,11 @@ int main(int argc, char **argv)
   spinner.start();
 
   // Do subscriptions here
-  m_objectDetectionSubscriber = nodeHandle.subscribe("/boundingbox", QUEUE, objDetectionCallback); //bbcord.msg
+  // m_objectDetectionSubscriber = nodeHandle.subscribe("/BBox", QUEUE, objDetectionCallback); //bbcord.msg
   m_detectionImageSubscriber = nodeHandle.subscribe("/camera/rgb/image_raw", QUEUE, detectionImageCallback); // H_detection_img
-  m_detectionPCLSubscriber = nodeHandle.subscribe("/camera/depth/points",QUEUE, ); 
+  // m_detectionPCLSubscriber = nodeHandle.subscribe("/camera/depth/points",QUEUE, ); 
   
-  ros::Subscriber sub = n.subscribe("chatter", 1000, chatterCallback);
+  
   
   // call functions 1 by 1
    
