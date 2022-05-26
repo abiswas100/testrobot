@@ -58,6 +58,7 @@
 
 #include <testrobots/BoundingBoxes.h> // add a header file for the message or it will error 
 
+ros::NodeHandle n;
 
 // added from Inventory Clerk header file
 
@@ -142,7 +143,13 @@ BoundingBox m_boundingBox;
 
 // *********************************************************************************************************************************
 void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // check this line for any change needed for custom C++ messages
-{
+{ 
+  /*
+    Avhishek - Below code is doing some printing but check from where m_Yolo_imagereceived is originating it is an important variable and we need to create it
+  */
+
+
+  // ******************************************************************************************************************
   ROS_INFO_STREAM("segmentation pipeline - object detected, in callback");
   ROS_INFO_STREAM("m_pause = " << m_pause << "  :  m_YOLO_imageReceived = " << m_YOLO_imageReceived <<
                   "m_currentlyProcessingObject = " << m_currentlyProcessingObject); 
@@ -164,7 +171,7 @@ void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // ch
   ROS_INFO_STREAM("m_pause = " << m_pause << "  :  m_YOLO_imageReceived = " << m_YOLO_imageReceived <<
                   "m_currentlyProcessingObject = " << m_currentlyProcessingObject);
 
-
+  // ******************************************************************************************************************
 
   //Iterate over all the items that have been identified
   unsigned itemNum = 0;
@@ -214,9 +221,12 @@ void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // ch
   ROS_ASSERT(m_latestRGBImage.height ==  pclCloud->height);
   ROS_ASSERT(m_latestRGBImage.width  ==  pclCloud->width);
 
-
-  //Do long-term object classification
-  if((objectName == "sofa") || (objectName == "bench") || (objectName == "door")) {
+  /*
+    Avhishek - Doing long term segmentation for only person
+  */
+  //Do long-term object classification 
+  // if((objectName == "sofa") || (objectName == "bench") || (objectName == "door"))
+  if((objectName == "person") {
     
     m_longTermObjectDetectedAtThisPosition = true; // this will not be needed
   
@@ -264,6 +274,11 @@ void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // ch
       //                                                    m_currentPose.yaw);
     }
 
+
+
+    /*
+      Avhishek - Apala rewrite this as just functions call and we will be good to go, they have created objects here which we don't have and need
+    */
 
     else {
       //Extract the object PCL knowing the bounding box
