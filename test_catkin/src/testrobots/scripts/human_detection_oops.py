@@ -18,11 +18,11 @@ import yolo as Yolo
 import numpy as np
 import os
 import math
-import pcl
+# import pcl
 import pcl_ros
-import ros_numpy
-import open3d as o3d
-from open3d_ros_helper import open3d_ros_helper as orh
+# import ros_numpy
+# import open3d as o3d
+# from open3d_ros_helper import open3d_ros_helper as orh
 
 
 from testrobots.msg import H_detection
@@ -55,7 +55,7 @@ class Detection(object):
         self.stop_msg =  rospy.Publisher("Stop_msg", stop, queue_size=1)
         self.vector_pub = rospy.Publisher("H_Vector", Image, queue_size=1)
         # self.point_pub = rospy.Publisher('/center_point', PointStamped, queue_size=1)
-        self.boundingboxes = rospy.Publisher("BBox", BoundBoxes, queue_size=1)
+        self.boundingbox = rospy.Publisher("BBox", Boundingbox, queue_size=1)
         
         #initialize csv file
         self.path = os.getcwd()
@@ -169,25 +169,25 @@ class Detection(object):
             ymax = righttop_corner[1]
             
             #complete the bbcord message now
-            
+            print(type(self.confidence))
             bbcordmsg.Class = object_label
-            bbcordmsg.probability = self.confidence
+            bbcordmsg.probability = float(self.confidence)
             bbcordmsg.xmin = xmin
             bbcordmsg.xmax = xmax
             bbcordmsg.ymin = ymin
             bbcordmsg.ymax = ymax
               
-            bbcordmsgs.bounding_boxes = bbcordmsg
+            # bbcordmsgs.bounding_boxes = bbcordmsg
             # self.transform_depth() # this is to call the transform function 
             msg.signal = 1 
-            
+            rospy.loginfo(bbcordmsg)
             
         rospy.logwarn(msg.signal)
         
         #publish the message and the image
         self.msg_pub.publish(msg)
         self.pub.publish(output)
-        self.boundingboxes.publish(bbcordmsgs)
+        self.boundingbox.publish(bbcordmsg)
         
         # checking if center_pixels is empty and then setting the past center
         if len(self.center_pixel) == 0: pass

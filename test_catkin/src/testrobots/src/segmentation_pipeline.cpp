@@ -173,6 +173,12 @@ std::string printStepCount() //const std::string SegmentationPipeline::printStep
   return ss.str();
 }
 
+std::string printStepCount(unsigned addition) //const
+{
+  std::stringstream ss;
+  ss << std::setfill('0') << std::setw(2) << (m_pipelineStepCount + addition);
+  return ss.str();
+}
 
 /*
   Avhishek - callback for object detection Boundary Box. We have to clean this function before we can do anything 
@@ -182,8 +188,9 @@ std::string printStepCount() //const std::string SegmentationPipeline::printStep
 
 
 // *********************************************************************************************************************************
-void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // check this line for any change needed for custom C++ messages
-{     ROS_INFO(msg->bounding_boxes);
+void objDetectionCallback(const testrobots::Boundingbox::ConstPtr& msg)  // check this line for any change needed for custom C++ messages
+{
+// {     ROS_INFO(msg->bounding_boxes);
 //   /*
 //     Avhishek - Below code is doing some printing but check from where m_Yolo_imagereceived is originating it is an important variable and we need to create it
 //   */
@@ -218,21 +225,21 @@ void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // ch
   // for(auto box : msg->bounding_boxes) {  commenting for loop
 //*************************************************
   //Get out the object type and the bounding box information
-  auto box = msg->BoundingBoxes ;//check
+  //auto box = msg->BoundingBoxes ;//check
   
-  std::string objectName = box.Class; //checkkkkkkkkkkkk errorrrrrrrrrrrrrrrrrr
-  unsigned xmin = box.xmin;
-  unsigned xmax = box.xmax;
-  unsigned ymin = box.ymin;
-  unsigned ymax = box.ymax;
+  std::string objectName = msg->Class.c_str(); //checkkkkkkkkkkkk errorrrrrrrrrrrrrrrrrr
+  unsigned xmin = msg->xmin;
+  unsigned xmax = msg->xmax;
+  unsigned ymin = msg->ymin;
+  unsigned ymax = msg->ymax;
   unsigned x_delta = xmax - xmin;
   unsigned y_delta = ymax - ymin; 
-  ROS_INFO_STREAM("  " << objectName  << "  -  Probability " << std::setprecision(4) << (box.probability*100) << "%" ); // not needed 
+  ROS_INFO_STREAM("  " << objectName  << "  -  Probability " << std::setprecision(4) << (msg->probability*100) << "%" ); // not needed 
   ROS_INFO_STREAM("    " << "BB Min (x,y) = (" << xmin << ", " << ymin << ")" );
   ROS_INFO_STREAM("    " << "BB Max (x,y) = (" << xmax << ", " << ymax << ")" );
   // not needed ************
   m_out << "*) Object type:  " << objectName << std::endl;
-  m_out << "   Probability  " << std::setprecision(4) << (box.probability*100.0) << "%" << std::endl;
+  m_out << "   Probability  " << std::setprecision(4) << (msg->probability*100.0) << "%" << std::endl;
 //*******************
 
 //   // Avhishek - Don't know why  this is being done what is the use of calculating objectAngleOffset
@@ -279,8 +286,8 @@ void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // ch
 //     ssObjPath << m_workingPath << timeStamp << "_" << ssObjName.str();
   
     //Call the crop and save function. Save only the object in this loop //UNL_Robotics::
-    UNL_Robotics::cropAndSaveImage(m_latestRGBImage, ssObjPath.str() + ".jpeg",
-                      xmin, ymin, x_delta, y_delta);
+    // UNL_Robotics::cropAndSaveImage(m_latestRGBImage, ssObjPath.str() + ".jpeg",
+    //                   xmin, ymin, x_delta, y_delta);
   
 //     //Save the full room point cloud
 //     std::stringstream ssPCD;
@@ -419,12 +426,7 @@ void pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 
 
 
-// std::string printStepCount(unsigned addition) //const
-// {
-//   std::stringstream ss;
-//   ss << std::setfill('0') << std::setw(2) << (m_pipelineStepCount + addition);
-//   return ss.str();
-// }
+
 
 
 void printMinMax(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
@@ -756,7 +758,7 @@ int main(int argc, char **argv)
   spinner.start();
 
   // Do subscriptions here
-  // m_objectDetectionSubscriber = nodeHandle.subscribe("/BBox", QUEUE, objDetectionCallback); //bbcord.msg
+  ros::Subscriber m_objectDetectionSubscriber = nodeHandle.subscribe("/BBox", QUEUE, objDetectionCallback); //bbcord.msg
   ros::Subscriber m_detectionImageSubscriber = nodeHandle.subscribe("/camera/rgb/image_raw", QUEUE, detectionImageCallback); // H_detection_img
   // m_detectionPCLSubscriber = nodeHandle.subscribe("/camera/depth/points",QUEUE, ); 
   
