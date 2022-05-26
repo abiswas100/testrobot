@@ -63,6 +63,7 @@
 
 #include <testrobots/BoundingBoxes.h> // add a header file for the message or it will error 
 #include <testrobots/BoundingBox.h>
+
 ros::NodeHandle n;
 
 // added from Inventory Clerk header file
@@ -212,27 +213,27 @@ void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // ch
 
 //   // ******************************************************************************************************************
 
-//   //Iterate over all the items that have been identified
-//   unsigned itemNum = 1; //apala: 1 for human only
-//   // for(auto box : msg->bounding_boxes) {  commenting for loop
-// //*************************************************
-//   //Get out the object type and the bounding box information
-//   auto box = msg->bounding_boxes ;//check
+  //Iterate over all the items that have been identified
+  unsigned itemNum = 1; //apala: 1 for human only
+  // for(auto box : msg->bounding_boxes) {  commenting for loop
+//*************************************************
+  //Get out the object type and the bounding box information
+  auto box = msg->BoundingBoxes ;//check
   
-//   std::string objectName = box.Class; //checkkkkkkkkkkkk errorrrrrrrrrrrrrrrrrr
-//   unsigned xmin = box.xmin;
-//   unsigned xmax = box.xmax;
-//   unsigned ymin = box.ymin;
-//   unsigned ymax = box.ymax;
-//   unsigned x_delta = xmax - xmin;
-//   unsigned y_delta = ymax - ymin; 
-//   ROS_INFO_STREAM("  " << objectName  << "  -  Probability " << std::setprecision(4) << (box.probability*100) << "%" ); // not needed 
-//   ROS_INFO_STREAM("    " << "BB Min (x,y) = (" << xmin << ", " << ymin << ")" );
-//   ROS_INFO_STREAM("    " << "BB Max (x,y) = (" << xmax << ", " << ymax << ")" );
-//   // not needed ************
-//   m_out << "*) Object type:  " << objectName << std::endl;
-//   m_out << "   Probability  " << std::setprecision(4) << (box.probability*100.0) << "%" << std::endl;
-// //*******************
+  std::string objectName = box.Class; //checkkkkkkkkkkkk errorrrrrrrrrrrrrrrrrr
+  unsigned xmin = box.xmin;
+  unsigned xmax = box.xmax;
+  unsigned ymin = box.ymin;
+  unsigned ymax = box.ymax;
+  unsigned x_delta = xmax - xmin;
+  unsigned y_delta = ymax - ymin; 
+  ROS_INFO_STREAM("  " << objectName  << "  -  Probability " << std::setprecision(4) << (box.probability*100) << "%" ); // not needed 
+  ROS_INFO_STREAM("    " << "BB Min (x,y) = (" << xmin << ", " << ymin << ")" );
+  ROS_INFO_STREAM("    " << "BB Max (x,y) = (" << xmax << ", " << ymax << ")" );
+  // not needed ************
+  m_out << "*) Object type:  " << objectName << std::endl;
+  m_out << "   Probability  " << std::setprecision(4) << (box.probability*100.0) << "%" << std::endl;
+//*******************
 
 //   // Avhishek - Don't know why  this is being done what is the use of calculating objectAngleOffset
 
@@ -277,9 +278,9 @@ void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // ch
 //     ssObjName << "item_" << itemNum << "_obj_" << objectName;
 //     ssObjPath << m_workingPath << timeStamp << "_" << ssObjName.str();
   
-//     //Call the crop and save function. Save only the object in this loop
-//     UNL_Robotics::cropAndSaveImage(m_latestRGBImage, ssObjPath.str() + ".jpeg",
-//                       xmin, ymin, x_delta, y_delta);
+    //Call the crop and save function. Save only the object in this loop //UNL_Robotics::
+    UNL_Robotics::cropAndSaveImage(m_latestRGBImage, ssObjPath.str() + ".jpeg",
+                      xmin, ymin, x_delta, y_delta);
   
 //     //Save the full room point cloud
 //     std::stringstream ssPCD;
