@@ -21,10 +21,11 @@
 
 
 // #include "inventoryClerk.h"
-// #include "segmentation_pipeline.h"
+#include "segmentation_pipeline.h"
 #include "pclUtils.h"
 #include "gaussKernel.h"
 #include "convexHull.h"
+#include "cvUtils.h"
 
 // ROS Topics
 #include <sensor_msgs/Image.h>
@@ -33,6 +34,7 @@
 
 // OpenCV
 #include <cv_bridge/cv_bridge.h>
+#include <opencv2/imgcodecs.hpp>
 // pcl
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
@@ -55,6 +57,9 @@
 // std
 #include <sstream>
 #include <fstream>
+#include <vector>
+#include <cstdio>
+#include <cstdlib>
 
 #include <testrobots/BoundingBoxes.h> // add a header file for the message or it will error 
 
@@ -75,6 +80,8 @@ bool m_useDownSampling;      //Whether to use a downsampling filter on the cup
 //The latest image/cloud messages
 sensor_msgs::Image m_latestRGBImage;
 sensor_msgs::PointCloud2 m_latestPointCloud;
+
+
 
 
 struct Pose 
@@ -98,6 +105,19 @@ enum class Normal
   eY,
   eZ
 };
+
+std::string timestamp()
+
+  {
+    std::time_t now_time_t = std::time(nullptr);
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&now_time_t), "%Y%m%d_%H%M%S");
+    return ss.str();
+  }
+std::vector<std::string> parseCL(int argc, char** argv)
+{
+  return std::vector<std::string>(argv+1, argv + argc);
+}
 
 // The following are added from Segmentation pipeline.cpp file 
 
@@ -126,6 +146,7 @@ double CLUSTER_TOLERANCE(0.10);
 unsigned MIN_CLUSTER_SIZE(10);
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud;
+pcl::PointCloud<pcl::PointXYZ>::Ptr m_postPlaneExtractedCloud;//added check
 
 //Convenience function to print the pipline step count formatted to 2 digits, padding from the front with a 0 if necessary
 std::string printStepCount(); // const;
@@ -135,11 +156,29 @@ pcl::PCDWriter m_writer;
 unsigned m_pipelineStepCount;  //What step are we in the pipeline. Major steps by 10, minor by 1
 std::string m_baseName;      //The base file name we will append and save to
 BoundingBox m_boundingBox;
+std::string timeStamp = timestamp();
+
+
+//apala: added declarations from segmentation_pipeline.h
+void doPlaneExtraction(Normal, double minThreshold);
+void doPlaneExtraction(Normal, double minThreshold, pcl::PointCloud<pcl::PointXYZ>::Ptr destination);
+void extractObjectInBoundingBox(double cropPercentage); 
+void extractObjectInBoundingBox(double cropPercentage, pcl::PointCloud<pcl::PointXYZ>::Ptr destination);
+
+std::string printStepCount() //const std::string SegmentationPipeline::printStepCount() //const
+{
+  std::stringstream ss;
+  ss << std::setfill('0') << std::setw(2) << m_pipelineStepCount;
+  return ss.str();
+}
+
 
 /*
   Avhishek - callback for object detection Boundary Box. We have to clean this function before we can do anything 
              it has a lot of UNL robotics related stuff that we don't need
 */ 
+
+
 
 // *********************************************************************************************************************************
 void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // check this line for any change needed for custom C++ messages
@@ -149,7 +188,7 @@ void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // ch
   */
 
 
-  // ******************************************************************************************************************
+  // ****************************************************to check if image is received**************************************************************
   ROS_INFO_STREAM("segmentation pipeline - object detected, in callback");
   ROS_INFO_STREAM("m_pause = " << m_pause << "  :  m_YOLO_imageReceived = " << m_YOLO_imageReceived <<
                   "m_currentlyProcessingObject = " << m_currentlyProcessingObject); 
@@ -174,12 +213,13 @@ void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // ch
   // ******************************************************************************************************************
 
   //Iterate over all the items that have been identified
-  unsigned itemNum = 0;
+  unsigned itemNum = 1; //apala: 1 for human only
   // for(auto box : msg->bounding_boxes) {  commenting for loop
 //*************************************************
   //Get out the object type and the bounding box information
+  auto box = msg->bounding_boxes ;//check
   
-  std::string objectName = box.Class;
+  std::string objectName = box.classname(); //checkkkkkkkkkkkk errorrrrrrrrrrrrrrrrrr
   unsigned xmin = box.xmin;
   unsigned xmax = box.xmax;
   unsigned ymin = box.ymin;
@@ -226,9 +266,9 @@ void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // ch
   */
   //Do long-term object classification 
   // if((objectName == "sofa") || (objectName == "bench") || (objectName == "door"))
-  if((objectName == "person") {
+  if(objectName == "person"){
     
-    m_longTermObjectDetectedAtThisPosition = true; // this will not be needed
+    // m_longTermObjectDetectedAtThisPosition = true; // this will not be needed
   
     //Save the RGB image of the object as a jpeg file and the point-cloud as a PCD
     //First create the path based on the object name and its number in this series of bounding boxes
@@ -238,7 +278,7 @@ void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // ch
     ssObjPath << m_workingPath << timeStamp << "_" << ssObjName.str();
   
     //Call the crop and save function. Save only the object in this loop
-    cropAndSaveImage(m_latestRGBImage, ssObjPath.str() + ".jpeg",
+    UNL_Robotics::cropAndSaveImage(m_latestRGBImage, ssObjPath.str() + ".jpeg",
                       xmin, ymin, x_delta, y_delta);
   
     //Save the full room point cloud
@@ -256,45 +296,45 @@ void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // ch
           Also, we don't need to do things different for specific objects, we are doing all this shenanigans for person and this node is active only for human
     */
     // we will be commenting this stuff out soon
-    if(objectName == "door") {
+    // if(objectName == "door") {
 
       
-      //Note: In order for doors to be recognized, you  **MUST**  use a custom version
-      //      of Yolo that is trained for doors.  If this is not installed, door
-      //      recognition will not work.
+    //   //Note: In order for doors to be recognized, you  **MUST**  use a custom version
+    //   //      of Yolo that is trained for doors.  If this is not installed, door
+    //   //      recognition will not work.
 
       
-      //DoorSegmentation segmenter(ssObjPath.str(), boundingBox, pclCloud);
-      //segmenter.doPlaneExtraction(normal, normalThreshold);
-      //segmenter.extractObjectInBoundingBox(cropPercentage);
-      //segmenter.removeOutliers(meanK, stddevMulThresh);
-      //segmenter.performEuclideanExtraction();
-      //hullPoints = segmenter.calcBoundingBoxInWorldCoords(m_currentPose.x,
-      //                                                    m_currentPose.y,
-      //                                                    m_currentPose.yaw);
-    }
+    //   //DoorSegmentation segmenter(ssObjPath.str(), boundingBox, pclCloud);
+    //   //segmenter.doPlaneExtraction(normal, normalThreshold);
+    //   //segmenter.extractObjectInBoundingBox(cropPercentage);
+    //   //segmenter.removeOutliers(meanK, stddevMulThresh);
+    //   //segmenter.performEuclideanExtraction();
+    //   //hullPoints = segmenter.calcBoundingBoxInWorldCoords(m_currentPose.x,
+    //   //                                                    m_currentPose.y,
+    //   //                                                    m_currentPose.yaw);
+    // }
 
 
 
-    /*
-      Avhishek - Apala rewrite this as just functions call and we will be good to go, they have created objects here which we don't have and need
-    */
+    // /*
+    //   Avhishek - Apala rewrite this as just functions call and we will be good to go, they have created objects here which we don't have and need
+    // */
 
-    else {
-      //Extract the object PCL knowing the bounding box
-      SegmentationPipeline segmenter(ssObjPath.str(), boundingBox, pclCloud);
-      segmenter.doPlaneExtraction(normal, normalThreshold);
-      segmenter.extractObjectInBoundingBox(cropPercentage);
-      segmenter.removeOutliers(meanK, stddevMulThresh);
-      segmenter.performEuclideanExtraction();
-      bool visualizeBB = false;
-      hullPoints = segmenter.calcBoundingBoxInWorldCoords(visualizeBB,
-                                                          m_currentPose.x,
-                                                          m_currentPose.y,
-                                                          m_currentPose.yaw);
-    }
-    LongTermObject lto {objectName, hullPoints};
-    m_longTermObjects.push_back(lto);
+    // else {
+    //   //Extract the object PCL knowing the bounding box
+    //   SegmentationPipeline segmenter(ssObjPath.str(), boundingBox, pclCloud);
+    //   segmenter.doPlaneExtraction(normal, normalThreshold);
+    //   segmenter.extractObjectInBoundingBox(cropPercentage);
+    //   segmenter.removeOutliers(meanK, stddevMulThresh);
+    //   segmenter.performEuclideanExtraction();
+    //   bool visualizeBB = false;
+    //   hullPoints = segmenter.calcBoundingBoxInWorldCoords(visualizeBB,
+    //                                                       m_currentPose.x,
+    //                                                       m_currentPose.y,
+    //                                                       m_currentPose.yaw);
+    // }
+    // LongTermObject lto {objectName, hullPoints};
+    // m_longTermObjects.push_back(lto);
   }
   
   //Avhishek - Increment the item number not needed because only 1 item that is - person
@@ -313,6 +353,7 @@ void objDetectionCallback(const testrobots::BoundingBoxes::ConstPtr& msg)  // ch
 
 void detectionImageCallback(const sensor_msgs::Image::ConstPtr& msg)
 {
+  //apala: to check if object is detected *************************************************************************************************
   ROS_INFO_STREAM("InventoryClerk - detection image callback called");
   ROS_INFO_STREAM("m_pause = " << m_pause << "  :  m_YOLO_imageReceived = " << m_YOLO_imageReceived <<
                   "m_currentlyProcessingObject = " << m_currentlyProcessingObject);
@@ -321,6 +362,7 @@ void detectionImageCallback(const sensor_msgs::Image::ConstPtr& msg)
     ROS_INFO_STREAM("InventoryClerk - currently paused. Returning");
     return;
   }
+  //******************************************************************************************************************************************
 
   //Save off the full image for this observation
   std::string timeStamp = timestamp();
@@ -356,10 +398,14 @@ void detectionImageCallback(const sensor_msgs::Image::ConstPtr& msg)
 
 
 // this is added by Avhishek
-void pointcloudCallback(const sensor_msgs::Poincloud2::ConstPtr& msg){
+void pointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
+
+  
   // I will fill this function soon
 
 }
+
+
 
 //**********************************************************************************************************************************
 /*
@@ -369,35 +415,17 @@ void pointcloudCallback(const sensor_msgs::Poincloud2::ConstPtr& msg){
 //**********************************************************************************************************************************
 
 // this function will need m_pipelineStepCount find it and define it 
-std::string SegmentationPipeline::printStepCount() //const
-{
-  std::stringstream ss;
-  ss << std::setfill('0') << std::setw(2) << m_pipelineStepCount;
-  return ss.str();
-}
 
 
 
-std::string printStepCount(unsigned addition) //const
-{
-  std::stringstream ss;
-  ss << std::setfill('0') << std::setw(2) << (m_pipelineStepCount + addition);
-  return ss.str();
-}
-
-// void printMinMax()
+// std::string printStepCount(unsigned addition) //const
 // {
-//   printMinMax(m_cloud);
+//   std::stringstream ss;
+//   ss << std::setfill('0') << std::setw(2) << (m_pipelineStepCount + addition);
+//   return ss.str();
 // }
-/* Avhishek - Variable Description for PrintMinMax
-  
-  Inputs ----------------------------------------- 
-  cloud - takes in the pointcloud 
 
-  Output -----------------------------------------
-  Prints the min, max x,y,z points.
 
-*/
 void printMinMax(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
 {
   pcl::PointXYZ minPoint;
@@ -712,8 +740,10 @@ void extractObjectInBoundingBox(double cropPercentage, pcl::PointCloud<pcl::Poin
 
 int main(int argc, char **argv)
 {
+  
   ros::init(argc, argv, "segmentationPCL");
   ROS_INFO("Initializiing Segmentation of PCL");
+  ros::NodeHandle nodeHandle;
 
   // why is this line used -
   std::vector<std::string> args = parseCL(argc, argv);
@@ -726,7 +756,7 @@ int main(int argc, char **argv)
 
   // Do subscriptions here
   // m_objectDetectionSubscriber = nodeHandle.subscribe("/BBox", QUEUE, objDetectionCallback); //bbcord.msg
-  m_detectionImageSubscriber = nodeHandle.subscribe("/camera/rgb/image_raw", QUEUE, detectionImageCallback); // H_detection_img
+  ros::Subscriber m_detectionImageSubscriber = nodeHandle.subscribe("/camera/rgb/image_raw", QUEUE, detectionImageCallback); // H_detection_img
   // m_detectionPCLSubscriber = nodeHandle.subscribe("/camera/depth/points",QUEUE, ); 
   
   
