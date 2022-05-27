@@ -25,7 +25,9 @@
 #include "pclUtils.h"
 #include "gaussKernel.h"
 #include "convexHull.h"
-#include "cvUtils.h"
+// #include "cvUtils.h"
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp> 
 
 // ROS Topics
 #include <sensor_msgs/Image.h>
@@ -105,7 +107,7 @@ enum class Normal
   eY,
   eZ
 };
-
+const Normal normal = Normal::eY;
 std::string timestamp()
 
   {
@@ -165,6 +167,17 @@ void doPlaneExtraction(Normal, double minThreshold, pcl::PointCloud<pcl::PointXY
 void extractObjectInBoundingBox(double cropPercentage); 
 void extractObjectInBoundingBox(double cropPercentage, pcl::PointCloud<pcl::PointXYZ>::Ptr destination);
 
+UNL_Robotics::SegmentationPipeline::SegmentationPipeline(const std::string& baseName,
+                                                         const BoundingBox& yoloIdentifiedBoundingBox,
+                                                         pcl::PointCloud <pcl::PointXYZ>::Ptr pointCloud)
+  : m_pipelineStepCount(0),
+    m_baseName(baseName),
+    m_boundingBox(yoloIdentifiedBoundingBox),
+    m_cloud(pointCloud),
+    m_postPlaneExtractedCloud(new pcl::PointCloud<pcl::PointXYZ>)
+{
+}
+
 std::string printStepCount() //const std::string SegmentationPipeline::printStepCount() //const
 {
   std::stringstream ss;
@@ -192,13 +205,14 @@ void cropAndSaveImage(const sensor_msgs::Image& msg,
 {
   cv_bridge::CvImagePtr cv_ptr;
   try
-  {
+  { 
     //Covert the image from a ROS image message to a CV image
     cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
     
     //Crop out the sub image, given the coordinates
     cv::Rect2d cropRect(xmin, ymin, x_delta, y_delta);
     cv::Mat croppedImage = cv_ptr->image(cropRect);
+    // imshow("blah",croppedImage);
     imwrite(croppedImagePath, croppedImage);
   }
   catch (cv_bridge::Exception& e)
@@ -206,6 +220,7 @@ void cropAndSaveImage(const sensor_msgs::Image& msg,
     ROS_ERROR_STREAM("cv_bridge exception. What = " << e.what());
     return;
   }
+
 }
 
 
@@ -263,8 +278,8 @@ void objDetectionCallback(const testrobots::Boundingbox::ConstPtr& msg)  // chec
 
 //   // Avhishek - 
 //   //Convert the most recent ROS point cloud msg into a pcl::PointCloud
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>());
-  pcl::fromROSMsg(m_latestPointCloud, *pclCloud);
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>());
+  // pcl::fromROSMsg(m_latestPointCloud, *pclCloud);
 
 
 
@@ -278,10 +293,11 @@ void objDetectionCallback(const testrobots::Boundingbox::ConstPtr& msg)  // chec
   
   ros::Duration maxWait(10.0); //Wait up to this amount of time for images/point cloud
    
-
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>());
+  pcl::fromROSMsg(m_latestPointCloud, *pclCloud);
   //raw image 
   boost::shared_ptr<sensor_msgs::Image const> rawImagePtr = ros::topic::waitForMessage<sensor_msgs::Image>("/camera/rgb/image_raw", maxWait);
-  if(rawImagePtr == NULL){
+  if(rawImagePtr == NULL)
     ROS_ERROR_STREAM("No raw image messages received on " << m_imageTopic);
     
 
@@ -290,11 +306,11 @@ void objDetectionCallback(const testrobots::Boundingbox::ConstPtr& msg)  // chec
 
   //pointcloud image
   boost::shared_ptr<sensor_msgs::PointCloud2 const> pointCloudPtr = ros::topic::waitForMessage<sensor_msgs::PointCloud2>("/camera/depth/points", maxWait);
-  if(pointCloudPtr == NULL){   
+  if(pointCloudPtr == NULL){  
 
     ROS_ERROR_STREAM("No point clound messages received on " << "/camera/depth/points");}
 
-    
+  else
     m_latestPointCloud = *pointCloudPtr;
        
 
@@ -310,10 +326,10 @@ void objDetectionCallback(const testrobots::Boundingbox::ConstPtr& msg)  // chec
   // Avhishek - 
   
   ROS_INFO_STREAM("    " << "Latest Image Height and Width = (" << m_latestRGBImage.height << ", " << m_latestRGBImage.width << ")" );
-  ROS_INFO_STREAM("    " << "Latest PCL Height and Width = (" << pclCloud->height << ", " << pclCloud->width << ")" );
+  ROS_INFO_STREAM("    " << "Latest PCL Height and Width = (" << m_latestPointCloud.height << ", " << m_latestPointCloud.width << ")" );
   
-  ROS_ASSERT(m_latestRGBImage.height ==  pclCloud->height);
-  ROS_ASSERT(m_latestRGBImage.width  ==  pclCloud->width);
+  ROS_ASSERT(m_latestRGBImage.height ==  m_latestPointCloud.height); //pclCloud
+  ROS_ASSERT(m_latestRGBImage.width  ==  m_latestPointCloud.width);
   
 
   /*
@@ -323,43 +339,38 @@ void objDetectionCallback(const testrobots::Boundingbox::ConstPtr& msg)  // chec
   //Do long-term object classification for only person class 
   if(objectName == "person"){
     ROS_INFO_STREAM("BLAH");  
-    //Save the RGB image of the object as a jpeg file and the point-cloud as a PCD
-    //First create the path based on the object name and its number in this series of bounding boxes
-    // (in the case that there is more than 1 object of the same type in the image, this will be unique)
+    // //Save the RGB image of the object as a jpeg file and the point-cloud as a PCD
+    // //First create the path based on the object name and its number in this series of bounding boxes
+    // // (in the case that there is more than 1 object of the same type in the image, this will be unique)
     std::stringstream ssObjName, ssObjPath;
     ssObjName << "item_" << itemNum << "_obj_" << objectName;
-    //ssObjPath << m_workingPath << timeStamp << "_" << ssObjName.str();// setting our own working path
-    ssObjPath << "home/apramani/testrobot/test_catkin/src/testrobots/src" << timeStamp << "_" << ssObjName.str();  
-    // Call the crop and save function. Save only the object in this loop //UNL_Robotics::
     
-    cropAndSaveImage(m_latestRGBImage, ssObjPath.str() + ".jpeg",
-                      xmin, ymin, x_delta, y_delta);
+    // //ssObjPath << m_workingPath << timeStamp << "_" << ssObjName.str();// setting our own working path
+  
+    // // Call the crop and save function. Save only the object in this loop //UNL_Robotics::
+    ssObjPath << ssObjName.str();
+    // cropAndSaveImage(m_latestRGBImage, ssObjPath.str() + ".jpeg", 
+    //                   xmin, ymin, x_delta, y_delta);
+   
   
     //Save the full room point cloud
-    std::stringstream ssPCD;
-     //ssPCD << m_workingPath << timeStamp << "_fullPointCloud.pcd"; // we are adding our own m_workingpath
-    ssPCD << "home/apramani/testrobot/test_catkin/src/testrobots/src" << timeStamp << "_fullPointCloud.pcd";
-    pcl::PCDWriter writer;
-    writer.write<pcl::PointXYZ>(ssPCD.str(), *pclCloud, false);
+    // std::stringstream ssPCD;
+    //  //ssPCD << m_workingPath << timeStamp << "_fullPointCloud.pcd"; // we are adding our own m_workingpath
+    // // ssPCD << "home/apramani/testrobot/test_catkin/src/testrobots/src" << timeStamp << "_fullPointCloud.pcd";
+    // ssPCD << "fullPointCloud.pcd";
+    // pcl::PCDWriter writer;
+    // writer.write<pcl::PointXYZ>(ssPCD.str(), *pclCloud, false);
 
     BoundingBox boundingBox{xmin, xmax, ymin, ymax};
     // std::vector<UNL_Robotics::Point2D> hullPoints;  
-  
-    /* Avhishek - think about how we can use these functions in the as we are not using any kind of classes just some functions
-          so creating any segmenter class is not needed .
 
-          Also, we don't need to do things different for specific objects, we are doing all this shenanigans for person and this node is active only for human
-    */
-
-
-    /*
-      Avhishek - Apala rewrite this as just functions call and we will be good to go, they have created objects here which we don't have and need
-    */
-
-    //Extract the object PCL knowing the bounding box and get it converter to map
+    // Extract the object PCL knowing the bounding box and get it converter to map
     
-    //   SegmentationPipeline segmenter(ssObjPath.str(), boundingBox, pclCloud);
-    //   segmenter.doPlaneExtraction(normal, normalThreshold);
+      // UNL_Robotics::SegmentationPipeline segmenter(ssObjPath.str(), boundingBox, *pclCloud);
+      // segmenter.doPlaneExtraction(normal, normalThreshold);
+      doPlaneExtraction(normal, normalThreshold,pclCloud);
+    // below this will be needed for mapping
+    
     //   segmenter.extractObjectInBoundingBox(cropPercentage);
     //   segmenter.removeOutliers(meanK, stddevMulThresh);
     //   segmenter.performEuclideanExtraction();
@@ -372,18 +383,226 @@ void objDetectionCallback(const testrobots::Boundingbox::ConstPtr& msg)  // chec
     // LongTermObject lto {objectName, hullPoints};
     // m_longTermObjects.push_back(lto);
 
-  
-  //Avhishek - Increment the item number not needed because only 1 item that is - person
-  ++itemNum;    
-
  
   //We're now finished processing this object, so set the processing flag to false
   //This is checked in the main thread to ensure we're not moving on before this is done.
   m_currentlyProcessingObject = false;
-  }  
+    
   ROS_INFO_STREAM("finished processing object");
-
+  }
  }
+
+
+
+/* Avhishek - Variable Description for doPlaneExtraction
+  
+  Inputs ----------------------------------------- 
+  normal - given 
+
+  minThreshold- given 
+
+  destination - *pcloud recieved in Objdetection
+
+  final_planeless_cloud - final cloud as the name suggests
+  cloud_for_plane_extraction - as the name suggests
+  cloud_plane - defined in function 
+  cloud_f - defined in function
+  coefficients - model coefficients in PCL segmentation
+  inliers - pcl library object 
+
+  PLANE_EXTRACTION_CONTINUE_THRESHOLD - defined as a global variable
+  planeCount - defined in function
+
+
+
+  Output -----------------------------------------
+  Saves the cropped pointcloud in PCD. 
+
+*/
+
+void doPlaneExtraction(Normal normal, double minThreshold, pcl::PointCloud<pcl::PointXYZ>::Ptr destination)
+{
+  // Plane extraction
+  //
+    //ros::Duration maxWait(10.0);
+    //pcl::fromROSMsg(m_latestPointCloud, *destination);
+  //m_cloud = m_latestPointCloud;//ros::topic::waitForMessage<sensor_msgs::PointCloud2>("/camera/depth/points", maxWait);
+  //pcl::PointCloud <pcl::PointXYZ>::Ptr
+  ROS_INFO_STREAM("getting here 1");
+  pcl::PointCloud<pcl::PointXYZ>::Ptr final_planeless_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  copyPointCloud(*m_cloud, *final_planeless_cloud);
+  ROS_INFO_STREAM("getting here 2");
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_for_plane_extraction(new pcl::PointCloud<pcl::PointXYZ>);
+  copyPointCloud(*m_cloud, *cloud_for_plane_extraction);
+  ROS_INFO_STREAM("getting here 3");
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_plane(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_f(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
+  pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
+  
+  // Create the segmentation object
+  pcl::SACSegmentation<pcl::PointXYZ> seg;
+  
+  // Optional
+  seg.setOptimizeCoefficients(true);
+  // Mandatory
+  seg.setModelType(pcl::SACMODEL_PLANE);
+  seg.setMethodType(pcl::SAC_RANSAC);
+  seg.setMaxIterations(1000);
+  seg.setDistanceThreshold(0.01);
+
+  // Create the extracting object (extraction based on indices)
+  pcl::ExtractIndices<pcl::PointXYZ> extract;
+    
+  //Keep the removed points as NaN values to maintain the structure of the cloud
+  extract.setKeepOrganized(true);
+    
+  unsigned planeCount =0;
+  const unsigned numOriginalPoints = cloud_for_plane_extraction->size();   //How many points we originally started with
+  unsigned numPointsExtracted =0;   //Keep track of how many points have so far been extracted
+
+  //Do until we extract a certain percentage of the points -or-
+  // until the maximum number of planes is met, which is checked at the end of this loop
+  while(numPointsExtracted < numOriginalPoints * (1.0 - PLANE_EXTRACTION_CONTINUE_THRESHOLD)) {
+      
+    // Segment the largest planar component from the remaining cloud
+    seg.setInputCloud(cloud_for_plane_extraction);
+    seg.segment(*inliers, *coefficients);
+    if(inliers->indices.size () == 0) {
+      std::cerr << "Could not estimate a planar model for the given dataset." << std::endl;
+      break;
+    }
+    
+    //Accumulate the number of points extracted for this plane
+    numPointsExtracted += inliers->indices.size();
+      
+    // Extract the inliers into a cloud that contains exactly (and only) the plane
+    extract.setInputCloud(cloud_for_plane_extraction);
+    extract.setIndices(inliers);
+    extract.setNegative(false);
+    extract.filter(*cloud_plane);
+
+    std::cout << "   - Plane #" << planeCount << std::endl;
+    std::cout << "     PointCloud representing the planar component: "
+              << inliers->indices.size() << " data points." << std::endl;
+
+    std::stringstream ss;
+    ss << m_baseName << "_step" << printStepCount() << "_plane_" << planeCount << ".pcd";
+    m_writer.write<pcl::PointXYZ>(ss.str(), *cloud_plane, false);
+
+    ////////////
+    //Calculate the plane normals - used to determine if the plane is a floor plane
+
+    // Create the normal estimation class, and pass the input dataset to it
+    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
+
+    //Calculate the least-squares plane value
+    float nx, ny, nz, curvature;
+    ne.computePointNormal(*cloud_for_plane_extraction, inliers->indices, nx, ny, nz, curvature);
+
+    //Now calc each normal
+    ne.setInputCloud(cloud_plane);
+
+    // Create an empty kdtree representation, and pass it to the normal estimation object.
+    // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ> ());
+    ne.setSearchMethod (tree);
+    
+    // Output datasets
+    pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(new pcl::PointCloud<pcl::Normal>);
+
+    // Use all neighbors in a sphere of radius 3cm
+    ne.setRadiusSearch(0.03);
+    
+    // Compute the features
+    ne.compute(*cloud_normals);
+    std::cout << "     Least-squares plane fit: (" << nx << ", " << ny << ", " << nz << ")"
+              << ", curvature = " << curvature << std::endl;
+
+    bool minThresholdMet = false;
+    if((normal == Normal::eX) && (fabs(nx) > minThreshold))
+      minThresholdMet = true;
+    if((normal == Normal::eY) && (fabs(ny) > minThreshold))
+      minThresholdMet = true;
+    if((normal == Normal::eZ) && (fabs(nz) > minThreshold))
+      minThresholdMet = true;
+
+    if(minThresholdMet)
+    {
+      std::cout << endl;
+      std::cout << "     ==> Minimum threshold of " << minThreshold << " met. Extracting this plane (#" << planeCount << "). <==" << std::endl;
+      std::cout << endl;
+      
+      pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_minus_plane(new pcl::PointCloud<pcl::PointXYZ>);
+      
+      // Create another filtering object 
+      pcl::ExtractIndices<pcl::PointXYZ> normalPlaneExtractor;
+      normalPlaneExtractor.setInputCloud(final_planeless_cloud);
+      normalPlaneExtractor.setIndices(inliers);
+      normalPlaneExtractor.setNegative(true);
+    
+      //Keep the removed points as NaN values to maintain the structure of the cloud
+      normalPlaneExtractor.setKeepOrganized(true);
+
+      normalPlaneExtractor.filter(*cloud_minus_plane);
+
+      std::cout << "final_planeless_cloud" << std::endl;
+      std::cout << "width = " << final_planeless_cloud->width << std::endl;
+      std::cout << "height = " << final_planeless_cloud->height << std::endl;
+
+      std::cout << "cloud_minus_plane" << std::endl;
+      std::cout << "width = " << cloud_minus_plane->width << std::endl;
+      std::cout << "height = " << cloud_minus_plane->height << std::endl;
+
+      //If this file already exists (i.e., part of the floor was removed in an earlier pass),
+      // it will be over written here, and so just the updated, most recent version (with
+      // the least amount of floor plane) will remain.
+      std::stringstream ss;
+      ss << m_baseName << "_step" << printStepCount(1) << "_floorless_cloud.pcd";
+      m_writer.write<pcl::PointXYZ>(ss.str(), *cloud_minus_plane, false);
+      
+      //Make this is our new cloud
+      copyPointCloud(*cloud_minus_plane, *final_planeless_cloud);
+    }
+
+    //Report the number of points extracted after this plane extraction
+    std::cout << "     " << numPointsExtracted << " points extracted so far (of a total "
+              << numOriginalPoints << ")." << std::endl << std::endl;
+    
+    // Remove the plane from our working cloud
+    extract.setNegative(true);
+    extract.filter(*cloud_f);
+    cloud_for_plane_extraction.swap(cloud_f);
+
+    //Increment the current plane count
+    ++planeCount;
+    
+    //Put in a max number of planes so if something goes wrong, we don't write a billion and 1 files
+    if(planeCount >= MAX_PLANE_COUNT) {
+      std::cout << std::endl << "Maximum threshold reached: plane count = " << MAX_PLANE_COUNT << ". Forcing end of plane extraction." << std::endl;
+      break;
+    }
+  }
+  
+  std::stringstream ss;
+  ss << m_baseName << "_step" << printStepCount(2) << "_postPlaneExtraction.pcd";
+  m_writer.write<pcl::PointXYZ>(ss.str(), *final_planeless_cloud, false);
+
+  //std::cout << "Min-max after extracting plane:" << std::endl;
+  //printMinMax(final_planeless_cloud);
+  
+  //Copy this into the destination cloud
+  copyPointCloud(*final_planeless_cloud, *destination);
+
+  //Also, cache a copy of teh post-extracted plane, so we can restart from this point
+  // again in the future
+  copyPointCloud(*final_planeless_cloud, *m_postPlaneExtractedCloud);
+  std::cout << "     " << "Post-plane extraction cloud cached for possible re-use again" << std::endl;
+  
+  m_pipelineStepCount += 10;
+
+}
+
 
 
 int main(int argc, char **argv)

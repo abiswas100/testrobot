@@ -102,7 +102,7 @@ namespace {
     std::stringstream ss;
     ss << std::put_time(std::localtime(&now_time_t), "%Y%m%d_%H%M%S");
     return ss.str();
-  }
+  }f
   // Avhishek - this is needed
   UNL_Robotics::InventoryClerk::Pose getCurrentPose()
   {
