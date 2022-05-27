@@ -82,9 +82,14 @@ std::string printStepCount(unsigned addition) //const
   return ss.str();
 }
 
+// function declarations
 void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg);
 void extractObjectInBoundingBox(double cropPercentage, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
 void removeNaNs(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::PointXYZ>::Ptr dest);
+void removeOutliers(double meanK, double stddevMulThresh);
+void performEuclideanExtraction();
+
+void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud); // this will be the function that does plane extract and recieves a pointer
 
 /* Avhishek - Variable Description for cloud_cb
   
@@ -107,18 +112,13 @@ void removeNaNs(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl:
   Saves the cropped pointcloud in PCD. 
 
 */
+void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud){
+  ROS_INFO_STREAM("getting here plane extract");
+  pcl::PointCloud<pcl::PointXYZ>::Ptr final_planeless_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  copyPointCloud(*m_cloud, *final_planeless_cloud);
+  ROS_INFO_STREAM("getting here 2");
 
-
-void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
-{ 
-    ROS_INFO_STREAM("getting here 1");
-    pcl::PCLPointCloud2 pcl_pc2;
-    pcl_conversions::toPCL(*cloud_msg,pcl_pc2);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr final_planeless_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::fromPCLPointCloud2(pcl_pc2,*m_cloud);
-
-    copyPointCloud(*m_cloud, *final_planeless_cloud);
+        copyPointCloud(*m_cloud, *final_planeless_cloud);
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_for_plane_extraction(new pcl::PointCloud<pcl::PointXYZ>);
     copyPointCloud(*m_cloud, *cloud_for_plane_extraction);
@@ -296,13 +296,43 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
   
   m_pipelineStepCount += 10;
 
-  
+}
+
+void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
+{ 
+    ROS_INFO_STREAM("getting here 1");
+    pcl::PCLPointCloud2 pcl_pc2;
+    pcl_conversions::toPCL(*cloud_msg,pcl_pc2);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr final_planeless_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::fromPCLPointCloud2(pcl_pc2,*m_cloud);
+
+    planeextract(m_cloud);
+
+    /*
+      Avhishek - all this below code is now in plane extract, run the code and remove things from below, this is our driver code 
+
+      1. do planeextract(m_cloud)
+      2. extract BoundingBox
+      3. remove outliers
+      4. euclidean distance
+      5.
+    */
+
+
+//   // Call the other functions here
+//   extractObjectInBoundingBox(10, m_postPlaneExtractedCloud);
+
+//   removeOutliers(double meanK, double stddevMulThresh);
+
+//   performEuclideanExtraction();
+
 }
 
 // call this function at the end of cloud_cb
 void extractObjectInBoundingBox(double cropPercentage, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
 {   
-
+    std::cout<< cropPercentage << std::endl;
 //   // Extract the object PCL knowing the bounding box values, possibly with an additional cropping border (reduced by the crop percentage)
 //   unsigned x_delta = m_boundingBox.xmax - m_boundingBox.xmin;
 //   unsigned y_delta = m_boundingBox.ymax - m_boundingBox.ymin;
@@ -492,4 +522,3 @@ int main(int argc, char **argv)
 
   return 0;
 }
-
