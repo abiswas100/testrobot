@@ -157,6 +157,7 @@ std::string printStepCount(); // const;
 std::string printStepCount(unsigned addition); //const;
 
 pcl::PCDWriter m_writer;
+
 unsigned m_pipelineStepCount;  //What step are we in the pipeline. Major steps by 10, minor by 1
 std::string m_baseName;      //The base file name we will append and save to
 BoundingBox m_boundingBox;
@@ -169,36 +170,7 @@ void doPlaneExtraction(Normal, double minThreshold, pcl::PointCloud<pcl::PointXY
 void extractObjectInBoundingBox(double cropPercentage); 
 void extractObjectInBoundingBox(double cropPercentage, pcl::PointCloud<pcl::PointXYZ>::Ptr destination);
 
-UNL_Robotics::SegmentationPipeline::SegmentationPipeline(const std::string& baseName,
-                                                         const BoundingBox& yoloIdentifiedBoundingBox,
-                                                         pcl::PointCloud <pcl::PointXYZ>::Ptr pointCloud)
-  : m_pipelineStepCount(0),
-    m_baseName(baseName),
-    m_boundingBox(yoloIdentifiedBoundingBox),
-    m_cloud(pointCloud),
-    m_postPlaneExtractedCloud(new pcl::PointCloud<pcl::PointXYZ>)
-{
-}
-//*************
-UNL_Robotics::SegmentationPipeline::SegmentationPipeline(pcl::PointCloud <pcl::PointXYZ>::Ptr pointCloud)
-  : m_pipelineStepCount(0),
-    m_cloud(pointCloud),
-    m_postPlaneExtractedCloud(new pcl::PointCloud<pcl::PointXYZ>)
-{
-}
-UNL_Robotics::SegmentationPipeline::SegmentationPipeline(const std::string& baseName,
-                                                         const BoundingBox& yoloIdentifiedBoundingBox,
-                                                         std::string pcdFilepath)
-  : m_pipelineStepCount(0),
-    m_baseName(baseName),
-    m_boundingBox(yoloIdentifiedBoundingBox),
-    m_cloud(new pcl::PointCloud<pcl::PointXYZ>),
-    m_postPlaneExtractedCloud(new pcl::PointCloud<pcl::PointXYZ>)
-{
-  //Read in the pointcloud from file
-  pcl::PCDReader reader;
-  reader.read(pcdFilepath, *m_cloud);
-}
+
 //**************
 std::string printStepCount() //const std::string SegmentationPipeline::printStepCount() //const
 {

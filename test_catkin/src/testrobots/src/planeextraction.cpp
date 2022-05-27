@@ -53,7 +53,11 @@ const unsigned MAX_PLANE_COUNT(8);
 const double PLANE_EXTRACTION_CONTINUE_THRESHOLD(0.30); // While 30% of the original cloud is still there
 unsigned m_pipelineStepCount =10; 
 
+pcl::PointCloud<pcl::PointXYZ>::Ptr m_postPlaneExtractedCloud(new pcl::PointCloud<pcl::PointXYZ>); // this is the pointcloud that saves the final planeless cloud
+
 const double minThreshold = 0.97; 
+
+
 std::string printStepCount() //const std::string SegmentationPipeline::printStepCount() //const
 {
   std::stringstream ss;
@@ -244,8 +248,23 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
       break;
     }
   }
+    //std::cout << "Min-max after extracting plane:" << std::endl;
+  //printMinMax(final_planeless_cloud);
+  
+  //Copy this into the destination cloud
+//   copyPointCloud(*final_planeless_cloud, *destination);
+
+  //Also, cache a copy of teh post-extracted plane, so we can restart from this point
+  // again in the future
+  copyPointCloud(*final_planeless_cloud, *m_postPlaneExtractedCloud);
+  std::cout << "     " << "Post-plane extraction cloud cached for possible re-use again" << std::endl;
+  
+  m_pipelineStepCount += 10;
 
 }
+
+
+
 
 
 int main(int argc, char **argv)
