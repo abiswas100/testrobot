@@ -38,7 +38,15 @@
 #include <iostream>
 
 static const std::string PCL_TOPIC = "/camera/depth/points";
+
 const double normalThreshold = 0.97;
+const double cropPercentage = 0.0;  // 0.00  to  0.20
+const double meanK = 50.0;          // 50.0  to  100.0
+const double stddevMulThresh = 0.5; // 0.5  to    1.0
+
+// Euclidean clustering
+double CLUSTER_TOLERANCE(0.10);
+unsigned MIN_CLUSTER_SIZE(10);
 
 enum class Normal
 {
@@ -47,7 +55,9 @@ enum class Normal
   eZ
 };
 const Normal normal = Normal::eY;
+
 pcl::PCDWriter m_writer;
+
 // PCL plane extraction - a hard threshold, especially for if something goes wrong or lots of small (insignificant) planes
 const unsigned MAX_PLANE_COUNT(8);
 const double PLANE_EXTRACTION_CONTINUE_THRESHOLD(0.30); // While 30% of the original cloud is still there
@@ -73,6 +83,31 @@ std::string printStepCount(unsigned addition) //const
 }
 
 void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg);
+void extractObjectInBoundingBox(double cropPercentage, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
+void removeNaNs(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::PointXYZ>::Ptr dest);
+
+/* Avhishek - Variable Description for cloud_cb
+  
+  Inputs ----------------------------------------- 
+  sensor msg - Pointcloud2
+
+  final_planeless_cloud - final cloud as the name suggests
+  cloud_for_plane_extraction - as the name suggests
+  cloud_plane - defined in function 
+  cloud_f - defined in function
+  coefficients - model coefficients in PCL segmentation
+  inliers - pcl library object 
+
+  PLANE_EXTRACTION_CONTINUE_THRESHOLD - defined as a global variable
+  planeCount - defined in function
+
+
+
+  Output -----------------------------------------
+  Saves the cropped pointcloud in PCD. 
+
+*/
+
 
 void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
 { 
@@ -261,11 +296,187 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
   
   m_pipelineStepCount += 10;
 
+  
 }
 
+// call this function at the end of cloud_cb
+void extractObjectInBoundingBox(double cropPercentage, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
+{   
 
+//   // Extract the object PCL knowing the bounding box values, possibly with an additional cropping border (reduced by the crop percentage)
+//   unsigned x_delta = m_boundingBox.xmax - m_boundingBox.xmin;
+//   unsigned y_delta = m_boundingBox.ymax - m_boundingBox.ymin;
+//   unsigned cloudWidth = m_cloud->width;
+//   unsigned cloudHeight = m_cloud->height;
 
+//   std::cout << "Cloud width = " << cloudWidth << std::endl;
+//   std::cout << "Cloud height = " << cloudHeight << std::endl;
+//   std::cout << "Crop percentage = " << (cropPercentage * 100) << "%" << std::endl;
+//   std::cout << "BB xmin = " << m_boundingBox.xmin << std::endl;
+//   std::cout << "BB xmax = " << m_boundingBox.xmax << std::endl;
+//   std::cout << "BB ymin = " << m_boundingBox.ymin << std::endl;
+//   std::cout << "BB ymax = " << m_boundingBox.ymax << std::endl;
+//   std::cout << "BB xmin, cropped = " << m_boundingBox.xmin + static_cast<unsigned>(x_delta * cropPercentage) << std::endl;
+//   std::cout << "BB xmax, cropped = " << m_boundingBox.xmax - static_cast<unsigned>(x_delta * cropPercentage) << std::endl;
+//   std::cout << "BB ymin, cropped = " << m_boundingBox.ymin + static_cast<unsigned>(y_delta * cropPercentage) << std::endl;
+//   std::cout << "BB ymax, cropped = " << m_boundingBox.ymax - static_cast<unsigned>(y_delta * cropPercentage) << std::endl;
 
+//   pcl::PointCloud<pcl::PointXYZ>::Ptr cloudCrop(new pcl::PointCloud<pcl::PointXYZ>);
+  
+//     // Otherwise we have an organized cloud, so use this version
+//     UNL_Robotics::extractFrame<pcl::PointXYZ>(m_cloud, cloudCrop,
+//                                                 m_boundingBox.xmin + static_cast<unsigned>(x_delta * cropPercentage),
+//                                                 m_boundingBox.xmax - static_cast<unsigned>(x_delta * cropPercentage),
+//                                                 m_boundingBox.ymin + static_cast<unsigned>(y_delta * cropPercentage),
+//                                                 m_boundingBox.ymax - static_cast<unsigned>(y_delta * cropPercentage));
+// }
+
+  // this will be used to save the extracted pointcloud as a pcd file
+  std::stringstream ss;
+  ss << "k_step" << printStepCount() << "_extractBBcrop" << std::setprecision(2) << std::fixed << cropPercentage << ".pcd";
+//   m_writer.write<pcl::PointXYZ>(ss.str(), *cloudCrop, false);
+  m_writer.write<pcl::PointXYZ>(ss.str(), *cloud, false);
+
+  // Copy this into the destination cloud
+//   copyPointCloud(*cloudCrop, *destination);
+
+//   m_pipelineStepCount += 10;
+}
+
+void removeNaNs(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::PointXYZ>::Ptr dest)
+{
+  //m_cloud->is_dense = false;  
+  //boost::shared_ptr<std::vector<int>> indices(new std::vector<int>);
+  //pcl::removeNaNFromPointCloud(*m_cloud, *m_cloud, *indices);
+
+  /*  
+  pcl::ExtractIndices<pcl::PointXYZ> extract;
+  extract.setInputCloud(m_cloud);
+  extract.setIndices(indices);
+  extract.setNegative(true);
+  extract.filter(*m_cloud);
+  */
+
+  for(pcl::PointCloud<pcl::PointXYZ>::const_iterator it = source->begin(); it != source->end(); ++it) {
+
+    if(!(std::isnan(it->x)  ||  std::isnan(it->y)  ||  std::isnan(it->z))) {
+      dest->push_back(*it);
+    }
+  }
+
+  pcl::PointXYZ pt = *source->begin();
+  cout << "pt = " << pt.x << " " << pt.y << " " << pt.z << std::endl;
+  cout << "is nan x : " << std::isnan(pt.x) << std::endl;
+  cout << "combined ! is nan :  " << !(std::isnan(pt.x) || std::isnan(pt.y) || std::isnan(pt.z)) << std::endl;
+
+  /*  
+  std::copy_if(source->begin(), source->end(), dest->begin(), 
+               [](pcl::PointXYZ pt)
+               {
+                 return(!(std::isnan(pt.x) || std::isnan(pt.y) || std::isnan(pt.z)));
+               });
+  */
+}
+
+void removeOutliers(double meanK, double stddevMulThresh)
+{
+  //Remove outliers
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_removedOutliers(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
+  sor.setInputCloud(m_postPlaneExtractedCloud); // *m_cloud
+  sor.setMeanK(meanK);
+  sor.setStddevMulThresh(stddevMulThresh);
+  sor.filter(*cloud_removedOutliers);
+  
+  std::stringstream ss;
+  ss << "r_step" << printStepCount() << "_removedOutliers.pcd";
+  m_writer.write<pcl::PointXYZ>(ss.str(), *cloud_removedOutliers, false);
+
+  //Make this is our new working cloud
+  copyPointCloud(*cloud_removedOutliers, *m_postPlaneExtractedCloud); //*m_cloud
+
+  m_pipelineStepCount += 10;
+}
+
+void performEuclideanExtraction()
+{
+  //Euclidean Cluster Extraction
+
+  //Start by removing NaNs, if they exist
+  pcl::PointCloud<pcl::PointXYZ>::Ptr nanlessCloud(new pcl::PointCloud<pcl::PointXYZ>);
+  removeNaNs(m_postPlaneExtractedCloud, nanlessCloud);
+  copyPointCloud(*nanlessCloud, *m_postPlaneExtractedCloud); //*m_cloud
+  
+  // Creating the KdTree object for the search method of the extraction
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+  tree->setInputCloud(m_postPlaneExtractedCloud); //m_cloud 
+    
+  std::vector<pcl::PointIndices> cluster_indices;
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clusters;
+  pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+
+  std::cout << "Cluster tolearance set to: " << CLUSTER_TOLERANCE << std::endl;
+  ec.setClusterTolerance(CLUSTER_TOLERANCE);
+
+  std::cout << "Minimum cluster size set to: " << MIN_CLUSTER_SIZE << std::endl;
+  ec.setMinClusterSize(MIN_CLUSTER_SIZE);
+
+  //This is set based on the bounding box size
+        // define bounding box first before uncommenting this line
+    //   unsigned maxClusterSize = (m_boundingBox.xmax - m_boundingBox.xmin) * (m_boundingBox.ymax - m_boundingBox.ymin);
+//   ec.setMaxClusterSize(maxClusterSize);
+//   std::cout << "Maximum cluster size set to: " << maxClusterSize << std::endl;
+  ec.setSearchMethod(tree);
+  std::cout << "Set search method to tree" << std::endl;
+  m_postPlaneExtractedCloud->is_dense = false; //m_cloud
+  ec.setInputCloud(m_postPlaneExtractedCloud);
+  std::cout << "Set input cloud" << std::endl;
+  ec.extract(cluster_indices);
+  std::cout << "   " << cluster_indices.size() << " cluster" << (cluster_indices.size() != 1 ? "s" : "")
+            << " found in pointcloud." << std::endl;
+  
+  //For the file name, set the cluster number width (so that numbers are formatted as  07  if there are more than 10)
+  unsigned clusterNumberWidth = floor(log10(cluster_indices.size())) + 1;
+  
+  //Loop over all the clusters found
+  for(auto it = cluster_indices.begin (); it != cluster_indices.end (); ++it) {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster(new pcl::PointCloud<pcl::PointXYZ>);
+    for(auto pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+      cloud_cluster->push_back((*m_postPlaneExtractedCloud)[*pit]); //m_cloud
+    cloud_cluster->width = cloud_cluster->size();
+    cloud_cluster->height = 1;
+    cloud_cluster->is_dense = true;
+
+    clusters.push_back(cloud_cluster);
+    std::cout << "    - Cluster extracted with " << cloud_cluster->size () << " data points." << std::endl;
+    std::stringstream ss;
+    ss << "c_step" << printStepCount() << "_euclideanCluster_" << std::setfill('0') 
+       << std::setw(clusterNumberWidth) << std::distance(cluster_indices.begin(), it) << ".pcd";
+    m_writer.write<pcl::PointXYZ>(ss.str(), *cloud_cluster, false);
+  }
+    
+  //Make the biggest cluster (cluster_indices[0]) our new working cloud  
+  if(cluster_indices.size() > 0) {
+    copyPointCloud(*clusters[0], *m_postPlaneExtractedCloud); // *m_cloud
+    
+    /* Do this if we ever figure out how to get cluster extraction to work on the NaN-full cloud
+      
+      pcl::ExtractIndices<pcl::PointXYZ> clusterExtractor;
+      clusterExtractor.setInputCloud(m_cloud);
+      pcl::PointIndices::Ptr inliers(new pcl::PointIndices(cluster_indices[0]));
+      clusterExtractor.setIndices(inliers);
+      clusterExtractor.setNegative(true);
+      //Keep the removed points as NaN values to maintain the structure of the cloud
+      clusterExtractor.setKeepOrganized(true);
+      
+      pcl::PointCloud<pcl::PointXYZ>::Ptr clusterCloud(new pcl::PointCloud<pcl::PointXYZ>);
+      clusterExtractor.filter(*clusterCloud);
+      copyPointCloud(*clusterCloud, *m_cloud);
+    */
+  }
+  
+  m_pipelineStepCount += 10;  
+}
 
 int main(int argc, char **argv)
 {
