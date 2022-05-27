@@ -63,6 +63,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <cmath>
+
 
 #include <testrobots/BoundingBoxes.h> // add a header file for the message or it will error 
 #include <testrobots/BoundingBox.h>
@@ -177,7 +179,27 @@ UNL_Robotics::SegmentationPipeline::SegmentationPipeline(const std::string& base
     m_postPlaneExtractedCloud(new pcl::PointCloud<pcl::PointXYZ>)
 {
 }
-
+//*************
+UNL_Robotics::SegmentationPipeline::SegmentationPipeline(pcl::PointCloud <pcl::PointXYZ>::Ptr pointCloud)
+  : m_pipelineStepCount(0),
+    m_cloud(pointCloud),
+    m_postPlaneExtractedCloud(new pcl::PointCloud<pcl::PointXYZ>)
+{
+}
+UNL_Robotics::SegmentationPipeline::SegmentationPipeline(const std::string& baseName,
+                                                         const BoundingBox& yoloIdentifiedBoundingBox,
+                                                         std::string pcdFilepath)
+  : m_pipelineStepCount(0),
+    m_baseName(baseName),
+    m_boundingBox(yoloIdentifiedBoundingBox),
+    m_cloud(new pcl::PointCloud<pcl::PointXYZ>),
+    m_postPlaneExtractedCloud(new pcl::PointCloud<pcl::PointXYZ>)
+{
+  //Read in the pointcloud from file
+  pcl::PCDReader reader;
+  reader.read(pcdFilepath, *m_cloud);
+}
+//**************
 std::string printStepCount() //const std::string SegmentationPipeline::printStepCount() //const
 {
   std::stringstream ss;
@@ -221,6 +243,40 @@ void cropAndSaveImage(const sensor_msgs::Image& msg,
     return;
   }
 
+}
+template<typename PointType>
+void extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
+                                typename pcl::PointCloud<PointType>::Ptr targetCloud,
+                                unsigned xmin, unsigned xmax,
+                                unsigned ymin, unsigned ymax)
+{
+  //Implement in terms of the other function
+  unsigned imageWidth = sourceCloud->width;
+  unsigned imageHeight = sourceCloud->height;
+  extractFrame<PointType>(sourceCloud, targetCloud, xmin, xmax, ymin, ymax, imageWidth, imageHeight);
+}
+
+
+template<typename PointType>
+void extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
+                                typename pcl::PointCloud<PointType>::Ptr targetCloud,
+                                unsigned xmin, unsigned xmax,
+                                unsigned ymin, unsigned ymax,
+                                unsigned imageWidth,
+                                unsigned imageHeight)
+{
+copyPointCloud(*sourceCloud, *targetCloud);
+  
+  double nan = std::nan("");
+  PointType nanPt(nan, nan, nan);
+  for(unsigned row =0; row < imageHeight; ++row) {
+    for(unsigned col =0; col < imageWidth; ++col) {
+      unsigned index = row * imageWidth  + col;
+      if((col < xmin) || (xmax < col) || (row < ymin) || (ymax < row))  {
+         targetCloud->operator[](index) = nanPt;
+      }
+    }
+  }
 }
 
 
@@ -424,10 +480,7 @@ void doPlaneExtraction(Normal normal, double minThreshold, pcl::PointCloud<pcl::
 {
   // Plane extraction
   //
-    //ros::Duration maxWait(10.0);
-    //pcl::fromROSMsg(m_latestPointCloud, *destination);
-  //m_cloud = m_latestPointCloud;//ros::topic::waitForMessage<sensor_msgs::PointCloud2>("/camera/depth/points", maxWait);
-  //pcl::PointCloud <pcl::PointXYZ>::Ptr
+   
   ROS_INFO_STREAM("getting here 1");
   pcl::PointCloud<pcl::PointXYZ>::Ptr final_planeless_cloud(new pcl::PointCloud<pcl::PointXYZ>);
   copyPointCloud(*m_cloud, *final_planeless_cloud);
