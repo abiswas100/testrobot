@@ -141,7 +141,7 @@ void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud){
     // Mandatory
     seg.setModelType(pcl::SACMODEL_PLANE);
     seg.setMethodType(pcl::SAC_RANSAC);
-    seg.setMaxIterations(1000);
+    seg.setMaxIterations(1000); 
     seg.setDistanceThreshold(0.01);
     
     ROS_INFO_STREAM("getting here 4");
