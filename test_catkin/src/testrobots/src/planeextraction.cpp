@@ -100,10 +100,12 @@ std::string printStepCount(unsigned addition) //const
 // function declarations
 void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg);
 void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg);
-void extractObjectInBoundingBox(double cropPercentage, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
+void extractObjectInBoundingBox(double cropPercentage);
 void removeNaNs(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::PointXYZ>::Ptr dest);
 void removeOutliers(double meanK, double stddevMulThresh);
 void performEuclideanExtraction();
+
+
 
 void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud); // this will be the function that does plane extract and recieves a pointer
 
@@ -124,6 +126,7 @@ void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg)
   xmax = msg->xmax;
   ymin = msg->ymin;
   ymax = msg->ymax;
+
   unsigned x_delta = xmax - xmin;
   unsigned y_delta = ymax - ymin; 
   ROS_INFO_STREAM("  " << objectName  << "  -  Probability " << std::setprecision(4) << (msg->probability*100) << "%" ); // not needed 
@@ -358,7 +361,9 @@ void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud){
   m_pipelineStepCount += 10;
 
 }
-
+/*
+Avhishek - This function is the driver function for the whole code , it calls all the other functions after planeextracct
+*/
 void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
 { 
     ROS_INFO_STREAM("getting here 1");
@@ -369,7 +374,7 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     pcl::fromPCLPointCloud2(pcl_pc2,*m_cloud);
 
 
-    std::cout << xmin << std::endl;
+    
     // planeextract(m_cloud);
 
     /*
@@ -383,8 +388,8 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     */
 
 
-//   // Call the other functions here
-//   extractObjectInBoundingBox(10, m_postPlaneExtractedCloud);
+  // Call the other functions here
+  extractObjectInBoundingBox(cropPercentage);
 
 //   removeOutliers(double meanK, double stddevMulThresh);
 
@@ -393,26 +398,32 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
 }
 
 // call this function at the end of cloud_cb
-void extractObjectInBoundingBox(double cropPercentage, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
+
+/*
+Avhishek - the function uses the global cloud finalplainless_cloud and updates it after the extract
+*/
+void extractObjectInBoundingBox(double cropPercentage)
 {   
-    std::cout<< cropPercentage << std::endl;
+  std::cout<< cropPercentage << std::endl;
   // Extract the object PCL knowing the bounding box values, possibly with an additional cropping border (reduced by the crop percentage)
-  // unsigned x_delta = m_boundingBox.xmax - m_boundingBox.xmin;
-  // unsigned y_delta = m_boundingBox.ymax - m_boundingBox.ymin;
+  std::cout << "getting here 1 " << std::endl;
+  unsigned x_delta = xmax - xmin;
+  unsigned y_delta = ymax - ymin;
   // unsigned cloudWidth = m_cloud->width;
   // unsigned cloudHeight = m_cloud->height;
 
-//   std::cout << "Cloud width = " << cloudWidth << std::endl;
-//   std::cout << "Cloud height = " << cloudHeight << std::endl;
-//   std::cout << "Crop percentage = " << (cropPercentage * 100) << "%" << std::endl;
-//   std::cout << "BB xmin = " << m_boundingBox.xmin << std::endl;
-//   std::cout << "BB xmax = " << m_boundingBox.xmax << std::endl;
-//   std::cout << "BB ymin = " << m_boundingBox.ymin << std::endl;
-//   std::cout << "BB ymax = " << m_boundingBox.ymax << std::endl;
-//   std::cout << "BB xmin, cropped = " << m_boundingBox.xmin + static_cast<unsigned>(x_delta * cropPercentage) << std::endl;
-//   std::cout << "BB xmax, cropped = " << m_boundingBox.xmax - static_cast<unsigned>(x_delta * cropPercentage) << std::endl;
-//   std::cout << "BB ymin, cropped = " << m_boundingBox.ymin + static_cast<unsigned>(y_delta * cropPercentage) << std::endl;
-//   std::cout << "BB ymax, cropped = " << m_boundingBox.ymax - static_cast<unsigned>(y_delta * cropPercentage) << std::endl;
+  // std::cout << "Cloud width = " << cloudWidth << std::endl;
+  // std::cout << "Cloud height = " << cloudHeight << std::endl;
+  std::cout << "Crop percentage = " << (cropPercentage * 100) << "%" << std::endl;
+  std::cout << "BB xmin = " << xmin << std::endl;
+  std::cout << "BB xmax = " << xmax << std::endl;
+  std::cout << "BB ymin = " << ymin << std::endl;
+  std::cout << "BB ymax = " << ymax << std::endl;
+  std::cout << "BB xmin, cropped = " << xmin + static_cast<unsigned>(x_delta * cropPercentage) << std::endl;
+  std::cout << "BB xmax, cropped = " << xmax - static_cast<unsigned>(x_delta * cropPercentage) << std::endl;
+  std::cout << "BB ymin, cropped = " << ymin + static_cast<unsigned>(y_delta * cropPercentage) << std::endl;
+  std::cout << "BB ymax, cropped = " << ymax - static_cast<unsigned>(y_delta * cropPercentage) << std::endl;
+  std::cout << "getting here 2 " << std::endl;
 
 //   pcl::PointCloud<pcl::PointXYZ>::Ptr cloudCrop(new pcl::PointCloud<pcl::PointXYZ>);
   
@@ -425,10 +436,10 @@ void extractObjectInBoundingBox(double cropPercentage, pcl::PointCloud<pcl::Poin
 // }
 
   // this will be used to save the extracted pointcloud as a pcd file
-  std::stringstream ss;
-  ss << "k_step" << printStepCount() << "_extractBBcrop" << std::setprecision(2) << std::fixed << cropPercentage << ".pcd";
-//   m_writer.write<pcl::PointXYZ>(ss.str(), *cloudCrop, false);
-  m_writer.write<pcl::PointXYZ>(ss.str(), *cloud, false);
+//   std::stringstream ss;
+//   ss << "k_step" << printStepCount() << "_extractBBcrop" << std::setprecision(2) << std::fixed << cropPercentage << ".pcd";
+// //   m_writer.write<pcl::PointXYZ>(ss.str(), *cloudCrop, false);
+//   m_writer.write<pcl::PointXYZ>(ss.str(), *cloud, false);
 
   // Copy this into the destination cloud
 //   copyPointCloud(*cloudCrop, *destination);
