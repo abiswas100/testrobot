@@ -17,6 +17,10 @@ const unsigned CAMERA_NUM_PIXELS_WIDTH(1920);   // Avhishek - has been updated a
 const unsigned CAMERA_NUM_PIXELS_HEIGHT(1080);
 const double CAMERA_HORIZONTAL_VIEW_ANGLE(1.19); // The angle (in radians) of what the camera views , Avhishek - which is an Astra camera 
 
+unsigned xmin = 0;
+unsigned xmax = 0;
+unsigned ymin = 0;
+unsigned ymax = 0;
 
 void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg);
 int main(int argc, char **argv)
@@ -45,10 +49,10 @@ void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg)
 
 
   std::string objectName = msg->Class.c_str();
-  unsigned xmin = msg->xmin;
-  unsigned xmax = msg->xmax;
-  unsigned ymin = msg->ymin;
-  unsigned ymax = msg->ymax;
+  xmin = msg->xmin;
+  xmax = msg->xmax;
+  ymin = msg->ymin;
+  ymax = msg->ymax;
   unsigned x_delta = xmax - xmin;
   unsigned y_delta = ymax - ymin; 
   ROS_INFO_STREAM("  " << objectName  << "  -  Probability " << std::setprecision(4) << (msg->probability*100) << "%" ); // not needed 

@@ -67,6 +67,12 @@ const unsigned CAMERA_NUM_PIXELS_WIDTH(1920);
 const unsigned CAMERA_NUM_PIXELS_HEIGHT(1080);
 const double CAMERA_HORIZONTAL_VIEW_ANGLE(1.19);
 
+unsigned xmin = 0;
+unsigned xmax = 0;
+unsigned ymin = 0;
+unsigned ymax = 0;
+
+
 // PCL plane extraction - a hard threshold, especially for if something goes wrong or lots of small (insignificant) planes
 const unsigned MAX_PLANE_COUNT(8);
 const double PLANE_EXTRACTION_CONTINUE_THRESHOLD(0.30); // While 30% of the original cloud is still there
@@ -101,7 +107,6 @@ void performEuclideanExtraction();
 
 void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud); // this will be the function that does plane extract and recieves a pointer
 
-void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg);
 
 void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg)
 { 
@@ -389,11 +394,11 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
 void extractObjectInBoundingBox(double cropPercentage, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
 {   
     std::cout<< cropPercentage << std::endl;
-//   // Extract the object PCL knowing the bounding box values, possibly with an additional cropping border (reduced by the crop percentage)
-//   unsigned x_delta = m_boundingBox.xmax - m_boundingBox.xmin;
-//   unsigned y_delta = m_boundingBox.ymax - m_boundingBox.ymin;
-//   unsigned cloudWidth = m_cloud->width;
-//   unsigned cloudHeight = m_cloud->height;
+  // Extract the object PCL knowing the bounding box values, possibly with an additional cropping border (reduced by the crop percentage)
+  // unsigned x_delta = m_boundingBox.xmax - m_boundingBox.xmin;
+  // unsigned y_delta = m_boundingBox.ymax - m_boundingBox.ymin;
+  // unsigned cloudWidth = m_cloud->width;
+  // unsigned cloudHeight = m_cloud->height;
 
 //   std::cout << "Cloud width = " << cloudWidth << std::endl;
 //   std::cout << "Cloud height = " << cloudHeight << std::endl;
@@ -571,7 +576,7 @@ int main(int argc, char **argv)
 
   ros::NodeHandle n;
 
-  ros::Subscriber sub = n.subscribe(PCL_TOPIC, 10, cloud_cb);
+  // ros::Subscriber sub = n.subscribe(PCL_TOPIC, 10, cloud_cb);
 
   ros::Subscriber BBsub = n.subscribe("/BBox", 10, BBoxCallback);
 
