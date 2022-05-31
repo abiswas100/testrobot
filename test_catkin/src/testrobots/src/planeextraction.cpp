@@ -37,6 +37,8 @@
 #include <cstdlib>
 #include <iostream>
 
+#include <testrobots/BoundingBox.h>
+
 static const std::string PCL_TOPIC = "/camera/depth/points";
 
 const double normalThreshold = 0.97;
@@ -57,6 +59,13 @@ enum class Normal
 const Normal normal = Normal::eY;
 
 pcl::PCDWriter m_writer;
+
+std::ofstream m_out;
+
+//Camera Specs
+const unsigned CAMERA_NUM_PIXELS_WIDTH(1920);
+const unsigned CAMERA_NUM_PIXELS_HEIGHT(1080);
+const double CAMERA_HORIZONTAL_VIEW_ANGLE(1.19);
 
 // PCL plane extraction - a hard threshold, especially for if something goes wrong or lots of small (insignificant) planes
 const unsigned MAX_PLANE_COUNT(8);
@@ -83,6 +92,7 @@ std::string printStepCount(unsigned addition) //const
 }
 
 // function declarations
+void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg);
 void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg);
 void extractObjectInBoundingBox(double cropPercentage, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
 void removeNaNs(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::PointXYZ>::Ptr dest);
@@ -90,6 +100,52 @@ void removeOutliers(double meanK, double stddevMulThresh);
 void performEuclideanExtraction();
 
 void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud); // this will be the function that does plane extract and recieves a pointer
+
+void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg);
+
+void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg)
+{ 
+  ROS_INFO("class: %s", msg->Class.c_str());  
+  ROS_INFO("%f", msg->probability);
+  ROS_INFO("%ld", msg->xmin);
+  ROS_INFO("%ld", msg->xmax);
+  ROS_INFO("%ld", msg->ymin);
+  ROS_INFO("%ld", msg->xmax);
+
+
+
+  std::string objectName = msg->Class.c_str();
+  unsigned xmin = msg->xmin;
+  unsigned xmax = msg->xmax;
+  unsigned ymin = msg->ymin;
+  unsigned ymax = msg->ymax;
+  unsigned x_delta = xmax - xmin;
+  unsigned y_delta = ymax - ymin; 
+  ROS_INFO_STREAM("  " << objectName  << "  -  Probability " << std::setprecision(4) << (msg->probability*100) << "%" ); // not needed 
+  ROS_INFO_STREAM("    " << "BB Min (x,y) = (" << xmin << ", " << ymin << ")" );
+  ROS_INFO_STREAM("    " << "BB Max (x,y) = (" << xmax << ", " << ymax << ")" );
+  // not needed ************
+  std::cout << "*) Object type:  " << objectName << std::endl;
+  std::cout << "   Probability  " << std::setprecision(4) << (msg->probability*100.0) << "%" << std::endl;
+//*******************
+
+//   // Avhishek - Don't know why  this is being done what is the use of calculating objectAngleOffset
+
+  //Calculate the angle offset of the picture relative to the center of the view port
+  unsigned x_centerBB = xmin + static_cast<unsigned>(x_delta/2);
+  unsigned y_centerBB = ymin + static_cast<unsigned>(y_delta/2);
+  int x_offset = static_cast<unsigned>(CAMERA_NUM_PIXELS_WIDTH/2) - x_centerBB;   //Can be negative! This orientation assumes CCW=+
+  double objectAngleOffset = CAMERA_HORIZONTAL_VIEW_ANGLE * (static_cast<double>(x_offset) / static_cast<double>(CAMERA_NUM_PIXELS_WIDTH));
+
+  // Avhishek - m_out is being used for printing and is declared at the top of the file
+  m_out << "   " << "Bounding Box (x,y):"
+        << "   Min = (" << xmin << ", " << ymin << ")"
+        << "   Max = (" << xmax << ", " << ymax << ")"
+        << "   Center = (" << x_centerBB << ", " << y_centerBB << ")" << std::endl;
+  m_out << "   In-image object angle offset = " << objectAngleOffset << " (rad)" << std::endl;
+
+}
+
 
 /* Avhishek - Variable Description for cloud_cb
   
@@ -517,8 +573,9 @@ int main(int argc, char **argv)
 
   ros::Subscriber sub = n.subscribe(PCL_TOPIC, 10, cloud_cb);
 
-  ros::spin();
+  ros::Subscriber BBsub = n.subscribe("/BBox", 10, BBoxCallback);
 
+  ros::spin();
 
   return 0;
 }
