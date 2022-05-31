@@ -4,7 +4,7 @@
 #include <cmath>
 
 template<typename PointType>
-void UNL_Robotics::extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
+void testrobots::extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
                                 typename pcl::PointCloud<PointType>::Ptr targetCloud,
                                 unsigned xmin, unsigned xmax,
                                 unsigned ymin, unsigned ymax)
@@ -17,7 +17,7 @@ void UNL_Robotics::extractFrame(typename pcl::PointCloud<PointType>::ConstPtr so
 
 
 template<typename PointType>
-void UNL_Robotics::extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
+void testrobots::extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
                                 typename pcl::PointCloud<PointType>::Ptr targetCloud,
                                 unsigned xmin, unsigned xmax,
                                 unsigned ymin, unsigned ymax,

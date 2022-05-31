@@ -7,12 +7,12 @@
 // (c) 2021
 //
 
-#ifndef UNL_ROBOTICS_PCLUTILS_H
-#define UNL_ROBOTICS_PCLUTILS_H
+#ifndef TESTROBOTS_PCLUTILS_H
+#define TESTROBOTS_PCLUTILS_H
 
 #include <pcl/point_cloud.h>
 
-namespace UNL_Robotics {
+namespace testrobots {
 
   //Extracts the points from a point cloud that fall within the frame (pixel) coordinates.
   //Supply a source cloud which is read from and a target cloud which is written to.

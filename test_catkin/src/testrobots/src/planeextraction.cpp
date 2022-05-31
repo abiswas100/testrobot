@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <testrobots/Boundingbox.h>
+#include <pclUtils.h>
 #include <string>
 
 // ROS Topics
@@ -42,7 +43,7 @@
 static const std::string PCL_TOPIC = "/camera/depth/points";
 
 const double normalThreshold = 0.97;
-const double cropPercentage = 0.0;  // 0.00  to  0.20
+const double cropPercentage = 0.10;  // 0.00  to  0.20
 const double meanK = 50.0;          // 50.0  to  100.0
 const double stddevMulThresh = 0.5; // 0.5  to    1.0
 
@@ -101,6 +102,13 @@ std::string printStepCount(unsigned addition) //const
 void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg);
 void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg);
 void extractObjectInBoundingBox(double cropPercentage);
+// template<typename PointType>
+// void extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
+//                                 typename pcl::PointCloud<PointType>::Ptr targetCloud,
+//                                 unsigned xmin, unsigned xmax,
+//                                 unsigned ymin, unsigned ymax,
+//                                 unsigned imageWidth,
+//                                 unsigned imageHeight);
 void removeNaNs(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::PointXYZ>::Ptr dest);
 void removeOutliers(double meanK, double stddevMulThresh);
 void performEuclideanExtraction();
@@ -409,11 +417,11 @@ void extractObjectInBoundingBox(double cropPercentage)
   std::cout << "getting here 1 " << std::endl;
   unsigned x_delta = xmax - xmin;
   unsigned y_delta = ymax - ymin;
-  // unsigned cloudWidth = m_cloud->width;
-  // unsigned cloudHeight = m_cloud->height;
+  unsigned cloudWidth = m_postPlaneExtractedCloud->width;  // m_cloud
+  unsigned cloudHeight = m_postPlaneExtractedCloud->height;
 
-  // std::cout << "Cloud width = " << cloudWidth << std::endl;
-  // std::cout << "Cloud height = " << cloudHeight << std::endl;
+  std::cout << "Cloud width = " << cloudWidth << std::endl;
+  std::cout << "Cloud height = " << cloudHeight << std::endl;
   std::cout << "Crop percentage = " << (cropPercentage * 100) << "%" << std::endl;
   std::cout << "BB xmin = " << xmin << std::endl;
   std::cout << "BB xmax = " << xmax << std::endl;
@@ -425,15 +433,26 @@ void extractObjectInBoundingBox(double cropPercentage)
   std::cout << "BB ymax, cropped = " << ymax - static_cast<unsigned>(y_delta * cropPercentage) << std::endl;
   std::cout << "getting here 2 " << std::endl;
 
-//   pcl::PointCloud<pcl::PointXYZ>::Ptr cloudCrop(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloudCrop(new pcl::PointCloud<pcl::PointXYZ>);
   
-//     // Otherwise we have an organized cloud, so use this version
-//     UNL_Robotics::extractFrame<pcl::PointXYZ>(m_cloud, cloudCrop,
-//                                                 m_boundingBox.xmin + static_cast<unsigned>(x_delta * cropPercentage),
-//                                                 m_boundingBox.xmax - static_cast<unsigned>(x_delta * cropPercentage),
-//                                                 m_boundingBox.ymin + static_cast<unsigned>(y_delta * cropPercentage),
-//                                                 m_boundingBox.ymax - static_cast<unsigned>(y_delta * cropPercentage));
-// }
+if (cloudHeight == 1)
+  {
+    testrobots::extractFrame<pcl::PointXYZ>(m_postPlaneExtractedCloud, cloudCrop,
+                                              xmin + static_cast<unsigned>(x_delta * cropPercentage),
+                                              xmax - static_cast<unsigned>(x_delta * cropPercentage),
+                                              ymin + static_cast<unsigned>(y_delta * cropPercentage),
+                                              ymax - static_cast<unsigned>(y_delta * cropPercentage),
+                                              CAMERA_NUM_PIXELS_WIDTH, CAMERA_NUM_PIXELS_HEIGHT);
+  }
+  else
+  { 
+    // Otherwise we have an organized cloud, so use this version
+    testrobots::extractFrame<pcl::PointXYZ>(m_postPlaneExtractedCloud, cloudCrop,
+                                              xmin + static_cast<unsigned>(x_delta * cropPercentage),
+                                              xmax - static_cast<unsigned>(x_delta * cropPercentage),
+                                              ymin + static_cast<unsigned>(y_delta * cropPercentage),
+                                              ymax - static_cast<unsigned>(y_delta * cropPercentage));
+  }
 
   // this will be used to save the extracted pointcloud as a pcd file
 //   std::stringstream ss;
@@ -446,6 +465,7 @@ void extractObjectInBoundingBox(double cropPercentage)
 
 //   m_pipelineStepCount += 10;
 }
+
 
 void removeNaNs(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::PointXYZ>::Ptr dest)
 {
