@@ -120,10 +120,10 @@ void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg)
 
 
   std::string objectName = msg->Class.c_str();
-  unsigned xmin = msg->xmin;
-  unsigned xmax = msg->xmax;
-  unsigned ymin = msg->ymin;
-  unsigned ymax = msg->ymax;
+  xmin = msg->xmin;
+  xmax = msg->xmax;
+  ymin = msg->ymin;
+  ymax = msg->ymax;
   unsigned x_delta = xmax - xmin;
   unsigned y_delta = ymax - ymin; 
   ROS_INFO_STREAM("  " << objectName  << "  -  Probability " << std::setprecision(4) << (msg->probability*100) << "%" ); // not needed 
@@ -368,7 +368,9 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     pcl::PointCloud<pcl::PointXYZ>::Ptr final_planeless_cloud(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromPCLPointCloud2(pcl_pc2,*m_cloud);
 
-    planeextract(m_cloud);
+
+    std::cout << xmin << std::endl;
+    // planeextract(m_cloud);
 
     /*
       Avhishek - all this below code is now in plane extract, run the code and remove things from below, this is our driver code 
@@ -576,7 +578,7 @@ int main(int argc, char **argv)
 
   ros::NodeHandle n;
 
-  // ros::Subscriber sub = n.subscribe(PCL_TOPIC, 10, cloud_cb);
+  ros::Subscriber sub = n.subscribe(PCL_TOPIC, 10, cloud_cb);
 
   ros::Subscriber BBsub = n.subscribe("/BBox", 10, BBoxCallback);
 

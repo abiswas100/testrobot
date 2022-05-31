@@ -36,3 +36,5 @@ test_catkin/src/rtamt4ros/
 test_catkin/src/rtamt/
 
 test_catkin/src/realsense
+
+test_catkin/src/testrobots/scripts/yolo_img.jpeg
