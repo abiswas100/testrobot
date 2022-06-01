@@ -102,13 +102,6 @@ std::string printStepCount(unsigned addition) //const
 void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg);
 void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg);
 void extractObjectInBoundingBox(double cropPercentage);
-// template<typename PointType>
-// void extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
-//                                 typename pcl::PointCloud<PointType>::Ptr targetCloud,
-//                                 unsigned xmin, unsigned xmax,
-//                                 unsigned ymin, unsigned ymax,
-//                                 unsigned imageWidth,
-//                                 unsigned imageHeight);
 void removeNaNs(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::PointXYZ>::Ptr dest);
 void removeOutliers(double meanK, double stddevMulThresh);
 void performEuclideanExtraction();
@@ -467,7 +460,6 @@ if (cloudHeight == 1)
 
   m_pipelineStepCount += 10;
 }
-
 
 void removeNaNs(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::PointXYZ>::Ptr dest)
 {
