@@ -188,19 +188,19 @@ void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud){
   ROS_INFO_STREAM("getting here plane extract");
   pcl::PointCloud<pcl::PointXYZ>::Ptr final_planeless_cloud(new pcl::PointCloud<pcl::PointXYZ>);
   copyPointCloud(*m_cloud, *final_planeless_cloud);
-  ROS_INFO_STREAM("getting here 2");
+  
 
         copyPointCloud(*m_cloud, *final_planeless_cloud);
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_for_plane_extraction(new pcl::PointCloud<pcl::PointXYZ>);
     copyPointCloud(*m_cloud, *cloud_for_plane_extraction);
     
-    // ROS_INFO_STREAM("getting here 2");
+    
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_plane(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_f(new pcl::PointCloud<pcl::PointXYZ>);
     
-    ROS_INFO_STREAM("getting here 3");
+    
     
     pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
     pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
@@ -216,7 +216,7 @@ void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud){
     seg.setMaxIterations(1000); 
     seg.setDistanceThreshold(0.01);
     
-    ROS_INFO_STREAM("getting here 4");
+    
 
 
     // // Create the extracting object (extraction based on indices)
@@ -230,7 +230,7 @@ void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud){
     const unsigned numOriginalPoints = cloud_for_plane_extraction->size();   //How many points we originally started with
     unsigned numPointsExtracted =0;   //Keep track of how many points have so far been extracted  
     std::cout << numOriginalPoints << std::endl;
-    ROS_INFO_STREAM("getting here 5");
+    
 
       //Do until we extract a certain percentage of the points -or-
     // until the maximum number of planes is met, which is checked at the end of this loop
