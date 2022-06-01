@@ -8,8 +8,8 @@
 //  (c) 2021
 //
 
-#ifndef UNL_ROBOTICS_MAP_WRITER
-#define UNL_ROBOTICS_MAP_WRITER
+#ifndef TESTROBOTS_MAP_WRITER
+#define TESTROBOTS_MAP_WRITER
 
 #include "convexHull.h"
 //std
@@ -17,7 +17,7 @@
 #include <tuple>
 #include <vector>
 
-namespace UNL_Robotics {
+namespace testrobots {
 
   class map_writer {
   public:
