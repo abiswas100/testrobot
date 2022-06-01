@@ -399,9 +399,9 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
   // Call the other functions here
   extractObjectInBoundingBox(cropPercentage);
 
-//   removeOutliers(double meanK, double stddevMulThresh);
+  removeOutliers(meanK,  stddevMulThresh);
 
-//   performEuclideanExtraction();
+  performEuclideanExtraction();
 
 }
 
