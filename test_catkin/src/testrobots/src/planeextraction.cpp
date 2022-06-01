@@ -374,7 +374,7 @@ Avhishek - This function is the driver function for the whole code , it calls al
 */
 void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
 { 
-    ROS_INFO_STREAM("getting here 1");
+    ROS_INFO_STREAM("getting here in Cloud callback");
     pcl::PCLPointCloud2 pcl_pc2;
     pcl_conversions::toPCL(*cloud_msg,pcl_pc2);
     pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud(new pcl::PointCloud<pcl::PointXYZ>);
@@ -383,7 +383,7 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
 
 
     
-    // planeextract(m_cloud);
+    planeextract(m_cloud);
 
     /*
       Avhishek - all this below code is now in plane extract, run the code and remove things from below, this is our driver code 
@@ -414,7 +414,8 @@ void extractObjectInBoundingBox(double cropPercentage)
 {   
   std::cout<< cropPercentage << std::endl;
   // Extract the object PCL knowing the bounding box values, possibly with an additional cropping border (reduced by the crop percentage)
-  std::cout << "getting here 1 " << std::endl;
+  std::cout << "" << std::endl;
+  std::cout << "getting here in extract ObjectinBB " << std::endl;
   unsigned x_delta = xmax - xmin;
   unsigned y_delta = ymax - ymin;
   unsigned cloudWidth = m_postPlaneExtractedCloud->width;  // m_cloud
@@ -431,7 +432,7 @@ void extractObjectInBoundingBox(double cropPercentage)
   std::cout << "BB xmax, cropped = " << xmax - static_cast<unsigned>(x_delta * cropPercentage) << std::endl;
   std::cout << "BB ymin, cropped = " << ymin + static_cast<unsigned>(y_delta * cropPercentage) << std::endl;
   std::cout << "BB ymax, cropped = " << ymax - static_cast<unsigned>(y_delta * cropPercentage) << std::endl;
-  std::cout << "getting here 2 " << std::endl;
+  
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloudCrop(new pcl::PointCloud<pcl::PointXYZ>);
   
@@ -446,6 +447,7 @@ if (cloudHeight == 1)
   }
   else
   { 
+
     // Otherwise we have an organized cloud, so use this version
     testrobots::extractFrame<pcl::PointXYZ>(m_postPlaneExtractedCloud, cloudCrop,
                                               xmin + static_cast<unsigned>(x_delta * cropPercentage),
@@ -453,17 +455,17 @@ if (cloudHeight == 1)
                                               ymin + static_cast<unsigned>(y_delta * cropPercentage),
                                               ymax - static_cast<unsigned>(y_delta * cropPercentage));
   }
-
+  std::cout << "getting here after extract frame " << std::endl;
   // this will be used to save the extracted pointcloud as a pcd file
-//   std::stringstream ss;
-//   ss << "k_step" << printStepCount() << "_extractBBcrop" << std::setprecision(2) << std::fixed << cropPercentage << ".pcd";
-// //   m_writer.write<pcl::PointXYZ>(ss.str(), *cloudCrop, false);
-//   m_writer.write<pcl::PointXYZ>(ss.str(), *cloud, false);
+  std::stringstream ss;
+  ss << "k_step" << printStepCount() << "_extractBBcrop" << std::setprecision(2) << std::fixed << cropPercentage << ".pcd";
+  m_writer.write<pcl::PointXYZ>(ss.str(), *cloudCrop, false);
+
 
   // Copy this into the destination cloud
-//   copyPointCloud(*cloudCrop, *destination);
+  copyPointCloud(*cloudCrop, *m_postPlaneExtractedCloud);
 
-//   m_pipelineStepCount += 10;
+  m_pipelineStepCount += 10;
 }
 
 
