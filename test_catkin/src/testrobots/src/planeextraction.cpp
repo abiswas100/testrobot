@@ -2,6 +2,7 @@
 #include <testrobots/Boundingbox.h>
 #include <pclUtils.h>
 #include <convexHull.h>
+#include <map_writer.h>
 #include <string>
 
 // ROS Topics
@@ -44,7 +45,7 @@
 
 static const std::string PCL_TOPIC = "/camera/depth/points";
 
-const double normalThreshold = 0.97;
+const double normalThreshold = 0.99; // for simulations
 const double cropPercentage = 0.10;  // 0.00  to  0.20
 const double meanK = 50.0;          // 50.0  to  100.0
 const double stddevMulThresh = 0.5; // 0.5  to    1.0
@@ -390,7 +391,8 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
       2. extract BoundingBox
       3. remove outliers
       4. euclidean distance
-      5. get hullpoints from CalBoundingBox in World Coordinate 
+      5. get hullpoints from CalBoundingBox in World Coordinate
+      6. Use hull points to write the map 
     */
 
 
@@ -405,6 +407,19 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
   // hullpoints = calcBoundingBoxInWorldCoords(visualizeBB,m_currentPose.x,
   //                                                       m_currentPose.y,
   //                                                       m_currentPose.yaw);
+
+
+  // std::string pgmPath("./buildings/pureza/maps");
+  // std::string yamlFilename("pureza.yaml");
+
+  // std::string yamlFilepath(pgmPath + "/" + yamlFilename);
+  //       testrobots::map_writer writer;
+  //       bool insertResult = writer.insertObject(yamlFilepath, pgmPath, hullPoints);
+  //       if(insertResult)
+  //         ROS_INFO_STREAM("Updated the map with long-term object successfully");
+  //       else
+  //         ROS_ERROR_STREAM("Failed to insert the object into the map");
+      
 }
 
 // call this function at the end of cloud_cb

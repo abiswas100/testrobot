@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UNL_Robotics>
+  <Facility_Plan>
+    <Door_Plan>
+      <Door_Definition>
+        <Door_ID>1</Door_ID>
+        <Door_Type>Solid_Oak</Door_Type>
+        <Hinge_Location>
+          <X>-0.19</X>
+          <Y>-8.95</Y>
+        </Hinge_Location>
+        <Hinge_Axis>Z</Hinge_Axis>
+        <Door_Width>0.73</Door_Width>
+        <Door_Height>2.40</Door_Height>
+        <Door_Thickness>0.03</Door_Thickness>
+        <Door_Frame_Orientation>3.1416</Door_Frame_Orientation>
+        <Subcontractor_ID>C</Subcontractor_ID>
+        <Planned_Completion_Date>2021_03_15</Planned_Completion_Date>
+        <Expected_State>Hung</Expected_State>
+        <Inspection_DateTime>2021_03_17 16:20</Inspection_DateTime>
+        <Inspection_Coords>-0.82, -7.50, -1.5708</Inspection_Coords>
+        <Actual_State>Not Hung</Actual_State>
+      </Door_Definition>
+    </Door_Plan>
+  </Facility_Plan>
+</UNL_Robotics>
+
