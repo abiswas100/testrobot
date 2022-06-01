@@ -380,10 +380,6 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     pcl::PointCloud<pcl::PointXYZ>::Ptr final_planeless_cloud(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromPCLPointCloud2(pcl_pc2,*m_cloud);
 
-
-    
-    planeextract(m_cloud);
-
     /*
       Avhishek - all this below code is now in plane extract, run the code and remove things from below, this is our driver code 
 
@@ -395,31 +391,32 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
       6. Use hull points to write the map 
     */
 
+    
+    planeextract(m_cloud);
 
-  // Call the other functions here
-  extractObjectInBoundingBox(cropPercentage);
+    extractObjectInBoundingBox(cropPercentage);
 
-  removeOutliers(meanK,  stddevMulThresh);
+    removeOutliers(meanK,  stddevMulThresh);
 
-  performEuclideanExtraction();
+    performEuclideanExtraction();
 
-  bool visualizeBB = true;
-  // hullpoints = calcBoundingBoxInWorldCoords(visualizeBB,m_currentPose.x,
-  //                                                       m_currentPose.y,
-  //                                                       m_currentPose.yaw);
+    bool visualizeBB = true;
+    // hullpoints = calcBoundingBoxInWorldCoords(visualizeBB,m_currentPose.x,
+    //                                                       m_currentPose.y,
+    //                                                       m_currentPose.yaw);
 
 
-  // std::string pgmPath("./buildings/pureza/maps");
-  // std::string yamlFilename("pureza.yaml");
+    // std::string pgmPath("./buildings/pureza/maps");
+    // std::string yamlFilename("pureza.yaml");
 
-  // std::string yamlFilepath(pgmPath + "/" + yamlFilename);
-  //       testrobots::map_writer writer;
-  //       bool insertResult = writer.insertObject(yamlFilepath, pgmPath, hullPoints);
-  //       if(insertResult)
-  //         ROS_INFO_STREAM("Updated the map with long-term object successfully");
-  //       else
-  //         ROS_ERROR_STREAM("Failed to insert the object into the map");
-      
+    // std::string yamlFilepath(pgmPath + "/" + yamlFilename);
+    //       testrobots::map_writer writer;
+    //       bool insertResult = writer.insertObject(yamlFilepath, pgmPath, hullPoints);
+    //       if(insertResult)
+    //         ROS_INFO_STREAM("Updated the map with long-term object successfully");
+    //       else
+    //         ROS_ERROR_STREAM("Failed to insert the object into the map");
+        
 }
 
 // call this function at the end of cloud_cb
