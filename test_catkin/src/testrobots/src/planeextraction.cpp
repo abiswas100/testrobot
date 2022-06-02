@@ -9,6 +9,7 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h> 
 #include <pcl_ros/point_cloud.h>  
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 
 // OpenCV
 #include <cv_bridge/cv_bridge.h>
@@ -91,6 +92,9 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr m_postPlaneExtractedCloud(new pcl::PointClou
 
 const double minThreshold = 0.97; 
 
+float poseAMCLx = 0;
+float poseAMCLy = 0;
+float poseAMCLw = 0;
 
 std::string printStepCount() //const std::string SegmentationPipeline::printStepCount() //const
 {
@@ -120,7 +124,13 @@ std::vector<testrobots::Point2D> calcBoundingBoxInWorldCoords(bool visualizeBB, 
 
 void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud); // this will be the function that does plane extract and recieves a pointer
 
+void poseCallback(const geometry_msgs::PoseWithCovarianceConstPtr &pose_msg){
+    
+    poseAMCLx = pose_msg->pose.position.x;
+    poseAMCLy = pose_msg->pose.position.y;
+    poseAMCLw = pose_msg->pose.orientation.w;
 
+}
 void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg)
 { 
   // check the value of pause, if plane extraction is working then ignore Bbox messages 
@@ -298,7 +308,7 @@ void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud){
     pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(new pcl::PointCloud<pcl::Normal>);
 
     // Use all neighbors in a sphere of radius 3cm
-    ne.setRadiusSearch(0.01); //0.03
+    ne.setRadiusSearch(0.03); //0.03
     
     // Compute the features
     ne.compute(*cloud_normals);
@@ -789,6 +799,8 @@ int main(int argc, char **argv)
   ros::Subscriber sub = n.subscribe(PCL_TOPIC, 10, cloud_cb);
 
   ros::Subscriber BBsub = n.subscribe("/BBox", 10, BBoxCallback);
+
+  ros::Subscriber current_pose = n.subscribe("/amcl_pose", 10, poseCallback);
 
   ros::spin();
 

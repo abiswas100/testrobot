@@ -4,6 +4,7 @@
 #include <cmath>
 
 
+
 template<typename PointType>
 void testrobots::extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
                                 typename pcl::PointCloud<PointType>::Ptr targetCloud,
