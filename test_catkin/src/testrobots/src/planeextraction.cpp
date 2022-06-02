@@ -45,6 +45,8 @@
 
 static const std::string PCL_TOPIC = "/camera/depth/points";
 
+int wait_now = 1;
+
 const double normalThreshold = 0.99; // for simulations
 const double cropPercentage = 0.10;  // 0.00  to  0.20
 const double meanK = 50.0;          // 50.0  to  100.0
@@ -103,6 +105,8 @@ std::string printStepCount(unsigned addition) //const
   ss << std::setfill('0') << std::setw(2) << (m_pipelineStepCount + addition);
   return ss.str();
 }
+
+
 std::vector<Point2D> findConvexHull(std::vector<Point2D> points);
 // function declarations
 void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg);
@@ -119,46 +123,52 @@ void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud); // this will be 
 
 void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg)
 { 
-  ROS_INFO("class: %s", msg->Class.c_str());  
-  ROS_INFO("%f", msg->probability);
-  ROS_INFO("%ld", msg->xmin);
-  ROS_INFO("%ld", msg->xmax);
-  ROS_INFO("%ld", msg->ymin);
-  ROS_INFO("%ld", msg->xmax);
+  // check the value of pause, if plane extraction is working then ignore Bbox messages 
+  if(wait_now == 1){ 
+      ROS_INFO("class: %s", msg->Class.c_str());  
+      ROS_INFO("%f", msg->probability);
+      ROS_INFO("%ld", msg->xmin);
+      ROS_INFO("%ld", msg->xmax);
+      ROS_INFO("%ld", msg->ymin);
+      ROS_INFO("%ld", msg->xmax);
 
 
 
-  std::string objectName = msg->Class.c_str();
-  xmin = msg->xmin;
-  xmax = msg->xmax;
-  ymin = msg->ymin;
-  ymax = msg->ymax;
+      std::string objectName = msg->Class.c_str();
+      xmin = msg->xmin;
+      xmax = msg->xmax;
+      ymin = msg->ymin;
+      ymax = msg->ymax;
 
-  unsigned x_delta = xmax - xmin;
-  unsigned y_delta = ymax - ymin; 
-  ROS_INFO_STREAM("  " << objectName  << "  -  Probability " << std::setprecision(4) << (msg->probability*100) << "%" ); // not needed 
-  ROS_INFO_STREAM("    " << "BB Min (x,y) = (" << xmin << ", " << ymin << ")" );
-  ROS_INFO_STREAM("    " << "BB Max (x,y) = (" << xmax << ", " << ymax << ")" );
-  // not needed ************
-  std::cout << "*) Object type:  " << objectName << std::endl;
-  std::cout << "   Probability  " << std::setprecision(4) << (msg->probability*100.0) << "%" << std::endl;
-//*******************
+      unsigned x_delta = xmax - xmin;
+      unsigned y_delta = ymax - ymin; 
+      ROS_INFO_STREAM("  " << objectName  << "  -  Probability " << std::setprecision(4) << (msg->probability*100) << "%" ); // not needed 
+      ROS_INFO_STREAM("    " << "BB Min (x,y) = (" << xmin << ", " << ymin << ")" );
+      ROS_INFO_STREAM("    " << "BB Max (x,y) = (" << xmax << ", " << ymax << ")" );
+      // not needed ************
+      std::cout << "*) Object type:  " << objectName << std::endl;
+      std::cout << "   Probability  " << std::setprecision(4) << (msg->probability*100.0) << "%" << std::endl;
+    //*******************
 
-//   // Avhishek - Don't know why  this is being done what is the use of calculating objectAngleOffset
+    //   // Avhishek - Don't know why  this is being done what is the use of calculating objectAngleOffset
 
-  //Calculate the angle offset of the picture relative to the center of the view port
-  unsigned x_centerBB = xmin + static_cast<unsigned>(x_delta/2);
-  unsigned y_centerBB = ymin + static_cast<unsigned>(y_delta/2);
-  int x_offset = static_cast<unsigned>(CAMERA_NUM_PIXELS_WIDTH/2) - x_centerBB;   //Can be negative! This orientation assumes CCW=+
-  double objectAngleOffset = CAMERA_HORIZONTAL_VIEW_ANGLE * (static_cast<double>(x_offset) / static_cast<double>(CAMERA_NUM_PIXELS_WIDTH));
+      //Calculate the angle offset of the picture relative to the center of the view port
+      unsigned x_centerBB = xmin + static_cast<unsigned>(x_delta/2);
+      unsigned y_centerBB = ymin + static_cast<unsigned>(y_delta/2);
+      int x_offset = static_cast<unsigned>(CAMERA_NUM_PIXELS_WIDTH/2) - x_centerBB;   //Can be negative! This orientation assumes CCW=+
+      double objectAngleOffset = CAMERA_HORIZONTAL_VIEW_ANGLE * (static_cast<double>(x_offset) / static_cast<double>(CAMERA_NUM_PIXELS_WIDTH));
 
-  // Avhishek - m_out is being used for printing and is declared at the top of the file
-  m_out << "   " << "Bounding Box (x,y):"
-        << "   Min = (" << xmin << ", " << ymin << ")"
-        << "   Max = (" << xmax << ", " << ymax << ")"
-        << "   Center = (" << x_centerBB << ", " << y_centerBB << ")" << std::endl;
-  m_out << "   In-image object angle offset = " << objectAngleOffset << " (rad)" << std::endl;
+      // Avhishek - m_out is being used for printing and is declared at the top of the file
+      m_out << "   " << "Bounding Box (x,y):"
+            << "   Min = (" << xmin << ", " << ymin << ")"
+            << "   Max = (" << xmax << ", " << ymax << ")"
+            << "   Center = (" << x_centerBB << ", " << y_centerBB << ")" << std::endl;
+      m_out << "   In-image object angle offset = " << objectAngleOffset << " (rad)" << std::endl;
+  }
 
+  else {
+    ROS_INFO_STREAM("No need for Bbox, plane segmentation is still working" );
+  }
 }
 
 
@@ -185,11 +195,14 @@ void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg)
 */
 void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud){
   ROS_INFO_STREAM("getting here plane extract");
+  // setting pause to false for wait for segmentation to complete
+  wait_now = 0;
+
   pcl::PointCloud<pcl::PointXYZ>::Ptr final_planeless_cloud(new pcl::PointCloud<pcl::PointXYZ>);
   copyPointCloud(*m_cloud, *final_planeless_cloud);
   
 
-        copyPointCloud(*m_cloud, *final_planeless_cloud);
+    copyPointCloud(*m_cloud, *final_planeless_cloud);
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_for_plane_extraction(new pcl::PointCloud<pcl::PointXYZ>);
     copyPointCloud(*m_cloud, *cloud_for_plane_extraction);
@@ -261,6 +274,8 @@ void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud){
     ss << "h_step" << printStepCount() << "_plane_" << planeCount << ".pcd";
     m_writer.write<pcl::PointXYZ>(ss.str(), *cloud_plane, false);
 
+
+
     ////////////
     //Calculate the plane normals - used to determine if the plane is a floor plane
 
@@ -283,7 +298,7 @@ void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud){
     pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(new pcl::PointCloud<pcl::Normal>);
 
     // Use all neighbors in a sphere of radius 3cm
-    ne.setRadiusSearch(0.03);
+    ne.setRadiusSearch(0.01); //0.03
     
     // Compute the features
     ne.compute(*cloud_normals);
@@ -332,7 +347,7 @@ void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud){
       ss << "i_step" << printStepCount(1) << "_floorless_cloud.pcd";
       m_writer.write<pcl::PointXYZ>(ss.str(), *cloud_minus_plane, false);
       
-      //Make this is our new cloud
+      // Make this is our new cloud
       copyPointCloud(*cloud_minus_plane, *final_planeless_cloud);
     }
 
@@ -354,11 +369,6 @@ void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud){
       break;
     }
   }
-    //std::cout << "Min-max after extracting plane:" << std::endl;
-  //printMinMax(final_planeless_cloud);
-  
-  //Copy this into the destination cloud
-//   copyPointCloud(*final_planeless_cloud, *destination);
 
   //Also, cache a copy of teh post-extracted plane, so we can restart from this point
   // again in the future
@@ -449,26 +459,15 @@ void extractObjectInBoundingBox(double cropPercentage)
   
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloudCrop(new pcl::PointCloud<pcl::PointXYZ>);
-  
-if (cloudHeight == 1)
-  {
-    testrobots::extractFrame<pcl::PointXYZ>(m_postPlaneExtractedCloud, cloudCrop,
+
+  // extract the BB frame 
+  testrobots::extractFrame<pcl::PointXYZ>(m_postPlaneExtractedCloud, cloudCrop,
                                               xmin + static_cast<unsigned>(x_delta * cropPercentage),
                                               xmax - static_cast<unsigned>(x_delta * cropPercentage),
                                               ymin + static_cast<unsigned>(y_delta * cropPercentage),
                                               ymax - static_cast<unsigned>(y_delta * cropPercentage),
                                               CAMERA_NUM_PIXELS_WIDTH, CAMERA_NUM_PIXELS_HEIGHT);
-  }
-  else
-  { 
 
-    // Otherwise we have an organized cloud, so use this version
-    testrobots::extractFrame<pcl::PointXYZ>(m_postPlaneExtractedCloud, cloudCrop,
-                                              xmin + static_cast<unsigned>(x_delta * cropPercentage),
-                                              xmax - static_cast<unsigned>(x_delta * cropPercentage),
-                                              ymin + static_cast<unsigned>(y_delta * cropPercentage),
-                                              ymax - static_cast<unsigned>(y_delta * cropPercentage));
-  }
   std::cout << "getting here after extract frame " << std::endl;
   // this will be used to save the extracted pointcloud as a pcd file
   std::stringstream ss;
@@ -615,6 +614,10 @@ void performEuclideanExtraction()
   }
   
   m_pipelineStepCount += 10;  
+
+  // settings pause to true so that bbox can continue
+  wait_now = 1;
+
 }
 
 
