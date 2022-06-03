@@ -4,6 +4,10 @@
 #include <convexHull.h>
 #include <map_writer.h>
 #include <string>
+#include <vector>
+#include<iostream>
+#include<algorithm>
+#include<stack>
 
 // ROS Topics
 #include <sensor_msgs/Image.h>
@@ -31,7 +35,10 @@
 #include <pcl/common/pca.h>
 #include <pcl/features/moment_of_inertia_estimation.h>
 // PCL - visualization
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 #include <pcl/visualization/pcl_visualizer.h>
+// #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/visualization/point_cloud_color_handlers.h>
 // std
 #include <sstream>
@@ -42,12 +49,9 @@
 #include <iostream>
 #include <vector>
 
-#include <testrobots/BoundingBox.h>
 
 static const std::string PCL_TOPIC = "/camera/depth/points";
-
 int wait_now = 1;
-
 const double normalThreshold = 0.99; // for simulations
 const double cropPercentage = 0.10;  // 0.00  to  0.20
 const double meanK = 50.0;          // 50.0  to  100.0
@@ -63,10 +67,13 @@ enum class Normal
   eY,
   eZ
 };
+struct Point2D {    //define points for 2d plane
+     double x, y;
+};
+
+
 const Normal normal = Normal::eY;
-
 pcl::PCDWriter m_writer;
-
 std::ofstream m_out;
 
 //Camera Specs
@@ -74,14 +81,12 @@ const unsigned CAMERA_NUM_PIXELS_WIDTH(1920);
 const unsigned CAMERA_NUM_PIXELS_HEIGHT(1080);
 const double CAMERA_HORIZONTAL_VIEW_ANGLE(1.19);
 
+//bounding box attributes
 unsigned xmin = 0;
 unsigned xmax = 0;
 unsigned ymin = 0;
 unsigned ymax = 0;
 
-struct Point2D {    //define points for 2d plane
-     double x, y;
-  };
 
 // PCL plane extraction - a hard threshold, especially for if something goes wrong or lots of small (insignificant) planes
 const unsigned MAX_PLANE_COUNT(8);
@@ -89,12 +94,14 @@ const double PLANE_EXTRACTION_CONTINUE_THRESHOLD(0.30); // While 30% of the orig
 unsigned m_pipelineStepCount =10; 
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr m_postPlaneExtractedCloud(new pcl::PointCloud<pcl::PointXYZ>); // this is the pointcloud that saves the final planeless cloud
+std::vector<Point2D> hullpoints;
+
 
 const double minThreshold = 0.97; 
+double poseAMCLx = 0.0;
+double poseAMCLy = 0.0;
+double poseAMCLw = 0.0;
 
-float poseAMCLx = 0;
-float poseAMCLy = 0;
-float poseAMCLw = 0;
 
 std::string printStepCount() //const std::string SegmentationPipeline::printStepCount() //const
 {
@@ -111,18 +118,18 @@ std::string printStepCount(unsigned addition) //const
 }
 
 
-std::vector<Point2D> findConvexHull(std::vector<Point2D> points);
-// function declarations
+
+// function declarations **********************************************************************************************
+void poseCallback(const geometry_msgs::PoseWithCovarianceConstPtr &pose_msg);
 void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg);
+void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud); // this will be the function that does plane extract and recieves a pointer
 void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg);
 void extractObjectInBoundingBox(double cropPercentage);
 void removeNaNs(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::PointXYZ>::Ptr dest);
 void removeOutliers(double meanK, double stddevMulThresh);
 void performEuclideanExtraction();
-std::vector<testrobots::Point2D> calcBoundingBoxInWorldCoords(bool visualizeBB, double camera_x, double camera_y, double camera_theta);
-
-
-void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud); // this will be the function that does plane extract and recieves a pointer
+void calcBoundingBoxInWorldCoords2(bool visualizeBB, double x, double y, double theta);
+//function callbacks*************************************************************************************************
 
 void poseCallback(const geometry_msgs::PoseWithCovarianceConstPtr &pose_msg){
     
@@ -421,10 +428,11 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     performEuclideanExtraction();
 
     bool visualizeBB = true;
-    // hullpoints = calcBoundingBoxInWorldCoords(visualizeBB,m_currentPose.x,
-    //                                                       m_currentPose.y,
-    //                                                       m_currentPose.yaw);
+    // hullpoints = calcBoundingBoxInWorldCoords(visualizeBB,poseAMCLx,
+    //                                                       poseAMCLy,
+    //                                                       poseAMCLw);
 
+    calcBoundingBoxInWorldCoords2(visualizeBB,poseAMCLx,poseAMCLy,poseAMCLw);
 
     // std::string pgmPath("./buildings/pureza/maps");
     // std::string yamlFilename("pureza.yaml");
@@ -436,6 +444,7 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     //         ROS_INFO_STREAM("Updated the map with long-term object successfully");
     //       else
     //         ROS_ERROR_STREAM("Failed to insert the object into the map");
+   
         
 }
 
@@ -632,161 +641,150 @@ void performEuclideanExtraction()
 
 
 
-// std::vector<testrobots::Point2D> calcBoundingBoxInWorldCoords(bool visualizeBB, double camera_x, double camera_y, double camera_theta)
-// {
-//   pcl::PointCloud<pcl::PointXYZ>::Ptr cloudSegmented = m_postPlaneExtractedCloud;
+void calcBoundingBoxInWorldCoords2(bool visualizeBB, double x, double y, double theta)
+{
+  typedef pcl::PointXYZ PointType;
   
-//   // Compute principal directions (equivalent to principal components / PCA)
-//   Eigen::Vector4f pcaCentroid;
-//   pcl::compute3DCentroid(*cloudSegmented, pcaCentroid);
+	pcl::PointCloud<PointType>::Ptr cloud = m_postPlaneExtractedCloud;
+ 
+	Eigen::Vector4f pcaCentroid;
+	pcl::compute3DCentroid(*cloud, pcaCentroid);
+	Eigen::Matrix3f covariance;
+	pcl::computeCovarianceMatrixNormalized(*cloud, pcaCentroid, covariance);
+	Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigen_solver(covariance, Eigen::ComputeEigenvectors);
+	Eigen::Matrix3f eigenVectorsPCA = eigen_solver.eigenvectors();
+	Eigen::Vector3f eigenValuesPCA = eigen_solver.eigenvalues();
+	eigenVectorsPCA.col(2) = eigenVectorsPCA.col(0).cross(eigenVectorsPCA.col(1)); //correct vertical between main directions
+	eigenVectorsPCA.col(0) = eigenVectorsPCA.col(1).cross(eigenVectorsPCA.col(2));
+	eigenVectorsPCA.col(1) = eigenVectorsPCA.col(2).cross(eigenVectorsPCA.col(0));
+ 
+	 std::cout << "Eigenvalue va(3x1):\n" << eigenValuesPCA << std::endl;
+	 std::cout << "Feature vector ve(3x3):\n" << eigenVectorsPCA << std::endl;
+	 std::cout << "centroid point (4x1):\n" << pcaCentroid << std::endl;
+	/*
+	 // Another way to calculate the eigenvalues ​​and eigenvectors of the point cloud covariance matrix: through the pca interface in PCL as follows
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloudPCAprojection (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PCA<pcl::PointXYZ> pca;
+	pca.setInputCloud(cloudSegmented);
+	pca.project(*cloudSegmented, *cloudPCAprojection);
+	 std::cerr << std::endl << "EigenVectors: "<< pca.getEigenVectors() << std::endl;//Calculate the feature vector
+	 std::cerr << std::endl << "EigenValues: "<< pca.getEigenValues() << std::endl;//Calculate characteristic values
+	*/
+	Eigen::Matrix4f tm = Eigen::Matrix4f::Identity();
+	Eigen::Matrix4f tm_inv = Eigen::Matrix4f::Identity();
+	tm.block<3, 3>(0, 0) = eigenVectorsPCA.transpose();   //R.
+	tm.block<3, 1>(0, 3) = -1.0f * (eigenVectorsPCA.transpose()) *(pcaCentroid.head<3>());//  -R*t
+	tm_inv = tm.inverse();
+ 
+	 std::cout << "Transformation matrix tm(4x4):\n" << tm << std::endl;
+	 std::cout << "inverter matrix tm'(4x4):\n" << tm_inv << std::endl;
+ 
+	pcl::PointCloud<PointType>::Ptr transformedCloud(new pcl::PointCloud<PointType>);
+	pcl::transformPointCloud(*cloud, *transformedCloud, tm);
+ 
+	PointType min_p1, max_p1;
+	Eigen::Vector3f c1, c;
+	pcl::getMinMax3D(*transformedCloud, min_p1, max_p1);
+	c1 = 0.5f*(min_p1.getVector3fMap() + max_p1.getVector3fMap());
+ 
+	 std::cout << "Centre c1(3x1):\n" << c1 << std::endl;
+ 
+	Eigen::Affine3f tm_inv_aff(tm_inv);
+	pcl::transformPoint(c1, c, tm_inv_aff);
+ 
+	Eigen::Vector3f whd, whd1;
+	whd1 = max_p1.getVector3fMap() - min_p1.getVector3fMap();
+	whd = whd1;
+	 float sc1 = (whd1(0) + whd1(1) + whd1(2)) / 3; //The average scale of the point cloud, used to set the size of the main direction arrow
+ 
+	std::cout << "width1=" << whd1(0) << std::endl;
+	std::cout << "heght1=" << whd1(1) << std::endl;
+	std::cout << "depth1=" << whd1(2) << std::endl;
+	std::cout << "scale1=" << sc1 << std::endl;
+ 
+	const Eigen::Quaternionf bboxQ1(Eigen::Quaternionf::Identity());
+	const Eigen::Vector3f    bboxT1(c1);
+ 
+	const Eigen::Quaternionf bboxQ(tm_inv.block<3, 3>(0, 0));
+	const Eigen::Vector3f    bboxT(c);
+ 
+ 
+	 //The main direction of the point cloud transformed to the origin
+	PointType op;
+	op.x = 0.0;
+	op.y = 0.0;
+	op.z = 0.0;
+	Eigen::Vector3f px, py, pz;
+	Eigen::Affine3f tm_aff(tm);
+	pcl::transformVector(eigenVectorsPCA.col(0), px, tm_aff);
+	pcl::transformVector(eigenVectorsPCA.col(1), py, tm_aff);
+	pcl::transformVector(eigenVectorsPCA.col(2), pz, tm_aff);
+	PointType pcaX;
+	pcaX.x = sc1 * px(0);
+	pcaX.y = sc1 * px(1);
+	pcaX.z = sc1 * px(2);
+	PointType pcaY;
+	pcaY.x = sc1 * py(0);
+	pcaY.y = sc1 * py(1);
+	pcaY.z = sc1 * py(2);
+	PointType pcaZ;
+	pcaZ.x = sc1 * pz(0);
+	pcaZ.y = sc1 * pz(1);
+	pcaZ.z = sc1 * pz(2);
+ 
+ 
+	 //The main direction of the initial point cloud
+	PointType cp;
+	cp.x = pcaCentroid(0);
+	cp.y = pcaCentroid(1);
+	cp.z = pcaCentroid(2);
+	PointType pcX;
+	pcX.x = sc1 * eigenVectorsPCA(0, 0) + cp.x;
+	pcX.y = sc1 * eigenVectorsPCA(1, 0) + cp.y;
+	pcX.z = sc1 * eigenVectorsPCA(2, 0) + cp.z;
+	PointType pcY;
+	pcY.x = sc1 * eigenVectorsPCA(0, 1) + cp.x;
+	pcY.y = sc1 * eigenVectorsPCA(1, 1) + cp.y;
+	pcY.z = sc1 * eigenVectorsPCA(2, 1) + cp.z;
+	PointType pcZ;
+	pcZ.x = sc1 * eigenVectorsPCA(0, 2) + cp.x;
+	pcZ.y = sc1 * eigenVectorsPCA(1, 2) + cp.y;
+	pcZ.z = sc1 * eigenVectorsPCA(2, 2) + cp.z;
+ 
+ 
+	// visualization
+	// pcl::visualization::PCLVisualizer viewer;
+ 
+	//  pcl::visualization::PointCloudColorHandlerCustom<PointType> tc_handler(transformedCloud, 0, 255, 0); //Point cloud related to the origin
+	// viewer.addPointCloud(transformedCloud, tc_handler, "transformCloud");
+	// viewer.addCube(bboxT1, bboxQ1, whd1(0), whd1(1), whd1(2), "bbox1");
+	// viewer.setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, "bbox1");
+	// viewer.setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 1.0, 0.0, "bbox1");
+ 
+	// viewer.addArrow(pcaX, op, 1.0, 0.0, 0.0, false, "arrow_X");
+	// viewer.addArrow(pcaY, op, 0.0, 1.0, 0.0, false, "arrow_Y");
+	// viewer.addArrow(pcaZ, op, 0.0, 0.0, 1.0, false, "arrow_Z");
 
-
-//   //Two methods: compute Eigen vectors, or use a PCA object
-
-//   //Method 1
-//   Eigen::Matrix3f covariance;
-//   computeCovarianceMatrixNormalized(*cloudSegmented, pcaCentroid, covariance);
-//   Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigen_solver(covariance, Eigen::ComputeEigenvectors);
-//   Eigen::Matrix3f eigenVectorsPCA = eigen_solver.eigenvectors();
-//   //The following line is necessary for proper orientation in some cases.
-//   //The numbers come out the same without it, but the signs are
-//   //   different and the box doesn't get correctly oriented in some cases.
-//    eigenVectorsPCA.col(2) = eigenVectorsPCA.col(0).cross(eigenVectorsPCA.col(1));  
+  // /*  
+	//  pcl::visualization::PointCloudColorHandlerCustom<PointType> color_handler(cloud, 255, 0, 0); //The initial point cloud input is related
+	// viewer.addPointCloud(cloud, color_handler, "cloud");
+	// viewer.addCube(bboxT, bboxQ, whd(0), whd(1), whd(2), "bbox");
+	// viewer.setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, "bbox");
+	// viewer.setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 0.0, 0.0, "bbox");
+ 
+	// viewer.addArrow(pcX, cp, 1.0, 0.0, 0.0, false, "arrow_x");
+	// viewer.addArrow(pcY, cp, 0.0, 1.0, 0.0, false, "arrow_y");
+	// viewer.addArrow(pcZ, cp, 0.0, 0.0, 1.0, false, "arrow_z");
+  // */
   
-// /*
-//    //Method 2
-//    // Note that getting the eigenvectors can also be obtained via the PCL PCA interface with something like:
-//    pcl::PointCloud<pcl::PointXYZ>::Ptr cloudPCAprojection (new pcl::PointCloud<pcl::PointXYZ>);
-//    pcl::PCA<pcl::PointXYZ> pca;
-//    pca.setInputCloud(cloudSegmented);
-//    pca.project(*cloudSegmented, *cloudPCAprojection);
-//    Eigen::Matrix3f eigenVectorsPCA = pca.getEigenVectors();
-// */
+	// viewer.addCoordinateSystem(0.5f*sc1);
+	// viewer.setBackgroundColor(1.0, 1.0, 1.0);
+	// while (!viewer.wasStopped())
+	// {
+	// 	viewer.spinOnce(100);
+	// }
+}
 
-
-  
-//   // Transform the original cloud to the origin where the principal components correspond to the axes.
-//   Eigen::Matrix4f projectionTransform(Eigen::Matrix4f::Identity());
-//   projectionTransform.block<3,3>(0,0) = eigenVectorsPCA.transpose();
-//   projectionTransform.block<3,1>(0,3) = -1.f * (projectionTransform.block<3,3>(0,0) * pcaCentroid.head<3>());
-//   pcl::PointCloud<pcl::PointXYZ>::Ptr cloudPointsProjected(new pcl::PointCloud<pcl::PointXYZ>);
-//   pcl::transformPointCloud(*cloudSegmented, *cloudPointsProjected, projectionTransform);
-//   // Get the minimum and maximum points of the transformed cloud.
-//   pcl::PointXYZ minPoint, maxPoint;
-//   pcl::getMinMax3D(*cloudPointsProjected, minPoint, maxPoint);
-//   const Eigen::Vector3f meanDiagonal = 0.5f*(maxPoint.getVector3fMap() + minPoint.getVector3fMap());
-
-//   // For the transformation back to world coordinates
-//   const Eigen::Quaternionf bboxQuaternion(eigenVectorsPCA); //Quaternions are a way to do rotations https://www.youtube.com/watch?v=mHVwd8gYLnI
-//   const Eigen::Vector3f bboxTransform = eigenVectorsPCA * meanDiagonal + pcaCentroid.head<3>();
-
-//   std::stringstream ss;
-//   ss <<  "world_step" << printStepCount() << "_PCA.pcd";
-//   m_writer.write<pcl::PointXYZ>(ss.str(), *cloudSegmented, false);
-
-//   std::cout << "PCA:" << std::endl;
-//   std::cout << eigenVectorsPCA << std::endl;
-//   std::cout << "Bounding box transform:" << std::endl;
-//   std::cout << bboxTransform << std::endl;
-
-//   Eigen::Vector3f p1(minPoint.x, minPoint.y, minPoint.z);
-//   Eigen::Vector3f p2(minPoint.x, minPoint.y, maxPoint.z);
-//   Eigen::Vector3f p3(maxPoint.x, minPoint.y, maxPoint.z);
-//   Eigen::Vector3f p4(maxPoint.x, minPoint.y, minPoint.z);
-//   Eigen::Vector3f p5(minPoint.x, maxPoint.y, minPoint.z);
-//   Eigen::Vector3f p6(minPoint.x, maxPoint.y, maxPoint.z);
-//   Eigen::Vector3f p7(maxPoint.x, maxPoint.y, maxPoint.z);
-//   Eigen::Vector3f p8(maxPoint.x, maxPoint.y, minPoint.z);
-
-//   std::cout << "Points - untransformed" << std::endl;
-//   std::cout << "P1" << std::endl << p1  << std::endl;
-//   std::cout << "P2" << std::endl << p2  << std::endl;
-//   std::cout << "P3" << std::endl << p3  << std::endl;
-//   std::cout << "P4" << std::endl << p4  << std::endl;
-//   std::cout << "P5" << std::endl << p5  << std::endl;
-//   std::cout << "P6" << std::endl << p6  << std::endl;
-//   std::cout << "P7" << std::endl << p7  << std::endl;
-//   std::cout << "P8" << std::endl << p8  << std::endl;
-
-//   // Transform back to world coordinates
-//   Eigen::Vector3f pr1 = bboxQuaternion * p1 + bboxTransform;
-//   Eigen::Vector3f pr2 = bboxQuaternion * p2 + bboxTransform;
-//   Eigen::Vector3f pr3 = bboxQuaternion * p3 + bboxTransform;
-//   Eigen::Vector3f pr4 = bboxQuaternion * p4 + bboxTransform;
-//   Eigen::Vector3f pr5 = bboxQuaternion * p5 + bboxTransform;
-//   Eigen::Vector3f pr6 = bboxQuaternion * p6 + bboxTransform;
-//   Eigen::Vector3f pr7 = bboxQuaternion * p7 + bboxTransform;
-//   Eigen::Vector3f pr8 = bboxQuaternion * p8 + bboxTransform;
-
-//   std::cout << std::endl << std::endl;
-//   std::cout << "Points with rotation/translation" << std::endl;
-//   std::cout << "P1" << std::endl << pr1  << std::endl;
-//   std::cout << "P2" << std::endl << pr2  << std::endl;
-//   std::cout << "P3" << std::endl << pr3  << std::endl;
-//   std::cout << "P4" << std::endl << pr4  << std::endl;
-//   std::cout << "P5" << std::endl << pr5  << std::endl;
-//   std::cout << "P6" << std::endl << pr6  << std::endl;
-//   std::cout << "P7" << std::endl << pr7  << std::endl;
-//   std::cout << "P8" << std::endl << pr8  << std::endl;
-
-//   //Project onto flat 2D space (in this case, x-z of the camera view)
-//   std::vector<Point2D> points;
-//   points.push_back({pr1[0], pr1[2]});
-//   points.push_back({pr2[0], pr2[2]});
-//   points.push_back({pr3[0], pr3[2]});
-//   points.push_back({pr4[0], pr4[2]});
-//   points.push_back({pr5[0], pr5[2]});
-//   points.push_back({pr6[0], pr6[2]});
-//   points.push_back({pr7[0], pr7[2]});
-//   points.push_back({pr8[0], pr8[2]});
-//   std::cout << "Input points are: " << std::endl;
-//   std::for_each(points.begin(), points.end(),
-//                 [](Point2D point) {std::cout << point.x << ", " << point.y << std::endl;});
-  
-//   std::vector<Point2D> resultLocal = testrobots::findConvexHull(points);
-//   std::cout << "Boundary points of convex hull (local) are: "<<endl;
-//   std::for_each(resultLocal.begin(), resultLocal.end(),
-//                 [](Point2D point) {std::cout << point.x << ", " << point.y << std::endl;});
-
-//   //Transform these into global coordinates
-//   std::vector<Point2D> resultGlobal;
-//   for(auto pt : resultLocal) {
-//     //Based on where the camera is and where it is looking. Note that camera local coords are:
-//     //  X = perpendicular to the right, Y = in direction of view (out the front)
-//     double delta_x =        sin(camera_theta) * pt.x + cos(camera_theta) * pt.y;
-//     double delta_y = -1.0 * cos(camera_theta) * pt.x + sin(camera_theta) * pt.y;
-//     resultGlobal.push_back(Point2D{camera_x + delta_x, camera_y + delta_y});
-//   }
-//   assert(resultLocal.size() == resultGlobal.size());
-//   std::cout << "Boundary points of convex hull (global) are: "<<endl;
-//   std::for_each(resultGlobal.begin(), resultGlobal.end(),
-//                 [](Point2D point) {std::cout << point.x << ", " << point.y << std::endl;});
-
-//   //Just for visulizing / debugging
-//   if(visualizeBB) {
-//     // This viewer has 4 windows, but is only showing images in one of them as written here.
-//     int argc = 1;
-//     char** argv;
-//     pcl::visualization::PCLVisualizer *visu = new pcl::visualization::PCLVisualizer(argc, argv, "PlyViewer");
-//     int mesh_vp_1, mesh_vp_2, mesh_vp_3, mesh_vp_4;
-//     //visu->createViewPort(0.0, 0.5, 0.5, 1.0,  mesh_vp_1);
-//     //visu->createViewPort(0.5, 0.5, 1.0, 1.0,  mesh_vp_2);
-//     //visu->createViewPort(0.0, 0, 0.5, 0.5,  mesh_vp_3);
-//     //visu->createViewPort(0.5, 0, 1.0, 0.5, mesh_vp_4);
-//     //visu->addPointCloud(cloudSegmented, ColorHandlerXYZ(cloudSegmented, 30, 144, 255), "bboxedCloud", mesh_vp_3);
-    
-//     visu->createViewPort(0.0, 0.0, 2.0, 2.0, mesh_vp_3);
-//     visu->addPointCloud(cloudSegmented, "bboxedCloud", mesh_vp_3);
-//     visu->addCube(bboxTransform, bboxQuaternion, maxPoint.x - minPoint.x, maxPoint.y - minPoint.y, maxPoint.z - minPoint.z, "bbox", mesh_vp_3);
-    
-//     while(!visu->wasStopped())
-//     {
-//       visu->spinOnce();
-//     }
-//   }
-
-//   return resultGlobal;
-// }
 
 
 int main(int argc, char **argv)

@@ -1,10 +1,10 @@
 
-#ifndef UNL_ROBOTICS_CONVEXHULL_H
-#define UNL_ROBOTICS_CONVEXHULL_H
+#ifndef TESTROBOTS_CONVEXHULL_H
+#define TESTROBOTS_CONVEXHULL_H
 
 #include<vector>
 
-namespace UNL_Robotics {
+namespace testrobots {
 
   struct Point2D {    //define points for 2d plane
      double x, y;

@@ -9,9 +9,9 @@
 #include<stack>
 
 using namespace std;
-using namespace UNL_Robotics;
+using namespace testrobot;
 
-Point2D p0; //used to another two points
+Point2Dp0 ; //used to another two points
 
 namespace {
   
@@ -53,7 +53,7 @@ namespace {
 
 ////////////
 
-std::vector<Point2D> UNL_Robotics::findConvexHull(std::vector<UNL_Robotics::Point2D> inputPoints)
+std::vector<Point2D> findConvexHull(std::vector<Point2D> inputPoints)
 {
   if(inputPoints.size() < 3) {
 
@@ -73,7 +73,7 @@ std::vector<Point2D> UNL_Robotics::findConvexHull(std::vector<UNL_Robotics::Poin
       min = i;
     }
    }
-   swap(inputPoints[0], inputPoints[min]);    //swap min point to 0th location
+   std::swap(inputPoints[0], inputPoints[min]);    //swap min point to 0th location
    p0 = inputPoints[0];
    qsort(&inputPoints[1], numPoints-1, sizeof(Point2D), comp);    //sort points from 1 place to end
    int arrSize = 1;    //used to locate items in modified array

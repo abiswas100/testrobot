@@ -30,8 +30,8 @@ void testrobots::extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sour
   
   double nan = std::nan("");
   PointType nanPt(nan, nan, nan);
-  for(unsigned row =0; row < imageHeight; ++row) {
-    for(unsigned col =0; col < imageWidth; ++col) {
+  for(unsigned row =0; row < imageWidth; ++row) { //imageHeight
+    for(unsigned col =0; col < imageHeight; ++col) { //imageWidth
       unsigned index = row * imageWidth  + col;
       if((col < xmin) || (xmax < col) || (row < ymin) || (ymax < row))  {
          targetCloud->operator[](index) = nanPt;
