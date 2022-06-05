@@ -53,7 +53,7 @@ namespace {
 
 ////////////
 
-std::vector<Point2D> UNL_Robotics::findConvexHull(std::vector<UNL_Robotics::Point2D> inputPoints)
+std::vector<UNL_Robotics::Point2D> UNL_Robotics::findConvexHull(std::vector<UNL_Robotics::Point2D> inputPoints)
 {
   if(inputPoints.size() < 3) {
 
