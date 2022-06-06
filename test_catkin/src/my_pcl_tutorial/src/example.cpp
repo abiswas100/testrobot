@@ -26,8 +26,7 @@ ros::Publisher plane_segmented;
 ros::Publisher except_plane;
 std::vector<ros::Publisher> cluster_vector;
 
-void 
-cloud_cb (const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
+void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
 {
   //Container: original data
   pcl::PCLPointCloud2::Ptr inputCloud (new pcl::PCLPointCloud2);

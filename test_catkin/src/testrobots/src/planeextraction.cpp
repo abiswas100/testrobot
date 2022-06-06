@@ -122,7 +122,8 @@ std::string printStepCount(unsigned addition) //const
 // function declarations **********************************************************************************************
 void poseCallback(const geometry_msgs::PoseWithCovarianceConstPtr &pose_msg);
 void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg);
-void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud); // this will be the function that does plane extract and recieves a pointer
+// mcloud is replacing m_postPlaneExtractedCloud,  so change it back before use or perish
+void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud); // this will be the function that does plane extract and recieves a pointer 
 void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg);
 void extractObjectInBoundingBox(double cropPercentage);
 void removeNaNs(pcl::PointCloud<pcl::PointXYZ>::Ptr source, pcl::PointCloud<pcl::PointXYZ>::Ptr dest);
@@ -138,16 +139,17 @@ void poseCallback(const geometry_msgs::PoseWithCovarianceConstPtr &pose_msg){
     poseAMCLw = pose_msg->pose.orientation.w;
 
 }
+
 void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg)
 { 
   // check the value of pause, if plane extraction is working then ignore Bbox messages 
   if(wait_now == 1){ 
-      ROS_INFO("class: %s", msg->Class.c_str());  
-      ROS_INFO("%f", msg->probability);
-      ROS_INFO("%ld", msg->xmin);
-      ROS_INFO("%ld", msg->xmax);
-      ROS_INFO("%ld", msg->ymin);
-      ROS_INFO("%ld", msg->xmax);
+      // ROS_INFO("class: %s", msg->Class.c_str());  
+      // ROS_INFO("%f", msg->probability);
+      // ROS_INFO("%ld", msg->xmin);
+      // ROS_INFO("%ld", msg->xmax);
+      // ROS_INFO("%ld", msg->ymin);
+      // ROS_INFO("%ld", msg->xmax);
 
 
 
@@ -157,30 +159,30 @@ void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg)
       ymin = msg->ymin;
       ymax = msg->ymax;
 
-      unsigned x_delta = xmax - xmin;
-      unsigned y_delta = ymax - ymin; 
-      ROS_INFO_STREAM("  " << objectName  << "  -  Probability " << std::setprecision(4) << (msg->probability*100) << "%" ); // not needed 
-      ROS_INFO_STREAM("    " << "BB Min (x,y) = (" << xmin << ", " << ymin << ")" );
-      ROS_INFO_STREAM("    " << "BB Max (x,y) = (" << xmax << ", " << ymax << ")" );
+      // unsigned x_delta = xmax - xmin;
+      // unsigned y_delta = ymax - ymin; 
+      // ROS_INFO_STREAM("  " << objectName  << "  -  Probability " << std::setprecision(4) << (msg->probability*100) << "%" ); // not needed 
+      // ROS_INFO_STREAM("    " << "BB Min (x,y) = (" << xmin << ", " << ymin << ")" );
+      // ROS_INFO_STREAM("    " << "BB Max (x,y) = (" << xmax << ", " << ymax << ")" );
       // not needed ************
-      std::cout << "*) Object type:  " << objectName << std::endl;
-      std::cout << "   Probability  " << std::setprecision(4) << (msg->probability*100.0) << "%" << std::endl;
+      // std::cout << "*) Object type:  " << objectName << std::endl;
+      // std::cout << "   Probability  " << std::setprecision(4) << (msg->probability*100.0) << "%" << std::endl;
     //*******************
 
     //   // Avhishek - Don't know why  this is being done what is the use of calculating objectAngleOffset
 
       //Calculate the angle offset of the picture relative to the center of the view port
-      unsigned x_centerBB = xmin + static_cast<unsigned>(x_delta/2);
-      unsigned y_centerBB = ymin + static_cast<unsigned>(y_delta/2);
-      int x_offset = static_cast<unsigned>(CAMERA_NUM_PIXELS_WIDTH/2) - x_centerBB;   //Can be negative! This orientation assumes CCW=+
-      double objectAngleOffset = CAMERA_HORIZONTAL_VIEW_ANGLE * (static_cast<double>(x_offset) / static_cast<double>(CAMERA_NUM_PIXELS_WIDTH));
+      // unsigned x_centerBB = xmin + static_cast<unsigned>(x_delta/2);
+      // unsigned y_centerBB = ymin + static_cast<unsigned>(y_delta/2);
+      // int x_offset = static_cast<unsigned>(CAMERA_NUM_PIXELS_WIDTH/2) - x_centerBB;   //Can be negative! This orientation assumes CCW=+
+      // double objectAngleOffset = CAMERA_HORIZONTAL_VIEW_ANGLE * (static_cast<double>(x_offset) / static_cast<double>(CAMERA_NUM_PIXELS_WIDTH));
 
       // Avhishek - m_out is being used for printing and is declared at the top of the file
-      m_out << "   " << "Bounding Box (x,y):"
-            << "   Min = (" << xmin << ", " << ymin << ")"
-            << "   Max = (" << xmax << ", " << ymax << ")"
-            << "   Center = (" << x_centerBB << ", " << y_centerBB << ")" << std::endl;
-      m_out << "   In-image object angle offset = " << objectAngleOffset << " (rad)" << std::endl;
+      // m_out << "   " << "Bounding Box (x,y):"
+      //       << "   Min = (" << xmin << ", " << ymin << ")"
+      //       << "   Max = (" << xmax << ", " << ymax << ")"
+      //       << "   Center = (" << x_centerBB << ", " << y_centerBB << ")" << std::endl;
+      // m_out << "   In-image object angle offset = " << objectAngleOffset << " (rad)" << std::endl;
   }
 
   else {
@@ -407,6 +409,19 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     pcl::PointCloud<pcl::PointXYZ>::Ptr final_planeless_cloud(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromPCLPointCloud2(pcl_pc2,*m_cloud);
 
+    // added PCD saving code 
+    
+    std::cout << xmax << std::endl;
+    std::cout << xmin << std::endl;
+    std::cout << ymax << std::endl;
+    std::cout << ymin << std::endl;
+    // this will be used to save the extracted pointcloud as a pcd file
+    std::stringstream ss;
+    ss << "_extractBBcrop"  ".pcd";
+    m_writer.write<pcl::PointXYZ>(ss.str(), *m_cloud, false);
+
+    exit(1);
+
     /*
       Avhishek - all this below code is now in plane extract, run the code and remove things from below, this is our driver code 
 
@@ -419,20 +434,20 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     */
 
     
-    planeextract(m_cloud);
+    // planeextract(m_cloud);
 
-    extractObjectInBoundingBox(cropPercentage);
+    // extractObjectInBoundingBox(cropPercentage);
 
-    removeOutliers(meanK,  stddevMulThresh);
+    // removeOutliers(meanK,  stddevMulThresh);
 
-    performEuclideanExtraction();
+    // performEuclideanExtraction();
 
-    bool visualizeBB = true;
-    // hullpoints = calcBoundingBoxInWorldCoords(visualizeBB,poseAMCLx,
-    //                                                       poseAMCLy,
-    //                                                       poseAMCLw);
+    // bool visualizeBB = true;
+    // // hullpoints = calcBoundingBoxInWorldCoords(visualizeBB,poseAMCLx,
+    // //                                                       poseAMCLy,
+    // //                                                       poseAMCLw);
 
-    calcBoundingBoxInWorldCoords2(visualizeBB,poseAMCLx,poseAMCLy,poseAMCLw);
+    // calcBoundingBoxInWorldCoords2(visualizeBB,poseAMCLx,poseAMCLy,poseAMCLw);
 
     // std::string pgmPath("./buildings/pureza/maps");
     // std::string yamlFilename("pureza.yaml");
@@ -798,7 +813,7 @@ int main(int argc, char **argv)
 
   ros::Subscriber BBsub = n.subscribe("/BBox", 10, BBoxCallback);
 
-  ros::Subscriber current_pose = n.subscribe("/amcl_pose", 10, poseCallback);
+  // ros::Subscriber current_pose = n.subscribe("/amcl_pose", 10, poseCallback);
 
   ros::spin();
 
