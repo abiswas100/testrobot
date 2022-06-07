@@ -417,7 +417,7 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     std::cout << ymin << std::endl;
     // this will be used to save the extracted pointcloud as a pcd file
     std::stringstream ss;
-    ss << "_extractBBcrop"  ".pcd";
+    ss << "_extractBBcrop"<<".pcd";
     m_writer.write<pcl::PointXYZ>(ss.str(), *m_cloud, false);
 
     exit(1);
