@@ -110,14 +110,7 @@ void sampling_passthrough(){
      vg.filter (*downsampled_pcl2);
      ROS_INFO_STREAM("downsampled data size: " << downsampled_pcl2->data.size());
 
-     //publish: voxel grid filtering result
-     //sensor_msgs::PointCloud2 downsampled_ros;
-     //pcl_conversions::fromPCL(*downsampled_pcl2, downsampled_ros);
-    
-    
-    // voxel_filtered.publish (downsampled_ros);
-
-     //converstion from pcl pointcloud2 to pcl::PointCloud<pcl::PointXYZ>
+  
      pcl::PointCloud<pcl::PointXYZ>::Ptr downsampled_pclXYZ (new pcl::PointCloud<pcl::PointXYZ>);
      pcl::fromPCLPointCloud2(*downsampled_pcl2, *downsampled_pclXYZ);
      
@@ -140,7 +133,7 @@ void sampling_passthrough(){
      pcl::toPCLPointCloud2(*passfiltered_pclXYZ, passfiltered_pcl2);
      pcl_conversions::fromPCL(passfiltered_pcl2, passfiltered_ros);
      std::stringstream ss;
-     ss << "downsampled_pcd"<<".pcd";
+     ss << "downsampled_pcd_both"<<".pcd";
      m_writer.write<pcl::PointXYZ>(ss.str(), *passfiltered_pclXYZ, false);     
      
      //passthrough_filtered.publish (passfiltered_ros);

@@ -112,7 +112,7 @@ void sampling_PointCloud()//const sensor_msgs::PointCloud2ConstPtr& cloud_msg
      sensor_msgs::PointCloud2 downsampled_ros;
      pcl_conversions::fromPCL(*downsampled_pcl2, downsampled_ros);
      std::stringstream ss;
-     ss << "downsampled_pcd"<<".pcd";
+     ss << "downsampled_pcd_voxel"<<".pcd";
     
     // voxel_filtered.publish (downsampled_ros);
 
