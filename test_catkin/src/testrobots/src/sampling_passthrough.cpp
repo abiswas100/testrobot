@@ -73,17 +73,21 @@
 #include <pcl/segmentation/extract_clusters.h>
 #include <boost/lexical_cast.hpp>
 
+//calculate time
+#include <chrono>
+using namespace std::chrono;
+
 ros::Publisher passthrough_filtered;
+pcl::PCDWriter m_writer;
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void sampling_passthrough(){
 
     //creates a PointCloud<PointXYZ> boost shared pointer and initializes it.
-     std::cout<< "1"<<std::endl;
+     
      pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); 
-     std::cout<< "2"<<std::endl;
+     std::cout<< "Loading pcd data..."<<std::endl;
      pcl::io::loadPCDFile<pcl::PointXYZ> ("/home/apramani/testrobot/test_catkin/src/testrobots/src/PointCloud.pcd", *cloud); //loads the PointCloud data from disk 
-     std::cout<< "3"<<std::endl;
-
+     
      std::cout << "Loaded "
             << cloud->width * cloud->height
             << " data points from PointCloud.pcd with the following fields: "
@@ -91,9 +95,77 @@ void sampling_passthrough(){
 
    
      
-     pcl::PCLPointCloud2::Ptr inputCloud (new pcl::PCLPointCloud2);
-     pcl::toPCLPointCloud2(*cloud, *inputCloud);
-     pcl::PCLPointCloud2::Ptr downsampled_pcl2 (new pcl::PCLPointCloud2); //Container: down sampled pointcloud2
+    //  pcl::PCLPointCloud2::Ptr inputCloud (new pcl::PCLPointCloud2);
+    //  pcl::toPCLPointCloud2(*cloud, *inputCloud);
+    //  pcl::PCLPointCloud2::Ptr downsampled_pcl2 (new pcl::PCLPointCloud2); //Container: down sampled pointcloud2
 
+    //   //filter setup and run
+    //  pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
+    //  std::cout<< "Filtering point cloud .."<<std::endl;
+    //  vg.setInputCloud (inputCloud);
+    //  vg.setLeafSize (0.05, 0.05, 0.0);
+    //  vg.filter (*downsampled_pcl2);
+    //  ROS_INFO_STREAM("downsampled data size: " << downsampled_pcl2->data.size());
+
+    //  //publish: voxel grid filtering result
+    //  //sensor_msgs::PointCloud2 downsampled_ros;
+    //  //pcl_conversions::fromPCL(*downsampled_pcl2, downsampled_ros);
+    
+    
+    // // voxel_filtered.publish (downsampled_ros);
+
+    //  //converstion from pcl pointcloud2 to pcl::PointCloud<pcl::PointXYZ>
+    //  pcl::PointCloud<pcl::PointXYZ>::Ptr downsampled_pclXYZ (new pcl::PointCloud<pcl::PointXYZ>);
+    //  pcl::fromPCLPointCloud2(*downsampled_pcl2, *downsampled_pclXYZ);
+     
+
+     pcl::PointCloud<pcl::PointXYZ>::Ptr passfiltered_pclXYZ (new pcl::PointCloud<pcl::PointXYZ>);//container after filtering
+     pcl::PassThrough<pcl::PointXYZ> pass_filter;
+
+     
+
+     //set up passhtrough filter
+      std::cout<< "Passthorugh filter running .."<<std::endl;
+     pass_filter.setInputCloud (cloud);
+     pass_filter.setFilterLimits (-1, 2);
+     pass_filter.setFilterLimitsNegative (true);
+     pass_filter.filter (*passfiltered_pclXYZ);
+     ROS_INFO_STREAM("downsampled data size: " << passfiltered_pclXYZ.data.size());
+     
+    
+
+     pcl::PCLPointCloud2 passfiltered_pcl2;
+     sensor_msgs::PointCloud2 passfiltered_ros;
+     pcl::toPCLPointCloud2(*passfiltered_pclXYZ, passfiltered_pcl2);
+     pcl_conversions::fromPCL(passfiltered_pcl2, passfiltered_ros);
+     
+     std::stringstream ss;
+     ss << "downsampled_pcd"<<".pcd";
+     m_writer.write<pcl::PointXYZ>(ss.str(), *passfiltered_pclXYZ, false);     
+     
+     //passthrough_filtered.publish (passfiltered_ros);
+
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+//main function
+
+int main(int argc, char **argv)
+{
+   
+    ros::init (argc, argv, "my_pcl_tutorial");
+    ros::NodeHandle nh;
+    auto start = high_resolution_clock::now();
+    sampling_passthrough ();
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(stop - start);
+    cout << "computation time: "<< duration.count() << "ms" << endl;
+    
+
+  //ros::spin();
+  return 0;
 
 }
