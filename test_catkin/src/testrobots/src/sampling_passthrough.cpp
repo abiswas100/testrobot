@@ -105,7 +105,7 @@ void sampling_passthrough(){
      std::cout<< "Passthorugh filter running .."<<std::endl;
      auto start2 = high_resolution_clock::now();
      pass_filter.setInputCloud (cloud);
-     pass_filter.setFilterLimits (-1, 2);
+     pass_filter.setFilterLimits (0.0, 1.0);
      pass_filter.setFilterLimitsNegative (true);
      pass_filter.filter (*passfiltered_pclXYZ);
      auto stop2 = high_resolution_clock::now();
@@ -154,6 +154,7 @@ void sampling_passthrough(){
     if(inliers->indices.size () == 0) {
       std::cerr << "Could not estimate a planar model for the given dataset." << std::endl;
     }
+
 
     pcl::ExtractIndices<pcl::PointXYZ> extract;
     extract.setInputCloud(cloud);
