@@ -119,6 +119,36 @@ void sampling_passthrough(){
      m_writer.write<pcl::PointXYZ>(ss.str(), *passfiltered_pclXYZ, false);     
     
 
+    // Avhishek - adding Plane segmentation 
+
+    //  container: plane pcl pointXYZ
+    
+    pcl::PointCloud<pcl::PointXYZ>::Ptr plane_pclXYZ (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+    pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+    //segmentation setup
+    pcl::SACSegmentation<pcl::PointXYZ> seg;
+    seg.setOptimizeCoefficients (true);
+    seg.setModelType(pcl::SACMODEL_PLANE);
+    seg.setMethodType(pcl::SAC_RANSAC);
+    seg.setMaxIterations (100);
+    seg.setDistanceThreshold(0.03);
+    seg.setInputCloud(downsampled_pclXYZ);
+    seg.segment(*inliers, *coefficients);
+
+    if(inliers->indices.size () == 0) {
+      std::cerr << "Could not estimate a planar model for the given dataset." << std::endl;
+    }
+
+    pcl::ExtractIndices<pcl::PointXYZ> extract;
+    extract.setInputCloud(downsampled_pclXYZ);
+    extract.setIndices(inliers);
+    extract.setNegative(true);
+    extract.filter(*plane_pclXYZ);
+
+    ss << "planeextracted_voxel"<<".pcd";
+    m_writer.write<pcl::PointXYZ>(ss.str(), *plane_pclXYZ, false);
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
