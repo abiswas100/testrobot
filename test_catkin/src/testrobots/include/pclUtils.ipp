@@ -2,7 +2,7 @@
 //Implementation file
 
 #include <cmath>
-
+#include <iostream>
 
 
 template<typename PointType>
@@ -34,6 +34,7 @@ void testrobots::extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sour
     for(unsigned col =0; col < imageHeight; ++col) { //imageWidth
       unsigned index = row * imageWidth  + col;
       if((col < xmin) || (xmax < col) || (row < ymin) || (ymax < row))  {
+         std::cout << "here - " << index <<targetCloud->operator[](index)<< std::endl;
          targetCloud->operator[](index) = nanPt;
       }
     }
