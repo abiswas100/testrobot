@@ -87,8 +87,12 @@ void sampling_passthrough(){
      
      pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); 
      std::cout<< "Loading pcd data..."<<std::endl;
+     auto start1 = high_resolution_clock::now();
      pcl::io::loadPCDFile<pcl::PointXYZ> ("/home/apramani/testrobot/test_catkin/src/testrobots/src/PointCloud.pcd", *cloud); //loads the PointCloud data from disk 
-     
+     auto stop1 = high_resolution_clock::now();
+     auto duration1 = duration_cast<microseconds>(stop1 - start1);
+     cout << "loading time: "<< duration1.count()/1000000.0 << " s" << endl;
+
      std::cout << "Loaded "
             << cloud->width * cloud->height
             << " data points from PointCloud.pcd with the following fields: "
@@ -99,10 +103,14 @@ void sampling_passthrough(){
 
      //set up passhtrough filter
      std::cout<< "Passthorugh filter running .."<<std::endl;
+     auto start2 = high_resolution_clock::now();
      pass_filter.setInputCloud (cloud);
      pass_filter.setFilterLimits (-1, 2);
      pass_filter.setFilterLimitsNegative (true);
      pass_filter.filter (*passfiltered_pclXYZ);
+     auto stop2 = high_resolution_clock::now();
+     auto duration2 = duration_cast<microseconds>(stop2 - start2);
+     cout << "filtering time: "<< duration2.count()/1000000.0 << " s" << endl;
 
      pcl::PCLPointCloud2::Ptr outputCloud (new pcl::PCLPointCloud2);
      pcl::toPCLPointCloud2(*passfiltered_pclXYZ, *outputCloud);
@@ -115,9 +123,10 @@ void sampling_passthrough(){
      pcl_conversions::fromPCL(passfiltered_pcl2, passfiltered_ros);
      
      std::stringstream ss;
+    
      ss << "downsampled_pcd_passthrough"<<".pcd";
      m_writer.write<pcl::PointXYZ>(ss.str(), *passfiltered_pclXYZ, false);     
-    
+     std::cout<< "Filtering done"<<std::endl;
 
     // Avhishek - adding Plane segmentation 
 
@@ -127,27 +136,34 @@ void sampling_passthrough(){
     pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
     pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
     //segmentation setup
+    std::cout<< "segmentation setup done!"<<std::endl;
+    auto start3 = high_resolution_clock::now();
     pcl::SACSegmentation<pcl::PointXYZ> seg;
     seg.setOptimizeCoefficients (true);
     seg.setModelType(pcl::SACMODEL_PLANE);
     seg.setMethodType(pcl::SAC_RANSAC);
     seg.setMaxIterations (100);
     seg.setDistanceThreshold(0.03);
-    seg.setInputCloud(downsampled_pclXYZ);
+    seg.setInputCloud(cloud);
     seg.segment(*inliers, *coefficients);
+    auto stop3 = high_resolution_clock::now();
+    auto duration3 = duration_cast<microseconds>(stop3 - start3);
+    cout << "segmentation time: "<< duration3.count()/1000000.0 << " s" << endl;
+    std::cout<< "segmentation done!"<<std::endl;
 
     if(inliers->indices.size () == 0) {
       std::cerr << "Could not estimate a planar model for the given dataset." << std::endl;
     }
 
     pcl::ExtractIndices<pcl::PointXYZ> extract;
-    extract.setInputCloud(downsampled_pclXYZ);
+    extract.setInputCloud(cloud);
     extract.setIndices(inliers);
     extract.setNegative(true);
     extract.filter(*plane_pclXYZ);
-
-    ss << "planeextracted_voxel"<<".pcd";
-    m_writer.write<pcl::PointXYZ>(ss.str(), *plane_pclXYZ, false);
+    std::cout<< "extraction done!"<<std::endl;
+    std::stringstream vv;
+    vv << "planeextracted_voxel"<<".pcd";
+    m_writer.write<pcl::PointXYZ>(vv.str(), *plane_pclXYZ, false);
 
 }
 
@@ -165,7 +181,7 @@ int main(int argc, char **argv)
     sampling_passthrough ();
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
-    cout << "computation time: "<< duration.count() << "ms" << endl;
+    cout << "total time: "<< duration.count()/1000000.0 << " s" << endl;
     
 
   //ros::spin();

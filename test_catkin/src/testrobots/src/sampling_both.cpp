@@ -89,8 +89,11 @@ void sampling_passthrough(){
      
      pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); 
      std::cout<< "Loading pcd data..."<<std::endl;
+     auto start1 = high_resolution_clock::now();
      pcl::io::loadPCDFile<pcl::PointXYZ> ("/home/apramani/testrobot/test_catkin/src/testrobots/src/PointCloud.pcd", *cloud); //loads the PointCloud data from disk 
-     
+     auto stop1 = high_resolution_clock::now();
+     auto duration1 = duration_cast<microseconds>(stop1 - start1);
+     cout << "loading time: "<< duration1.count()/1000000.0 << " s" << endl;
      std::cout << "Loaded "
             << cloud->width * cloud->height
             << " data points from PointCloud.pcd with the following fields: "
@@ -105,9 +108,13 @@ void sampling_passthrough(){
       //filter setup and run
      pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
      std::cout<< "Filtering point cloud .."<<std::endl;
+     auto start2 = high_resolution_clock::now();
      vg.setInputCloud (inputCloud);
      vg.setLeafSize (0.05, 0.05, 0.0);
      vg.filter (*downsampled_pcl2);
+     auto stop2 = high_resolution_clock::now();
+     auto duration2 = duration_cast<microseconds>(stop2 - start2);
+     cout << "voxel filtering time: "<< duration2.count()/1000000.0 << " s" << endl;
      ROS_INFO_STREAM("downsampled data size: " << downsampled_pcl2->data.size());
 
   
@@ -122,10 +129,14 @@ void sampling_passthrough(){
 
      //set up passhtrough filter
      std::cout<< "Passthorugh filter running .."<<std::endl;
+     auto start3 = high_resolution_clock::now();
      pass_filter.setInputCloud (downsampled_pclXYZ);
      pass_filter.setFilterLimits (-1, 2);
      pass_filter.setFilterLimitsNegative (true);
      pass_filter.filter (*passfiltered_pclXYZ);
+     auto stop3 = high_resolution_clock::now();
+     auto duration3 = duration_cast<microseconds>(stop3 - start3);
+     cout << "passthrough filtering time: "<< duration3.count()/1000000.0 << " s" << endl;
     
 
      pcl::PCLPointCloud2 passfiltered_pcl2;
@@ -155,7 +166,7 @@ int main(int argc, char **argv)
     sampling_passthrough ();
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
-    cout << "computation time: "<< duration.count() << "ms" << endl;
+    cout << "computation time: "<< duration.count()/1000000.0 << " s" << endl;
     
 
   //ros::spin();

@@ -87,11 +87,15 @@ void sampling_PointCloud()//const sensor_msgs::PointCloud2ConstPtr& cloud_msg
      
      pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); 
      std::cout<< "Loading pcd data ..."<<std::endl;
-    //  pcl::io::loadPCDFile<pcl::PointXYZ> ("/home/apramani/testrobot/test_catkin/src/testrobots/src/PointCloud.pcd", *cloud); //loads the PointCloud data from disk 
-     pcl::io::loadPCDFile<pcl::PointXYZ> ("/home/tran/testrobot/test_catkin/src/testrobots/src/PointCloud.pcd", *cloud); //loads the PointCloud data from disk 
+     auto start4 = high_resolution_clock::now();
+     pcl::io::loadPCDFile<pcl::PointXYZ> ("/home/apramani/testrobot/test_catkin/src/testrobots/src/PointCloud.pcd", *cloud); //loads the PointCloud data from disk 
+    //  pcl::io::loadPCDFile<pcl::PointXYZ> ("/home/tran/testrobot/test_catkin/src/testrobots/src/PointCloud.pcd", *cloud); //loads the PointCloud data from disk 
+     auto stop4 = high_resolution_clock::now();
+     auto duration4 = duration_cast<microseconds>(stop4 - start4);
+     cout << "loading time: "<< duration4.count()/1000000.0 << " s" << endl;
      std::cout << "Loaded "
             << cloud->width * cloud->height
-            << " data points from PointCloud.pcd with the following fields: "
+            << " data points from PointCloud.pcd "
             << std::endl;
 
    
@@ -103,15 +107,21 @@ void sampling_PointCloud()//const sensor_msgs::PointCloud2ConstPtr& cloud_msg
      //filter setup and run
      pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
      std::cout<< "Filtering point cloud .."<<std::endl;
+     auto start1 = high_resolution_clock::now();
      vg.setInputCloud (inputCloud);
-     vg.setLeafSize (0.2, 0.2, 0.0);
+     vg.setLeafSize (0.05, 0.05, 0.0);
      vg.filter (*downsampled_pcl2);
+     auto stop1 = high_resolution_clock::now();
+     auto duration1 = duration_cast<microseconds>(stop1 - start1);
+     cout << "filtering time: "<< duration1.count()/1000000.0<< "  s" << endl;
+     ROS_INFO_STREAM("downsampled data size: " << downsampled_pcl2->data.size());
      
 
      //publish: voxel grid filtering result
      sensor_msgs::PointCloud2 downsampled_ros;
      pcl_conversions::fromPCL(*downsampled_pcl2, downsampled_ros);
      std::stringstream ss;
+     
      ss << "downsampled_pcd_voxel"<<".pcd";
     
     // voxel_filtered.publish (downsampled_ros);
@@ -120,6 +130,7 @@ void sampling_PointCloud()//const sensor_msgs::PointCloud2ConstPtr& cloud_msg
      pcl::PointCloud<pcl::PointXYZ>::Ptr downsampled_pclXYZ (new pcl::PointCloud<pcl::PointXYZ>);
      pcl::fromPCLPointCloud2(*downsampled_pcl2, *downsampled_pclXYZ);
      m_writer.write<pcl::PointXYZ>(ss.str(), *downsampled_pclXYZ, false);
+     std::cout<< "Filtering done"<<std::endl;
      
 
      // Avhishek - adding Plane segmentation 
@@ -130,7 +141,9 @@ void sampling_PointCloud()//const sensor_msgs::PointCloud2ConstPtr& cloud_msg
     pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
     pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
     //segmentation setup
+    std::cout<< "segmentation setup done!"<<std::endl;
     pcl::SACSegmentation<pcl::PointXYZ> seg;
+    auto begin2 = high_resolution_clock::now();
     seg.setOptimizeCoefficients (true);
     seg.setModelType(pcl::SACMODEL_PLANE);
     seg.setMethodType(pcl::SAC_RANSAC);
@@ -138,6 +151,10 @@ void sampling_PointCloud()//const sensor_msgs::PointCloud2ConstPtr& cloud_msg
     seg.setDistanceThreshold(0.03);
     seg.setInputCloud(downsampled_pclXYZ);
     seg.segment(*inliers, *coefficients);
+    auto stop2 = high_resolution_clock::now();
+    auto time2 = duration_cast<microseconds>(stop2 - begin2);
+    cout << "segmentation time: "<< time2.count()/1000000.0 << " s" << endl;
+    std::cout<< "segmentation done!"<<std::endl;
 
     if(inliers->indices.size () == 0) {
       std::cerr << "Could not estimate a planar model for the given dataset." << std::endl;
@@ -148,9 +165,10 @@ void sampling_PointCloud()//const sensor_msgs::PointCloud2ConstPtr& cloud_msg
     extract.setIndices(inliers);
     extract.setNegative(true);
     extract.filter(*plane_pclXYZ);
-
-    ss << "planeextracted_voxel"<<".pcd";
-    m_writer.write<pcl::PointXYZ>(ss.str(), *plane_pclXYZ, false);
+    std::cout<< "extraction done!"<<std::endl;
+    std ::stringstream vv;
+    vv << "planeextracted_voxel"<<".pcd";
+    m_writer.write<pcl::PointXYZ>(vv.str(), *plane_pclXYZ, false);
 
 }
 
@@ -170,7 +188,7 @@ int main(int argc, char **argv)
     auto stop = high_resolution_clock::now();
     //calculate computation time
     auto duration = duration_cast<microseconds>(stop - start);
-    cout << "computation time: "<< duration.count() << "ms" << endl;
+    cout << "Total time: "<< duration.count()/1000000.0 << " s" << endl;
     //ros::spin();
 
 }
