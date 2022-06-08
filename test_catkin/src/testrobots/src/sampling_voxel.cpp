@@ -87,8 +87,8 @@ void sampling_PointCloud()//const sensor_msgs::PointCloud2ConstPtr& cloud_msg
      
      pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); 
      std::cout<< "Loading pcd data ..."<<std::endl;
-     pcl::io::loadPCDFile<pcl::PointXYZ> ("/home/apramani/testrobot/test_catkin/src/testrobots/src/PointCloud.pcd", *cloud); //loads the PointCloud data from disk 
-  
+    //  pcl::io::loadPCDFile<pcl::PointXYZ> ("/home/apramani/testrobot/test_catkin/src/testrobots/src/PointCloud.pcd", *cloud); //loads the PointCloud data from disk 
+     pcl::io::loadPCDFile<pcl::PointXYZ> ("/home/tran/testrobot/test_catkin/src/testrobots/src/PointCloud.pcd", *cloud); //loads the PointCloud data from disk 
      std::cout << "Loaded "
             << cloud->width * cloud->height
             << " data points from PointCloud.pcd with the following fields: "
@@ -122,7 +122,35 @@ void sampling_PointCloud()//const sensor_msgs::PointCloud2ConstPtr& cloud_msg
      m_writer.write<pcl::PointXYZ>(ss.str(), *downsampled_pclXYZ, false);
      
 
+     // Avhishek - adding Plane segmentation 
 
+    //  container: plane pcl pointXYZ
+    
+    pcl::PointCloud<pcl::PointXYZ>::Ptr plane_pclXYZ (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+    pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+    //segmentation setup
+    pcl::SACSegmentation<pcl::PointXYZ> seg;
+    seg.setOptimizeCoefficients (true);
+    seg.setModelType(pcl::SACMODEL_PLANE);
+    seg.setMethodType(pcl::SAC_RANSAC);
+    seg.setMaxIterations (100);
+    seg.setDistanceThreshold(0.03);
+    seg.setInputCloud(downsampled_pclXYZ);
+    seg.segment(*inliers, *coefficients);
+
+    if(inliers->indices.size () == 0) {
+      std::cerr << "Could not estimate a planar model for the given dataset." << std::endl;
+    }
+
+    pcl::ExtractIndices<pcl::PointXYZ> extract;
+    extract.setInputCloud(downsampled_pclXYZ);
+    extract.setIndices(inliers);
+    extract.setNegative(true);
+    extract.filter(*plane_pclXYZ);
+
+    ss << "planeextracted_voxel"<<".pcd";
+    m_writer.write<pcl::PointXYZ>(ss.str(), *plane_pclXYZ, false);
 
 }
 
