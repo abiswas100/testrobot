@@ -7,7 +7,7 @@
 
 
 template<typename PointType>
-void UNL_Robotics::extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
+void testrobots::extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
                                       typename pcl::PointCloud<PointType>::Ptr targetCloud,
                                       unsigned xmin, unsigned xmax,
                                       unsigned ymin, unsigned ymax)
@@ -17,13 +17,15 @@ void UNL_Robotics::extractFrame(typename pcl::PointCloud<PointType>::ConstPtr so
   unsigned imageWidth = sourceCloud->width;
   unsigned imageHeight = sourceCloud->height;
   double nan = std::nan("");
-  PointType nanPt(nan, nan, nan);
+  PointType nanPt(1,1,1);
   for(unsigned row =0; row < imageHeight; ++row) {
     for(unsigned col =0; col < imageWidth; ++col) {
       unsigned index = row * imageWidth  + col;
       if((col < xmin) || (xmax < col) || (row < ymin) || (ymax < row))  {
+        //  std::cout << "here - " << index <<targetCloud->operator[](index)<< std::endl;
          targetCloud->operator[](index) = nanPt;
       }
+
     }
   }
 }

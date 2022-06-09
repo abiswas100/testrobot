@@ -411,16 +411,16 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
 
     // added PCD saving code 
     
-    std::cout << xmax << std::endl;
-    std::cout << xmin << std::endl;
-    std::cout << ymax << std::endl;
-    std::cout << ymin << std::endl;
+    // std::cout << xmax << std::endl;
+    // std::cout << xmin << std::endl;
+    // std::cout << ymax << std::endl;
+    // std::cout << ymin << std::endl;
     // this will be used to save the extracted pointcloud as a pcd file
-    std::stringstream ss;
-    ss << "_extractBBcrop"<<".pcd";
-    m_writer.write<pcl::PointXYZ>(ss.str(), *m_cloud, false);
+    // std::stringstream ss;
+    // ss << "_extractBBcrop"<<".pcd";
+    // m_writer.write<pcl::PointXYZ>(ss.str(), *m_cloud, false);
 
-    exit(1);
+    // exit(1);
 
     /*
       Avhishek - all this below code is now in plane extract, run the code and remove things from below, this is our driver code 
@@ -434,9 +434,9 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     */
 
     
-    // planeextract(m_cloud);
+    planeextract(m_cloud);
 
-    // extractObjectInBoundingBox(cropPercentage);
+    extractObjectInBoundingBox(cropPercentage);
 
     // removeOutliers(meanK,  stddevMulThresh);
 
@@ -495,12 +495,12 @@ void extractObjectInBoundingBox(double cropPercentage)
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloudCrop(new pcl::PointCloud<pcl::PointXYZ>);
 
   // extract the BB frame 
-  testrobots::extractFrame<pcl::PointXYZ>(m_postPlaneExtractedCloud, cloudCrop,
-                                              xmin + static_cast<unsigned>(x_delta * cropPercentage),
-                                              xmax - static_cast<unsigned>(x_delta * cropPercentage),
-                                              ymin + static_cast<unsigned>(y_delta * cropPercentage),
-                                              ymax - static_cast<unsigned>(y_delta * cropPercentage),
-                                              CAMERA_NUM_PIXELS_WIDTH, CAMERA_NUM_PIXELS_HEIGHT);
+  // testrobots::extractFrame<pcl::PointXYZ>(m_postPlaneExtractedCloud, cloudCrop,
+  //                                             xmin + static_cast<unsigned>(x_delta * cropPercentage),
+  //                                             xmax - static_cast<unsigned>(x_delta * cropPercentage),
+  //                                             ymin + static_cast<unsigned>(y_delta * cropPercentage),
+  //                                             ymax - static_cast<unsigned>(y_delta * cropPercentage),
+  //                                             CAMERA_NUM_PIXELS_WIDTH, CAMERA_NUM_PIXELS_HEIGHT);
 
   std::cout << "getting here after extract frame " << std::endl;
   // this will be used to save the extracted pointcloud as a pcd file
