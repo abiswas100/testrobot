@@ -6,59 +6,59 @@
 
 
 
-template<typename PointType>
-void UNL_Robotics::extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
-                                      typename pcl::PointCloud<PointType>::Ptr targetCloud,
-                                      unsigned xmin, unsigned xmax,
-                                      unsigned ymin, unsigned ymax)
-{
-  copyPointCloud(*sourceCloud, *targetCloud);
-  
-  unsigned imageWidth = sourceCloud->width;
-  unsigned imageHeight = sourceCloud->height;
-  double nan = std::nan("");
-  PointType nanPt(nan, nan, nan);
-  for(unsigned row =0; row < imageHeight; ++row) {
-    for(unsigned col =0; col < imageWidth; ++col) {
-      unsigned index = row * imageWidth  + col;
-      if((col < xmin) || (xmax < col) || (row < ymin) || (ymax < row))  {
-         targetCloud->operator[](index) = nanPt;
-      }
-    }
-  }
-}
-
 // template<typename PointType>
-// void testrobots::extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
-//                                 typename pcl::PointCloud<PointType>::Ptr targetCloud,
-//                                 unsigned xmin, unsigned xmax,
-//                                 unsigned ymin, unsigned ymax)
-// {
-//   //Implement in terms of the other function
-//   unsigned imageWidth = sourceCloud->width;
-//   unsigned imageHeight = sourceCloud->height;
-//   extractFrame<PointType>(sourceCloud, targetCloud, xmin, xmax, ymin, ymax, imageWidth, imageHeight);
-// }
-// template<typename PointType>
-// void testrobots::extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
-//                                 typename pcl::PointCloud<PointType>::Ptr targetCloud,
-//                                 unsigned xmin, unsigned xmax,
-//                                 unsigned ymin, unsigned ymax,
-//                                 unsigned imageWidth,
-//                                 unsigned imageHeight)
+// void UNL_Robotics::extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
+//                                       typename pcl::PointCloud<PointType>::Ptr targetCloud,
+//                                       unsigned xmin, unsigned xmax,
+//                                       unsigned ymin, unsigned ymax)
 // {
 //   copyPointCloud(*sourceCloud, *targetCloud);
   
+//   unsigned imageWidth = sourceCloud->width;
+//   unsigned imageHeight = sourceCloud->height;
 //   double nan = std::nan("");
 //   PointType nanPt(nan, nan, nan);
-//   for(unsigned row =0; row < imageWidth; ++row) { //imageHeight
-//     for(unsigned col =0; col < imageHeight; ++col) { //imageWidth
+//   for(unsigned row =0; row < imageHeight; ++row) {
+//     for(unsigned col =0; col < imageWidth; ++col) {
 //       unsigned index = row * imageWidth  + col;
 //       if((col < xmin) || (xmax < col) || (row < ymin) || (ymax < row))  {
-//          std::cout << "here - " << index <<targetCloud->operator[](index)<< std::endl;
 //          targetCloud->operator[](index) = nanPt;
 //       }
 //     }
 //   }
 // }
+
+template<typename PointType>
+void testrobots::extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
+                                typename pcl::PointCloud<PointType>::Ptr targetCloud,
+                                unsigned xmin, unsigned xmax,
+                                unsigned ymin, unsigned ymax)
+{
+  //Implement in terms of the other function
+  unsigned imageWidth = sourceCloud->width;
+  unsigned imageHeight = sourceCloud->height;
+  extractFrame<PointType>(sourceCloud, targetCloud, xmin, xmax, ymin, ymax, imageWidth, imageHeight);
+}
+template<typename PointType>
+void testrobots::extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
+                                typename pcl::PointCloud<PointType>::Ptr targetCloud,
+                                unsigned xmin, unsigned xmax,
+                                unsigned ymin, unsigned ymax,
+                                unsigned imageWidth,
+                                unsigned imageHeight)
+{
+  copyPointCloud(*sourceCloud, *targetCloud);
+  
+  double nan = std::nan("");
+  PointType nanPt(nan, nan, nan);
+  for(unsigned row =0; row < imageWidth; ++row) { //imageHeight
+    for(unsigned col =0; col < imageHeight; ++col) { //imageWidth
+      unsigned index = row * imageWidth  + col;
+      if((col < xmin) || (xmax < col) || (row < ymin) || (ymax < row))  {
+         std::cout << "here - " << index <<targetCloud->operator[](index)<< std::endl;
+         targetCloud->operator[](index) = nanPt;
+      }
+    }
+  }
+}
                     
