@@ -113,6 +113,8 @@ void extractObjectInBoundingBox(double cropPercentage);
 void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud)
 {
     ROS_INFO_STREAM("getting here plane extract");
+
+  ////////////////////////////////////////////////////////// This code is to run extraction without segmentation//////////////////////////        
   //   pcl::PointCloud<pcl::PointXYZ>::Ptr cloudCrop(new pcl::PointCloud<pcl::PointXYZ>);
   //   testrobots::extractFrame<pcl::PointXYZ>(m_cloud, cloudCrop,
   //                                             xmin,
@@ -125,6 +127,9 @@ void planeextract(pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud)
   // std::stringstream ss;
   // ss << printStepCount() << "_extractBBcrop" << ".pcd";
   // m_writer.write<pcl::PointXYZ>(ss.str(), *cloudCrop, false);
+
+
+
     pcl::PointCloud<pcl::PointXYZ>::Ptr final_planeless_cloud(new pcl::PointCloud<pcl::PointXYZ>);
     copyPointCloud(*m_cloud, *final_planeless_cloud);
 
