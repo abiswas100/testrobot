@@ -46,7 +46,7 @@ class Detection(object):
         self.confidence = 0.0
         
         rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=1)
-        # rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
+        rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
         # rospy.Subscriber("/camera/depth/points",pc2, self.Depthcloud, queue_size=1)
         # rospy.Subscriber("/map",OccupancyGrid,self.Occupancy, queue_size=1)
         # publishing topics
@@ -56,7 +56,7 @@ class Detection(object):
         self.vector_pub = rospy.Publisher("H_Vector", Image, queue_size=1)
         # self.point_pub = rospy.Publisher('/center_point', PointStamped, queue_size=1)
         self.boundingbox = rospy.Publisher("BBox", Boundingbox, queue_size=1)
-        
+        self.depth_with_BB = rospy.Publisher("DepthBB", Image, queue_size=1)
         #initialize csv file
         self.path = os.getcwd()
         self.path = self.path+"/human_motion.csv"
@@ -164,8 +164,8 @@ class Detection(object):
             righttop_corner = corner[3]  
             
             xmin = leftbottom_corner[0]
-            xmax = rightbottom_corner[0]
-            ymin = lefttop_corner[1]
+            xmax = righttop_corner[0]
+            ymin = leftbottom_corner[1]
             ymax = righttop_corner[1]
             
             #complete the bbcord message now

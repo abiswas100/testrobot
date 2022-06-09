@@ -75,69 +75,65 @@
 pcl::PCDWriter m_writer;
 #include <chrono>
 using namespace std::chrono;
+static const std::string PCL_TOPIC = "/camera/depth/points";
+#define YELLOW  "\033[33m"      /* Yellow */
+#define GREEN   "\033[32m"      /* Green */
+#define MAGENTA "\033[35m"      /* Magenta */
+
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
+ros::Publisher plane_segmented;
+ros::Publisher except_plane;
 ros::Publisher voxel_filtered;
 std::vector<ros::Publisher> cluster_vector;
 
-void sampling_PointCloud()//const sensor_msgs::PointCloud2ConstPtr& cloud_msg
+void sampling_PointCloud(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
 {
    
-     //creates a PointCloud<PointXYZ> boost shared pointer and initializes it.
      
-     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); 
-     std::cout<< "Loading pcd data ..."<<std::endl;
-     auto start4 = high_resolution_clock::now();
-     pcl::io::loadPCDFile<pcl::PointXYZ> ("/home/apramani/testrobot/test_catkin/src/testrobots/src/PointCloud.pcd", *cloud); //loads the PointCloud data from disk 
-    //pcl::io::loadPCDFile<pcl::PointXYZ> ("/home/tran/testrobot/test_catkin/src/testrobots/src/PointCloud.pcd", *cloud); //loads the PointCloud data from disk 
-     auto stop4 = high_resolution_clock::now();
-     auto duration4 = duration_cast<microseconds>(stop4 - start4);
-     cout << "loading time: "<< duration4.count()/1000000.0 << " s" << endl;
-     std::cout << "Loaded "
-            << cloud->width * cloud->height
-            << " data points from PointCloud.pcd "
-            << std::endl;
-
-   
-     
-     pcl::PCLPointCloud2::Ptr inputCloud (new pcl::PCLPointCloud2);
-     pcl::toPCLPointCloud2(*cloud, *inputCloud);
-     pcl::PCLPointCloud2::Ptr downsampled_pcl2 (new pcl::PCLPointCloud2); //Container: down sampled pointcloud2
-
-     //filter setup and run
-     pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
-     std::cout<< "Filtering point cloud .."<<std::endl;
-     auto start1 = high_resolution_clock::now();
-     vg.setInputCloud (inputCloud);
-     vg.setLeafSize (0.05, 0.05, 0.0);
-     vg.filter (*downsampled_pcl2);
-     auto stop1 = high_resolution_clock::now();
-     auto duration1 = duration_cast<microseconds>(stop1 - start1);
-     cout << "filtering time: "<< duration1.count()/1000000.0<< "  s" << endl;
-     ROS_INFO_STREAM("downsampled data size: " << downsampled_pcl2->data.size());
-     
-
-     //publish: voxel grid filtering result
-     sensor_msgs::PointCloud2 downsampled_ros;
-     pcl_conversions::fromPCL(*downsampled_pcl2, downsampled_ros);
-     std::stringstream ss;
-     
-     ss << "downsampled_pcd_voxel"<<".pcd";
+    ROS_INFO_STREAM("In callback function");
+    auto start8 = high_resolution_clock::now();
     
-    // voxel_filtered.publish (downsampled_ros);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); 
+    pcl::PCLPointCloud2 pcl_pc2;
+    pcl_conversions::toPCL(*cloud_msg,pcl_pc2);
+    pcl::fromPCLPointCloud2(pcl_pc2,*cloud);
 
-     //converstion from pcl pointcloud2 to pcl::PointCloud<pcl::PointXYZ>
-     pcl::PointCloud<pcl::PointXYZ>::Ptr downsampled_pclXYZ(new pcl::PointCloud<pcl::PointXYZ>);
-     pcl::fromPCLPointCloud2(*downsampled_pcl2, *downsampled_pclXYZ);
-     m_writer.write<pcl::PointXYZ>(ss.str(), *downsampled_pclXYZ, false);
-     std::cout<< "Filtering done"<<std::endl;
+     
+    pcl::PCLPointCloud2::Ptr inputCloud (new pcl::PCLPointCloud2);
+    pcl::toPCLPointCloud2(*cloud, *inputCloud);
+    pcl::PCLPointCloud2::Ptr downsampled_pcl2 (new pcl::PCLPointCloud2); //Container: down sampled pointcloud2
+
+    //filter setup and run
+    pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
+    
+    auto start1 = high_resolution_clock::now();
+    vg.setInputCloud (inputCloud);
+    vg.setLeafSize (0.02, 0.02, 0.0);
+    vg.filter (*downsampled_pcl2);
+    auto stop1 = high_resolution_clock::now();
+    auto duration1 = duration_cast<microseconds>(stop1 - start1);
+    cout << YELLOW << "filtering time:"<< duration1.count()/1000000.0<< "  s\n"<< endl;
+    ROS_INFO_STREAM("downsampled data size: " << downsampled_pcl2->data.size()<<"\n");
      
 
-    // Avhishek - adding Plane segmentation 
+    //publish: voxel grid filtering result
+    sensor_msgs::PointCloud2 downsampled_ros;
+    pcl_conversions::fromPCL(*downsampled_pcl2, downsampled_ros);
+    voxel_filtered.publish (downsampled_ros);
+  
+    
 
-    //  container: plane pcl pointXYZ
+
+    //converstion from pcl pointcloud2 to pcl::PointCloud<pcl::PointXYZ>
+    pcl::PointCloud<pcl::PointXYZ>::Ptr downsampled_pclXYZ(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::fromPCLPointCloud2(*downsampled_pcl2, *downsampled_pclXYZ);
+    
+   
+
+    //container: plane pcl pointXYZ
     
     pcl::PointCloud<pcl::PointXYZ>::Ptr plane_pclXYZ (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
@@ -145,7 +141,7 @@ void sampling_PointCloud()//const sensor_msgs::PointCloud2ConstPtr& cloud_msg
 
 
     //segmentation :
-    std::cout<< "segmentation setup done!"<<std::endl;
+    
     pcl::SACSegmentation<pcl::PointXYZ> seg;
     auto begin2 = high_resolution_clock::now();
     seg.setOptimizeCoefficients (true);
@@ -157,23 +153,42 @@ void sampling_PointCloud()//const sensor_msgs::PointCloud2ConstPtr& cloud_msg
     seg.segment(*inliers, *coefficients);
     auto stop2 = high_resolution_clock::now();
     auto time2 = duration_cast<microseconds>(stop2 - begin2);
-    cout << "segmentation time: "<< time2.count()/1000000.0 << " s" << endl;
-    std::cout<< "segmentation done!"<<std::endl;
+    cout << GREEN << "segmentation time: "<< time2.count()/1000000.0 << " s\n" << endl;
+    
 
     if(inliers->indices.size () == 0) {
       std::cerr << "Could not estimate a planar model for the given dataset." << std::endl;
     }
 
-    //extraction:
-    pcl::ExtractIndices<pcl::PointXYZ> extract;
-    extract.setInputCloud(downsampled_pclXYZ);
-    extract.setIndices(inliers);
-    extract.setNegative(true);
-    extract.filter(*plane_pclXYZ);
-    std::cout<< "extraction done!"<<std::endl;
-    std ::stringstream vv;
-    vv << "planeextracted_voxel"<<".pcd";
-    m_writer.write<pcl::PointXYZ>(vv.str(), *plane_pclXYZ, false);
+  //extraction:
+  pcl::ExtractIndices<pcl::PointXYZ> extract;
+  extract.setInputCloud(downsampled_pclXYZ);
+  extract.setIndices(inliers);
+  extract.setNegative(true);
+  extract.filter(*plane_pclXYZ);
+  
+
+  //publish
+  pcl::PCLPointCloud2 plane_pcl2;
+  sensor_msgs::PointCloud2 plane_ros;
+  pcl::toPCLPointCloud2(*plane_pclXYZ, plane_pcl2);
+  pcl_conversions::fromPCL(plane_pcl2, plane_ros);
+  plane_segmented.publish (plane_ros);
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr except_plane_pclXYZ (new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PCLPointCloud2 except_plane_pcl2;
+  sensor_msgs::PointCloud2 except_plane_ros;
+
+  extract.setInputCloud (downsampled_pclXYZ);
+  extract.setIndices (inliers);
+  extract.setNegative (true);
+  extract.filter (*except_plane_pclXYZ);
+
+  pcl::toPCLPointCloud2(*except_plane_pclXYZ, except_plane_pcl2);
+  pcl_conversions::fromPCL(except_plane_pcl2, except_plane_ros);
+  except_plane.publish (except_plane_ros);
+
+    
 
 
   //clustering:
@@ -188,9 +203,9 @@ void sampling_PointCloud()//const sensor_msgs::PointCloud2ConstPtr& cloud_msg
   ec.setSearchMethod (tree);
   ec.setInputCloud (plane_pclXYZ);
   ec.extract (cluster_indices);
-  //std::cout<< "clustering ongoin 1!"<<std::endl;
+  
 
-  std::cout << cluster_indices.size() << " clusters" << std::endl;
+  //std::cout << cluster_indices.size() << " clusters" << std::endl;
 
   ros::NodeHandle cluster_nh;
 
@@ -221,18 +236,24 @@ void sampling_PointCloud()//const sensor_msgs::PointCloud2ConstPtr& cloud_msg
     pcl::toPCLPointCloud2( *cluster_pclXYZ ,cluster_pcl2);
     pcl_conversions::fromPCL(cluster_pcl2, cluster_ros);
     cluster_ros.header.frame_id = downsampled_pclXYZ->header.frame_id;
-    std::cout << "Cluster Frame id: " << downsampled_pclXYZ->header.frame_id << std::endl;
-    //cluster_vector[i].publish (cluster_ros);
+    //std::cout << "Cluster Frame id: " << downsampled_pclXYZ->header.frame_id << std::endl;
+    cluster_vector[i].publish (cluster_ros);
+    std::stringstream ss;
+    ss << "complete"<<".pcd";
+    m_writer.write<pcl::PointXYZ>(ss.str(), *cluster_pclXYZ, false);
     
-    std ::stringstream bb;
-    bb << "clustered_voxel"<<".pcd";
-    m_writer.write<pcl::PointXYZ>(bb.str(), *cluster_pclXYZ, false);
-
   }
-  std::cout<< "clustering done!"<<std::endl;
+  
   auto stop7 = high_resolution_clock::now();
   auto time7 = duration_cast<microseconds>(stop7 - start7);
-  cout << "clustering time: "<< time7.count()/1000000.0 << " s" << endl;
+  cout << MAGENTA << "clustering time: "<< time7.count()/1000000.0 << " s\n" <<  endl;
+  
+
+  auto stop8 = high_resolution_clock::now();
+  auto time8 = duration_cast<microseconds>(stop8 - start8);
+  cout << "TOTAL time: "<< time8.count()/1000000.0 << " s\n" << endl;
+  std::cout<< "*************************************************\n"<<std::endl;
+
 
 }
 
@@ -243,16 +264,15 @@ void sampling_PointCloud()//const sensor_msgs::PointCloud2ConstPtr& cloud_msg
 
 int main(int argc, char **argv)
 {
-    ros::init (argc, argv, "my_pcl_tutorial");
+    ros::init (argc, argv, "plotting_human");
     ros::NodeHandle nh;
-    auto start = high_resolution_clock::now(); //start timer
-    //call function here
-    sampling_PointCloud ();
-    //stop timer 
-    auto stop = high_resolution_clock::now();
-    //calculate computation time
-    auto duration = duration_cast<microseconds>(stop - start);
-    cout << "Total time: "<< duration.count()/1000000.0 << " s" << endl;
-    //ros::spin();
+    
+    ros::Subscriber sub = nh.subscribe(PCL_TOPIC, 10, sampling_PointCloud);
+    voxel_filtered = nh.advertise<sensor_msgs::PointCloud2> ("voxel_filtered", 1);
+    plane_segmented = nh.advertise<sensor_msgs::PointCloud2> ("plane_segmented", 1);
+    except_plane = nh.advertise<sensor_msgs::PointCloud2> ("except_plane",1);
+    
+
+    ros::spin();
 
 }
