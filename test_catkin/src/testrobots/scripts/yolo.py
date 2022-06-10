@@ -15,6 +15,7 @@ from os import chdir
 import numpy as np
 import time
 import csv
+import math
 
 
 def Yolo_imp(img_data): 
@@ -91,9 +92,12 @@ def Yolo_imp(img_data):
             x,y,w,h = boxes[i]
             label = str(classes[class_ids[i]])
             confidence = str(round(confidences[i], 2))
+            # getting the coordinates +ve
+            x = abs(x)
+            y = abs(y)
             area = 0
             print("")
-            
+            # print("Yolo X Y",x,y)
             print("label -",label,
             ", confidence", confidence,
             ", area of Bounding Box  - ",w*h)
@@ -104,21 +108,14 @@ def Yolo_imp(img_data):
             rightbottom_corner = [x+w,y]
             lefttop_corner = [x,y+h]
             righttop_corner =  [x+w,y+h]
+
             '''
                 Add code to find the center from the coordinates
             '''    
-            # center from cordinates: by Apala
-            # center__x = int(x + w/2) # x coordinate of left bottom plus half of width
-            # center__y = int(y + h/2) # y coordinate of left bottom plus half of height
-            # center_bb = (center__x, center__y) #center of bounding box
-            # print("apala ka center",center_bb)
             probable_center = (center_x, center_y)
+
             center_pixels.append([center_x,center_y])
-            print("center pixels in yolo",center_pixels)
-            # center_pixels.append([center__x,center__y])
             corners.append([leftbottom_corner,rightbottom_corner,lefttop_corner,righttop_corner])
-             
-            print("corners in yolo", leftbottom_corner,rightbottom_corner,lefttop_corner,righttop_corner)
             
             cv2.rectangle(img_data,(x,y), (x+w, y+h), color, 2)
             cv2.putText(img_data, label + " " + confidence, (x, y+20), font, 2, (255,255,255), 2)
@@ -130,7 +127,7 @@ def Yolo_imp(img_data):
 
     # object_label = "person"
     end_time = time.perf_counter ()
-    print("")
+    # print("")
     # print(end_time - start_time, "seconds")
     cv2.imwrite('yolo_img.jpeg', img_data)
     return img_data, object_label, center_pixels,  corners, confidence 

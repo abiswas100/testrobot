@@ -106,7 +106,7 @@ void sampling_passthrough(){
      auto start2 = high_resolution_clock::now();
      pass_filter.setInputCloud (cloud);
      pass_filter.setFilterLimits (0.0, 1.0);
-     pass_filter.setFilterLimitsNegative (true);
+     pass_filter.setFilterLimitsNegative (false);  // try this with false
      pass_filter.filter (*passfiltered_pclXYZ);
      auto stop2 = high_resolution_clock::now();
      auto duration2 = duration_cast<microseconds>(stop2 - start2);

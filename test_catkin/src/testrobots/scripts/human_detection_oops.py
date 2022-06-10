@@ -110,6 +110,7 @@ class Detection(object):
 
         self.yolo_processing(cv_img)
         
+        # no human tracking is happening now
         # self.human_motion_tracking(tracking_img)
         
 
@@ -130,7 +131,7 @@ class Detection(object):
         yolo_output, object_label, center_pixels, self.corners, self.confidence = Yolo.Yolo_imp(cv_img)
         
        
-        print(self.corners)
+        
         
         # checking center_pixels and setting center_pixel to 0         
         if len(center_pixels) == 0: 
@@ -149,7 +150,7 @@ class Detection(object):
         '''
         # changing the msg value only if the label is == person
         if(object_label == 'person'):
-            rospy.logwarn("Human Detected on Camera")
+            # rospy.logwarn("Human Detected on Camera")
             # if human is detected find the transform and the point
             
             '''
@@ -169,7 +170,7 @@ class Detection(object):
             ymax = righttop_corner[1]
             
             #complete the bbcord message now
-            print(type(self.confidence))
+            # print(type(self.confidence))
             bbcordmsg.Class = object_label
             bbcordmsg.probability = float(self.confidence)
             bbcordmsg.xmin = xmin
@@ -180,9 +181,9 @@ class Detection(object):
             # bbcordmsgs.bounding_boxes = bbcordmsg
             # self.transform_depth() # this is to call the transform function 
             msg.signal = 1 
-            rospy.loginfo(bbcordmsg)
+            # rospy.loginfo(bbcordmsg)
             
-        rospy.logwarn(msg.signal)
+        # rospy.logwarn(msg.signal)
         
         #publish the message and the image
         self.msg_pub.publish(msg)
@@ -300,13 +301,14 @@ class Detection(object):
 
     def DepthCamSub(self,depth_data):
         depth_cv_img =  bridge.imgmsg_to_cv2(depth_data)
-
+        depth_img_cpy = depth_cv_img 
+        # if else below tries to find the center_pixel depth of the Bounding Box
         if len(self.center_pixel) == 0:
             print("no centers in depth")
             rospy.sleep(0.5)
             
         else:
-            print("center_pixel in depth- ", self.center_pixel, "length of center pixel", len(self.center_pixel))
+            # print("center_pixel in depth- ", self.center_pixel, "length of center pixel", len(self.center_pixel))
             # print("center pixel in depthcam",self.center_pixel)
             center_x = self.center_pixel[1]
             center_y = self.center_pixel[0]
@@ -326,15 +328,56 @@ class Detection(object):
             self.writer.writerow(data_to_write)
             
             
-            print("distance of human in depthcam - ", self.depth)
+            # print("distance of human in depthcam - ", self.depth)
             
             if self.depth <= 1.5 : 
-                rospy.logfatal("Human too close ... Stop Immediately")
+                # rospy.logfatal("Human too close ... Stop Immediately")
                 msg.stop = 1
-                rospy.logwarn(msg.stop)            
+                # rospy.logwarn(msg.stop)            
             
             self.stop_msg.publish(msg)            
             rospy.sleep(0.5)
+            
+        # code below will use the bbox from yolo and draw a box on depth camera and publish that
+        
+        if len(self.center_pixel) == 0:
+             print("no yolo_human so wait")
+            
+        else:    
+            
+            print("Corners in Depth Camera Bounding Box",self.corners)
+            corner = self.corners[0]
+            leftbottom_corner = corner[0]
+            rightbottom_corner = corner[1]
+            lefttop_corner = corner[2]
+            righttop_corner = corner[3]  
+            
+            xmin = leftbottom_corner[0]
+            xmax = righttop_corner[0]
+            ymin = leftbottom_corner[1]
+            ymax = righttop_corner[1]
+
+            w = xmax - xmin
+            h = ymax - ymin
+        
+            # color = (0, 255 , 0)
+            # depth_with_box = cv2.rectangle(depth_img_cpy,(xmin,ymin), (xmin+w, ymin+h), color, 2)
+            
+            print(depth_img_cpy.shape)
+            print(depth_img_cpy)
+            height, width = depth_img_cpy.shape
+            for col in range(width+1):
+                for row in range(height+1):
+                    if((row > ymin and row < ymax) and (col > xmin and col<xmax)):
+                        pass
+                    else:
+                        depth_img_cpy[col][row]
+             
+            
+            
+            cv2.imwrite('depth_with_BBox.jpeg', depth_img_cpy)
+            # depth_bbox = bridge.cv2_to_imgmsg(depth_with_box)
+            # self.depth_with_BB.publish(depth_bbox)
     
     def transform_depth(self):       
         listener = tf.TransformListener()
