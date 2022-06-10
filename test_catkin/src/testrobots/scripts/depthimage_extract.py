@@ -13,7 +13,7 @@ from geometry_msgs.msg import Point, PointStamped
 from nav_msgs.msg import OccupancyGrid
 import csv
 import cv2
-from cv_bridge import CvBridge
+from cv_bridge import CvBridge, CvBridgeError
 import yolo as Yolo
 import numpy as np
 import os
@@ -21,8 +21,8 @@ import math
 # import pcl
 import pcl_ros
 # import ros_numpy
-# import open3d as o3d
-# from open3d_ros_helper import open3d_ros_helper as orh
+import open3d as o3d
+from open3d_ros_helper import open3d_ros_helper as orh
 
 
 bridge = CvBridge() 
@@ -40,7 +40,7 @@ class Detection(object):
         self.confidence = 0.0
         
         rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=1)
-        # rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
+        rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
 
         # publishing topics
         self.pub = rospy.Publisher("H_Detection_image", Image, queue_size=1)    
@@ -123,10 +123,18 @@ class Detection(object):
     def DepthCamSub(self,depth_data):
         
        
-        depth_cv_img =  bridge.imgmsg_to_cv2(depth_data, desired_encoding="passthrough")
+        # depth_cv_img =  bridge.imgmsg_to_cv2(depth_data, '32FC1')
         
-        depth_img_cpy = depth_cv_img 
-        # depth_img_cpy.flags.writable = True
+        depth_image = bridge.imgmsg_to_cv2(depth_data,desired_encoding='passthrough' )
+        
+    
+        depth_array = np.array(depth_image, dtype=np.float32)
+        
+        # rospy.loginfo(depth_array)
+        
+        # depth_array = depth_array.astype(np.uint8)
+        cv2.imwrite("depth_img.png", depth_array)
+        
         if len(self.center_pixel) == 0:
              pass
             
@@ -152,39 +160,34 @@ class Detection(object):
             h = ymax - ymin
         
             i = 0
-            print(depth_img_cpy.shape) 
+            print(depth_array.shape) 
             # print(depth_img_cpy)
-            totalrows, totalcols = depth_img_cpy.shape   ## 1080*1920
+            totalrows, totalcols = depth_array.shape   ## 1080*1920
             
             for row_no in range(0,1079):
                 for col_no in range(0,1919):
-                    row = depth_img_cpy[row_no]
+                    row = depth_array[row_no]
                     value = row[col_no]
                     
                     
                     if (row_no >= ymin and row_no <= ymax) and (col_no >= xmin and col_no <= xmax):
                         i += 1
-                        # print("row, col, value",row_no, col_no, value)          
+                        # print("row, col, value",row_no, col_no, value)        
+                        # depth_array[row_no][col_no] = 2.00  
                         pass
                     else:
-                        depth_img_cpy[row_no][col_no] = 0.0
+                        depth_array[row_no][col_no] = NaN
             print("no of points in the bbox in depth_image",i)
             
-            print(depth_img_cpy)            
+            print(depth_array) 
+            cv2.imwrite('depth_with_BBox.jpeg', depth_array)
+            depth_bbox = bridge.cv2_to_imgmsg(depth_array)
+            self.depth_with_BB.publish(depth_bbox)
             
-            # for row in range(1,totalrows):
-            #     for col in range(1, totalcols):
-            #         print(depth_img_cpy[row[col]])
-            # i =0;
-            # for row in depth_img_cpy:
-            #     i=i+1;                
-            # print("i", i, depth_img_cpy[])
-            # arow = depth_img_cpy[1080]
-            # print(len(arow))
             
-            cv2.imwrite('depth_with_BBox.jpeg', depth_img_cpy)
-            # depth_bbox = bridge.cv2_to_imgmsg(depth_with_box)
-            # self.depth_with_BB.publish(depth_bbox)
+            pcl = o3d.geometry.PointCloud()
+            pcl.points = o3d.utility.Vector3dVector(np.random.randn(500,3))
+            o3d.visualization.draw_geometries([pcl])
     
  
    
