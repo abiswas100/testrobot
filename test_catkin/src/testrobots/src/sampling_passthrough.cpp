@@ -97,7 +97,7 @@ void sampling_passthrough(){
             << cloud->width * cloud->height
             << " data points from PointCloud.pcd with the following fields: "
             << std::endl;
-
+     
      pcl::PointCloud<pcl::PointXYZ>::Ptr passfiltered_pclXYZ (new pcl::PointCloud<pcl::PointXYZ>);//container after filtering
      pcl::PassThrough<pcl::PointXYZ> pass_filter;
 

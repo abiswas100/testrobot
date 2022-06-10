@@ -88,6 +88,31 @@ ros::Publisher plane_segmented;
 ros::Publisher except_plane;
 ros::Publisher voxel_filtered;
 std::vector<ros::Publisher> cluster_vector;
+// extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
+//                                 typename pcl::PointCloud<PointType>::Ptr targetCloud,
+//                                 unsigned xmin, unsigned xmax,
+//                                 unsigned ymin, unsigned ymax);
+// template<typename PointType>
+void extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
+                                typename pcl::PointCloud<PointType>::Ptr targetCloud,
+                                unsigned xmin, unsigned xmax,
+                                unsigned ymin, unsigned ymax,
+                                unsigned imageWidth,
+                                unsigned imageHeight);
+{
+  copyPointCloud(*sourceCloud, *targetCloud);
+  
+  double nan = std::nan("");
+  PointType nanPt(nan, nan, nan);
+  for(unsigned row =0; row < imageHeight; ++row) {
+    for(unsigned col =0; col < imageWidth; ++col) {
+      unsigned index = row * imageWidth  + col;
+      if((col < xmin) || (xmax < col) || (row < ymin) || (ymax < row))  {
+         targetCloud->operator[](index) = nanPt;
+      }
+    }
+  }
+}
 
 void sampling_PointCloud(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
 {
@@ -105,15 +130,16 @@ void sampling_PointCloud(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     pcl::PCLPointCloud2::Ptr inputCloud (new pcl::PCLPointCloud2);
     pcl::toPCLPointCloud2(*cloud, *inputCloud);
     pcl::PCLPointCloud2::Ptr downsampled_pcl2 (new pcl::PCLPointCloud2); //Container: down sampled pointcloud2
-    ROS_INFO_STREAM("original data size: " << inputCloud->data.size()<<"\n");
-    ROS_INFO_STREAM("original data width: " << inputCloud->width<<"\n");
-    ROS_INFO_STREAM("original data height: " << inputCloud->height<<"\n"); 
+
+
+  
+
     //filter setup and run
     pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
     
     auto start1 = high_resolution_clock::now();
     vg.setInputCloud (inputCloud);
-    vg.setLeafSize (0.02, 0.02, 0.0);
+    vg.setLeafSize (0.02, 0.00, 0.02);
     vg.filter (*downsampled_pcl2);
     auto stop1 = high_resolution_clock::now();
     auto duration1 = duration_cast<microseconds>(stop1 - start1);
@@ -126,139 +152,29 @@ void sampling_PointCloud(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     //publish: voxel grid filtering result
     sensor_msgs::PointCloud2 downsampled_ros;
     pcl_conversions::fromPCL(*downsampled_pcl2, downsampled_ros);
-    voxel_filtered.publish (downsampled_ros);
-  
+    voxel_filtered.publish (downsampled_ros); 
     
 
 
     //converstion from pcl pointcloud2 to pcl::PointCloud<pcl::PointXYZ>
     pcl::PointCloud<pcl::PointXYZ>::Ptr downsampled_pclXYZ(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromPCLPointCloud2(*downsampled_pcl2, *downsampled_pclXYZ);
-    
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr final_extracted_pclXYZ(new pcl::PointCloud<pcl::PointXYZ>);
+    //extractFrame(downsampled_pclXYZ,final_extracted_pclXYZ )
    
 
-    //container: plane pcl pointXYZ
-    
-    pcl::PointCloud<pcl::PointXYZ>::Ptr plane_pclXYZ (new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
-    pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
 
-
-    //segmentation :
-    
-    pcl::SACSegmentation<pcl::PointXYZ> seg;
-    auto begin2 = high_resolution_clock::now();
-    seg.setOptimizeCoefficients (true);
-    seg.setModelType(pcl::SACMODEL_PLANE);
-    seg.setMethodType(pcl::SAC_RANSAC);
-    seg.setMaxIterations (100);
-    seg.setDistanceThreshold(0.03);
-    seg.setInputCloud(downsampled_pclXYZ);
-    seg.segment(*inliers, *coefficients);
-    auto stop2 = high_resolution_clock::now();
-    auto time2 = duration_cast<microseconds>(stop2 - begin2);
-    cout << GREEN << "segmentation time: "<< time2.count()/1000000.0 << " s\n" << endl;
-    
-
-    if(inliers->indices.size () == 0) {
-      std::cerr << "Could not estimate a planar model for the given dataset." << std::endl;
-    }
-
-  //extraction:
-  pcl::ExtractIndices<pcl::PointXYZ> extract;
-  extract.setInputCloud(downsampled_pclXYZ);
-  extract.setIndices(inliers);
-  extract.setNegative(true);
-  extract.filter(*plane_pclXYZ);
-  
-
-  //publish
-  pcl::PCLPointCloud2 plane_pcl2;
-  sensor_msgs::PointCloud2 plane_ros;
-  pcl::toPCLPointCloud2(*plane_pclXYZ, plane_pcl2);
-  pcl_conversions::fromPCL(plane_pcl2, plane_ros);
-  plane_segmented.publish (plane_ros);
-
-  pcl::PointCloud<pcl::PointXYZ>::Ptr except_plane_pclXYZ (new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PCLPointCloud2 except_plane_pcl2;
-  sensor_msgs::PointCloud2 except_plane_ros;
-
-  extract.setInputCloud (downsampled_pclXYZ);
-  extract.setIndices (inliers);
-  extract.setNegative (true);
-  extract.filter (*except_plane_pclXYZ);
-
-  pcl::toPCLPointCloud2(*except_plane_pclXYZ, except_plane_pcl2);
-  pcl_conversions::fromPCL(except_plane_pcl2, except_plane_ros);
-  except_plane.publish (except_plane_ros);
-
-    
-
-
-  //clustering:
-  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
-  auto start7 = high_resolution_clock::now();
-  tree->setInputCloud(plane_pclXYZ);
-  std::vector<pcl::PointIndices> cluster_indices;
-  pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-  ec.setClusterTolerance (0.1);
-  ec.setMinClusterSize (100);
-  ec.setMaxClusterSize (20000);
-  ec.setSearchMethod (tree);
-  ec.setInputCloud (plane_pclXYZ);
-  ec.extract (cluster_indices);
-  
-
-  //std::cout << cluster_indices.size() << " clusters" << std::endl;
-
-  ros::NodeHandle cluster_nh;
-
-  for (int i = 0; i < cluster_indices.size(); i++)
-  {
-    std::string topicName = "cluster" + boost::lexical_cast<std::string>(i);
-    ros::Publisher pub = cluster_nh.advertise<sensor_msgs::PointCloud2> (topicName, 1);
-    cluster_vector.push_back(pub);
-  }
-
-  for (int i = 0; i < cluster_indices.size(); i++)
-  {
-    
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cluster_pclXYZ (new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::PCLPointCloud2 cluster_pcl2;
-    sensor_msgs::PointCloud2 cluster_ros;
-
-    for (int j = 0; j < cluster_indices[i].indices.size(); j++)
-    {
-      int index = cluster_indices[i].indices[j];
-      cluster_pclXYZ->points.push_back(plane_pclXYZ->points[index]);
-    }
-    //std::cout<< "clustering ongoing 2!"<<std::endl;
-    std::cout << i << " PointCloud representing the Cluster: " << cluster_pclXYZ->points.size () << " data " << std::endl;
-    cluster_pclXYZ->width = cluster_pclXYZ->points.size();
-    cluster_pclXYZ->height = 1;
-    cluster_pclXYZ->is_dense = true;
-    pcl::toPCLPointCloud2( *cluster_pclXYZ ,cluster_pcl2);
-    pcl_conversions::fromPCL(cluster_pcl2, cluster_ros);
-    cluster_ros.header.frame_id = downsampled_pclXYZ->header.frame_id;
-    //std::cout << "Cluster Frame id: " << downsampled_pclXYZ->header.frame_id << std::endl;
-    cluster_vector[i].publish (cluster_ros);
-    std::stringstream ss;
-    ss << "complete"<<".pcd";
-    m_writer.write<pcl::PointXYZ>(ss.str(), *cluster_pclXYZ, false);
-    
-  }
-  
-  auto stop7 = high_resolution_clock::now();
-  auto time7 = duration_cast<microseconds>(stop7 - start7);
-  cout << MAGENTA << "clustering time: "<< time7.count()/1000000.0 << " s\n" <<  endl;
-  
-
-  auto stop8 = high_resolution_clock::now();
-  auto time8 = duration_cast<microseconds>(stop8 - start8);
-  cout << "TOTAL time: "<< time8.count()/1000000.0 << " s\n" << endl;
-  std::cout<< "*************************************************\n"<<std::endl;
-
-
+}
+extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
+                                typename pcl::PointCloud<PointType>::Ptr targetCloud,
+                                unsigned xmin, unsigned xmax,
+                                unsigned ymin, unsigned ymax)
+{
+  //Implement in terms of the other function
+  unsigned imageWidth = sourceCloud->width;
+  unsigned imageHeight = sourceCloud->height;
+  extractFrame<PointType>(sourceCloud, targetCloud, xmin, xmax, ymin, ymax, imageWidth, imageHeight);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
