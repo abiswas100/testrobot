@@ -79,7 +79,12 @@ static const std::string PCL_TOPIC = "/camera/depth/points";
 #define YELLOW  "\033[33m"      /* Yellow */
 #define GREEN   "\033[32m"      /* Green */
 #define MAGENTA "\033[35m"      /* Magenta */
+pcl::PointCloud<pcl::PointXYZ>::Ptr downsampled_pclXYZ(new pcl::PointCloud<pcl::PointXYZ>);
 
+  unsigned xmin = 0;
+  unsigned xmax = 0;
+  unsigned ymin = 0;
+  unsigned ymax = 0;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -93,28 +98,59 @@ std::vector<ros::Publisher> cluster_vector;
 //                                 unsigned xmin, unsigned xmax,
 //                                 unsigned ymin, unsigned ymax);
 // template<typename PointType>
-void extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
-                                typename pcl::PointCloud<PointType>::Ptr targetCloud,
-                                unsigned xmin, unsigned xmax,
-                                unsigned ymin, unsigned ymax,
-                                unsigned imageWidth,
-                                unsigned imageHeight);
-{
-  copyPointCloud(*sourceCloud, *targetCloud);
+// void extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
+//                                 typename pcl::PointCloud<PointType>::Ptr targetCloud,
+//                                 unsigned xmin, unsigned xmax,
+//                                 unsigned ymin, unsigned ymax,
+//                                 unsigned imageWidth,
+//                                 unsigned imageHeight);
+// {
+//   copyPointCloud(*sourceCloud, *targetCloud);
   
+//   double nan = std::nan("");
+//   PointType nanPt(nan, nan, nan);
+//   for(unsigned row =0; row < imageHeight; ++row) {
+//     for(unsigned col =0; col < imageWidth; ++col) {
+//       unsigned index = row * imageWidth  + col;
+//       if((col < xmin) || (xmax < col) || (row < ymin) || (ymax < row))  {
+//          targetCloud->operator[](index) = nanPt;
+//       }
+//     }
+//   }
+// }
+
+void BB_Callback(const testrobots::Boundingbox::ConstPtr &msg){
+  unsigned xmin = msg->xmin;
+  unsigned xmax = msg->xmax;
+  unsigned ymin = msg->ymin;
+  unsigned ymax = msg->ymax;
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr final_extracted_pclXYZ(new pcl::PointCloud<pcl::PointXYZ>);
+  unsigned imageWidth = downsampled_pclXYZ->width;
+  unsigned imageHeight = downsampled_pclXYZ->height;
+
+  copyPointCloud(*downsampled_pclXYZ, *final_extracted_pclXYZ);
+
   double nan = std::nan("");
   PointType nanPt(nan, nan, nan);
-  for(unsigned row =0; row < imageHeight; ++row) {
-    for(unsigned col =0; col < imageWidth; ++col) {
+  for(unsigned row =0; row < imageWidth; ++row) { //imageHeight
+    for(unsigned col =0; col < imageHeight; ++col) { //imageWidth
       unsigned index = row * imageWidth  + col;
       if((col < xmin) || (xmax < col) || (row < ymin) || (ymax < row))  {
-         targetCloud->operator[](index) = nanPt;
+         std::cout << "here - " << index <<final_extracted_pclXYZ->operator[](index)<< std::endl;
+         final_extracted_pclXYZ->operator[](index) = nanPt;
       }
     }
   }
-}
 
+
+
+}
+{
+
+}
 void sampling_PointCloud(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
+
 {
    
      
@@ -157,7 +193,7 @@ void sampling_PointCloud(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
 
 
     //converstion from pcl pointcloud2 to pcl::PointCloud<pcl::PointXYZ>
-    pcl::PointCloud<pcl::PointXYZ>::Ptr downsampled_pclXYZ(new pcl::PointCloud<pcl::PointXYZ>);
+    //pcl::PointCloud<pcl::PointXYZ>::Ptr downsampled_pclXYZ(new pcl::PointCloud<pcl::PointXYZ>);//made it global variable
     pcl::fromPCLPointCloud2(*downsampled_pcl2, *downsampled_pclXYZ);
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr final_extracted_pclXYZ(new pcl::PointCloud<pcl::PointXYZ>);
@@ -166,6 +202,7 @@ void sampling_PointCloud(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
 
 
 }
+
 extractFrame(typename pcl::PointCloud<PointType>::ConstPtr sourceCloud,
                                 typename pcl::PointCloud<PointType>::Ptr targetCloud,
                                 unsigned xmin, unsigned xmax,
@@ -188,9 +225,10 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     
     ros::Subscriber sub = nh.subscribe(PCL_TOPIC, 10, sampling_PointCloud);
+    ros::Subscriber bbsub = n.subscribe("/BBox", 10, BB_Callback);
     voxel_filtered = nh.advertise<sensor_msgs::PointCloud2> ("voxel_filtered", 1);
-    plane_segmented = nh.advertise<sensor_msgs::PointCloud2> ("plane_segmented", 1);
-    except_plane = nh.advertise<sensor_msgs::PointCloud2> ("except_plane",1);
+    // plane_segmented = nh.advertise<sensor_msgs::PointCloud2> ("plane_segmented", 1);
+    // except_plane = nh.advertise<sensor_msgs::PointCloud2> ("except_plane",1);
     
 
     ros::spin();
