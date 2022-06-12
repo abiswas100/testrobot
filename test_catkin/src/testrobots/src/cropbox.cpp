@@ -89,10 +89,10 @@ static const std::string PCL_TOPIC = "/camera/depth/points";
 #define GREEN   "\033[32m"      /* Green */
 #define MAGENTA "\033[35m"      /* Magenta */
 
-unsigned xmin = 664.0;
-unsigned xmax = 894.0;
-unsigned ymin = 563.0;
-unsigned ymax = 663.0;
+float xmin = 664.0;
+float xmax = 894.0;
+float ymin = 563.0;
+float ymax = 663.0;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // void bb_callback(const testrobots::Boundingbox::ConstPtr &msg){
@@ -102,23 +102,23 @@ unsigned ymax = 663.0;
 //     ymax = msg->ymax;
 
 // }
-void crop_box(){
+void crop_box(const sensor_msgs::PointCloud2ConstPtr& cloud_msg){
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); 
-    std::cout<< "Loading pcd data..."<<std::endl;
-    pcl::io::loadPCDFile<pcl::PointXYZ> ("/home/apramani/testrobot/test_catkin/src/testrobots/src/PointCloud.pcd", *cloud); //loads the PointCloud data from disk 
-    std::cout << "Loaded "
-            << cloud->width * cloud->height
-            << " data points from PointCloud.pcd with the following fields: "
-            << std::endl;
+    // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); 
+    // std::cout<< "Loading pcd data..."<<std::endl;
+    // pcl::io::loadPCDFile<pcl::PointXYZ> ("/home/apramani/testrobot/test_catkin/src/testrobots/src/PointCloud.pcd", *cloud); //loads the PointCloud data from disk 
+    // std::cout << "Loaded "
+    //         << cloud->width * cloud->height
+    //         << " data points from PointCloud.pcd with the following fields: "
+    //         << std::endl;
     
 
 
 
-    // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); 
-    // pcl::PCLPointCloud2 pcl_pc2;
-    // pcl_conversions::toPCL(*cloud_msg,pcl_pc2);
-    // pcl::fromPCLPointCloud2(pcl_pc2,*cloud);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); 
+    pcl::PCLPointCloud2 pcl_pc2;
+    pcl_conversions::toPCL(*cloud_msg,pcl_pc2);
+    pcl::fromPCLPointCloud2(pcl_pc2,*cloud);
 
      
     // // pcl::PCLPointCloud2::Ptr inputCloud (new pcl::PCLPointCloud2);
@@ -126,11 +126,11 @@ void crop_box(){
 
     CropBox<PointXYZ> cropBoxFilter (true);
     cropBoxFilter.setInputCloud (cloud);
-    Eigen::Vector4f min_pt (xmin, ymin, 0.0f, 1.0f);
-    Eigen::Vector4f max_pt (xmax,ymax,0.0f, 1.0f);
+    Eigen::Vector4f min_pt (xmin, -1.0f, 1.0f, 1.0f);
+    Eigen::Vector4f max_pt (xmax,1.0f,2.0f, 1.0f);
 
     // Cropbox slighlty bigger then bounding box of points
-    cropBoxFilter.setMin (min_pt);-
+    cropBoxFilter.setMin (min_pt);
     cropBoxFilter.setMax (max_pt);
 
     // Indices
@@ -149,11 +149,11 @@ void crop_box(){
     sensor_msgs::PointCloud2 cloud_ros;
     pcl::toPCLPointCloud2(cloud_out, output_cloud_pcl2);
     pcl_conversions::fromPCL(output_cloud_pcl2, cloud_ros);
-   // cropbox_filtered.publish(cloud_ros);
+    cropbox_filtered.publish(cloud_ros);
 
-    std::stringstream vv;
-    vv << "crop_box"<<".pcd";
-    m_writer.write<pcl::PointXYZ>(vv.str(), *cloud_save, false);
+    // std::stringstream vv;
+    // vv << "crop_box"<<".pcd";
+    // m_writer.write<pcl::PointXYZ>(vv.str(), *cloud_save, false);
 
  
 }
@@ -161,11 +161,11 @@ int main(int argc, char **argv)
 {
     ros::init (argc, argv, "plotting_human");
     ros::NodeHandle nh;
-    crop_box();
-    cout<<"done"<<endl;
+    // crop_box();
+    // cout<<"done"<<endl;
     
-    // ros::Subscriber sub = nh.subscribe(PCL_TOPIC, 10, crop_box);
-    // cropbox_filtered = nh.advertise<sensor_msgs::PointCloud2> ("cropbox_filtered", 1);
+    ros::Subscriber sub = nh.subscribe(PCL_TOPIC, 10, crop_box);
+    cropbox_filtered = nh.advertise<sensor_msgs::PointCloud2> ("cropbox_filtered", 1);
 
     // voxel_filtered = nh.advertise<sensor_msgs::PointCloud2> ("voxel_filtered", 1);
     // plane_segmented = nh.advertise<sensor_msgs::PointCloud2> ("plane_segmented", 1);
