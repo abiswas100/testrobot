@@ -90,8 +90,13 @@ double ymin = 0;
 double ymax = 0;
 int row = 0;
 int col = 0;
+pcl::PointCloud<pcl::PointXYZ>::Ptr no_plane_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+//sensor_msgs::PointCloud2 crop_cloud_msg;//(new pcl::PointCloud);
+sensor_msgs::PointCloud2 obj_msg;//(new pcl::PointCloud);
+ros::Publisher pub_cropped_cloud;//=nh.advertise<sensor_msgs::PointCloud2>("cropped_cloud",1);
 void crop_bb(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> >  input_cloud_ptr, boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > output_cloud_ptr,
 double x_min, double x_max,double  y_min,double  y_max,double  z_min,double z_max);
+void extractObject(pcl::PointCloud<pcl::PointXYZ>::Ptr crop_cloud_ptr);
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg){
     xmin = msg->xmin;
@@ -132,11 +137,20 @@ void blah(const sensor_msgs::PointCloud2 &cloud_msg){
          Eigen::Vector4f::Zero (), Eigen::Quaternionf::Identity (), false);
 
     //crop bounding box
-   pcl::PointCloud<pcl::PointXYZ>::Ptr crop_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+   //pcl::PointCloud<pcl::PointXYZ>::Ptr crop_cloud(new pcl::PointCloud<pcl::PointXYZ>);
    pcl::PointCloud<pcl::PointXYZ>::Ptr output_ptr(new pcl::PointCloud<pcl::PointXYZ>);
    pcl::fromPCLPointCloud2(*outputCloud, *output_ptr);
-   //pcl::fromPCLPointCloud2(&outputCloud,*output_ptr);
-   crop_bb(output_ptr,crop_cloud,xmax,xmin,ymax,ymin, 0,0);
+
+   crop_bb(output_ptr,output_ptr,xmax,xmin,ymax,ymin, ymax,ymin);
+   sensor_msgs::PointCloud2 crop_cloud_msg;
+
+   pcl::toROSMsg(*output_ptr.get(),crop_cloud_msg );
+   pub_cropped_cloud.publish (crop_cloud_msg);
+  
+   // extractObject(output_ptr);
+   // pcl::toROSMsg(*no_plane_cloud.get(),obj_msg );
+
+   
 
    auto stop1 = high_resolution_clock::now();
    auto duration1 = duration_cast<microseconds>(stop1 - start1);
@@ -144,6 +158,49 @@ void blah(const sensor_msgs::PointCloud2 &cloud_msg){
     
 
 
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void extractObject(pcl::PointCloud<pcl::PointXYZ>::Ptr crop_cloud_ptr)
+{
+    no_plane_cloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
+    // Cloud indices representing planar components inliers
+    pcl::PointIndices::Ptr planar_inliers (new pcl::PointIndices);
+    // Cloud coefficients for planar components inliers
+    pcl::ModelCoefficients::Ptr planar_coefficients (new pcl::ModelCoefficients);
+    // Segmentation object
+    pcl::SACSegmentation<pcl::PointXYZ> SAC_filter;
+    pcl::ExtractIndices<pcl::PointXYZ> planar_inliers_extraction;
+    // Euclidean Cluster Extraction object
+
+
+
+
+    // Segmentation object initialization
+    SAC_filter.setOptimizeCoefficients (true);
+    SAC_filter.setModelType(pcl::SACMODEL_PLANE);
+    SAC_filter.setMethodType (pcl::SAC_RANSAC);
+    SAC_filter.setMaxIterations (100);
+    SAC_filter.setDistanceThreshold (0.02);
+   //if(crop_cloud_ptr->size() > 0){
+
+    // Segment the dominant plane cluster
+    SAC_filter.setInputCloud (crop_cloud_ptr);
+    SAC_filter.segment (*planar_inliers, *planar_coefficients);
+
+    if (planar_inliers->indices.size () == 0)
+    {
+       return ;
+    }
+
+    // Remove the planar cluster from the input cloud
+    planar_inliers_extraction.setInputCloud (crop_cloud_ptr);
+    planar_inliers_extraction.setIndices (planar_inliers);
+    planar_inliers_extraction.setNegative (true);
+    planar_inliers_extraction.filter (*no_plane_cloud);
+    std::vector<int> no_Nan_vector;
+    pcl::removeNaNFromPointCloud(*no_plane_cloud,*no_plane_cloud,no_Nan_vector);
+   //}
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -223,9 +280,10 @@ double x_min, double x_max,double  y_min,double  y_max,double  z_min,double z_ma
 
     surface_hull.reset(new pcl::PointCloud<pcl::PointXYZ>);
     hull.reconstruct(*surface_hull, polygons);
+    std::cout<<"here 3 \n"<<std::endl;
     pcl::CropHull<pcl::PointXYZ> bb_filter;
 
-    std::cout<<"here 3 \n"<<std::endl;
+   
 
    bb_filter.setDim(3);
    std::cout<<"here 4 \n"<<std::endl;
@@ -239,6 +297,7 @@ double x_min, double x_max,double  y_min,double  y_max,double  z_min,double z_ma
    std::cout<<"here 8 \n"<<std::endl;
    bb_filter.filter(*output_cloud_ptr.get());
    std::cout<<"here 9 \n"<<std::endl;
+   
 
 
 
@@ -256,6 +315,8 @@ int main(int argc, char **argv)
    ros::NodeHandle nh;
    ros::Subscriber BBsub = nh.subscribe("/BBox", 10, BBoxCallback);
    ros::Subscriber sub = nh.subscribe(PCL_TOPIC, 10, blah);
+   pub_cropped_cloud=nh.advertise<sensor_msgs::PointCloud2>("cropped_cloud",1);
+   
    
 
   ros::spin();
