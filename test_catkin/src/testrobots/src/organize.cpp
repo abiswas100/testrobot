@@ -91,13 +91,15 @@ double ymax = 0;
 int row = 0;
 int col = 0;
 pcl::PointCloud<pcl::PointXYZ>::Ptr no_plane_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-//sensor_msgs::PointCloud2 crop_cloud_msg;//(new pcl::PointCloud);
-sensor_msgs::PointCloud2 obj_msg;//(new pcl::PointCloud);
-ros::Publisher pub_cropped_cloud;//=nh.advertise<sensor_msgs::PointCloud2>("cropped_cloud",1);
+
+sensor_msgs::PointCloud2 obj_msg;
+ros::Publisher pub_cropped_cloud;
 void crop_bb(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> >  input_cloud_ptr, boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > output_cloud_ptr,
 double x_min, double x_max,double  y_min,double  y_max,double  z_min,double z_max);
 void extractObject(pcl::PointCloud<pcl::PointXYZ>::Ptr crop_cloud_ptr);
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg){
     xmin = msg->xmin;
     xmax = msg->xmax;
@@ -137,14 +139,14 @@ void blah(const sensor_msgs::PointCloud2 &cloud_msg){
          Eigen::Vector4f::Zero (), Eigen::Quaternionf::Identity (), false);
 
     //crop bounding box
-   //pcl::PointCloud<pcl::PointXYZ>::Ptr crop_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+   
    pcl::PointCloud<pcl::PointXYZ>::Ptr output_ptr(new pcl::PointCloud<pcl::PointXYZ>);
    pcl::fromPCLPointCloud2(*outputCloud, *output_ptr);
-
-   crop_bb(output_ptr,output_ptr,xmax,xmin,ymax,ymin, ymax,ymin);
+   pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+   crop_bb(output_ptr,cropped_cloud_ptr,xmax,xmin,ymax,ymin, ymax,ymin);
    sensor_msgs::PointCloud2 crop_cloud_msg;
 
-   pcl::toROSMsg(*output_ptr.get(),crop_cloud_msg );
+   pcl::toROSMsg(*cropped_cloud_ptr.get(),crop_cloud_msg );
    pub_cropped_cloud.publish (crop_cloud_msg);
   
    // extractObject(output_ptr);
