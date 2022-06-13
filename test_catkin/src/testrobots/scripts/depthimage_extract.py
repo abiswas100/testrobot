@@ -2,12 +2,16 @@
 #!/usr/bin/env python3
 
 
+import queue
 from numpy import NaN
 import rospy
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import LaserScan 
 from sensor_msgs.msg import PointCloud2 as pc2
+from sensor_msgs.msg import PointField
 import sensor_msgs.msg as sensor_msgs
+from std_msgs.msg import Header
+from sensor_msgs import point_cloud2
 
 import tf, tf2_ros
 from geometry_msgs.msg import Point, PointStamped
@@ -23,6 +27,8 @@ import pcl_ros
 import open3d as o3d
 import pcl_ros
 import ros_numpy
+
+from testrobots.msg import newBoundingbox
 
 
 bridge = CvBridge() 
@@ -51,17 +57,29 @@ class Detection(object):
 
         self.croppedpcl = rospy.Publisher("cropedPCL", pc2, queue_size=100)
 
-    
+        self.boundingbox = rospy.Publisher("Box_values", newBoundingbox, queue_size=100)
 
     def pointcallback(self,data):
-        #use the same header as data
+        #use the same header and data as input message
         header = data.header
+        height = data.height
+        width = data.width
+        # fields = data.fields
+        is_bigendian = data.is_bigendian
+        point_step =  data.point_step
+        row_step = data.row_step
+        is_dense = data.is_dense
+        fields = [PointField('x', 0, PointField.FLOAT32, 1),
+              PointField('y', 4, PointField.FLOAT32, 1),
+              PointField('z', 8, PointField.FLOAT32, 1)]
         
+        print(point_step, row_step)
+        print(type(data.data))
+        
+        # convert pointcloud into ros message
         pcl_np = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data, remove_nans=False)  # remove_nans=True
         item =  pcl_np[0]
-        # print("item row",pcl_np[0], "length" , len(pcl_np[0]))
-        # print(item[0])
-        print(pcl_np)
+
         if len(self.center_pixel) == 0:
              pass
             
@@ -96,23 +114,64 @@ class Detection(object):
                             i += 1
                             # print(i)
                             # print("row, col, value",row_no, col_no, value)       
-                            
-                            # depth_array[row_no][col_no] = 2.00  
+
                             pass
                         else:
                             # print("before change",pcl_np[row_no][col_no])
                             pcl_np[row_no][col_no] = NaN
                             # print("after change",pcl_np[row_no][col_no])
-            print(i)
-            print(pcl_np)
-       
-        
-        #publishing pointcloud
-        # newpcl = pc2()
-        # newpcl.header = header
-        # pcl_np2 = ros_numpy.point_cloud2.array_to_pointcloud2(pcl_np, header.stamp, header.frame_id)
-        # print(pcl_np2)
- 
+            # print(i)
+            # print(pcl_np)
+                                        
+            #publishing pointcloud
+            # dtype = np.float32
+            # data = pcl_np.astype(dtype).tobytes()
+            # pcl2 = point_cloud2.create_cloud_xyz32(header,pcl_np)
+            # self.croppedpcl.publish(pcl2)
+            
+            
+            #  creating bounding box message for apala
+            box = newBoundingbox()
+            for row_no in range(0,1079):
+                    for col_no in range(0,1919):
+                        row = pcl_np[row_no]
+                        value = row[col_no]
+                        
+                        
+                        if (row_no >= ymin and row_no <= ymax) and (col_no >= xmin and col_no <= xmax):
+                            i += 1
+                            # print(i)
+                            # print("row, col, value",row_no, col_no, value)       
+
+                            pass
+                        else:
+                            # print("before change",pcl_np[row_no][col_no])
+                            pcl_np[row_no][col_no] = NaN
+                            # print("after change",pcl_np[row_no][col_no])
+                        if(row_no == ymin and col_no == xmin):
+                            value = pcl_np[row_no][col_no]
+                            box.A_x = value[0]
+                            box.A_y = value[1]
+                            box.A_z = value[2]
+                        if(row_no == ymin and col_no == xmax):
+                            value = pcl_np[row_no][col_no]
+                            box.B_x = value[0]
+                            box.B_y = value[1]
+                            box.B_z = value[2]
+                        if(row_no == ymax and col_no == xmin):
+                            value = pcl_np[row_no][col_no]
+                            box.C_x = value[0]
+                            box.C_y = value[1]
+                            box.C_z = value[2]
+                        if(row_no == ymax and col_no == xmax):
+                            value = pcl_np[row_no][col_no]
+                            box.D_x = value[0]
+                            box.D_y = value[1]
+                            box.D_z = value[2]
+            print(box)
+            self.boundingbox.publish(box)            
+            
+
  
     '''
         This is a callback for RGB Image message
