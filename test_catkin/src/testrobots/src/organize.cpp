@@ -87,30 +87,115 @@ static const std::string PCL_TOPIC = "/camera/depth/points";
 
 ros::Publisher organizer;
 pcl::PCDWriter m_writer;
+
 double xmin = 0;
 double xmax = 0;
 double ymin = 0;
 double ymax = 0;
-int row = 0;
-int col = 0;
-pcl::PointCloud<pcl::PointXYZ>::Ptr no_plane_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+double zmin = 0;
+double zmax = 0;
+
+double A_x;
+double A_y;
+double A_z;
+double B_x;
+double B_y;
+double B_z;
+double C_x;
+double C_y;
+double C_z;
+double D_x;
+double D_y;
+double D_z;
+
+double xmin_left = 0;
+double xmin_right = 0;
+
+double xmax_left = 0;
+double xmax_right = 0;
+
+double ymin_left = 0;
+double ymin_right = 0;
+
+double ymax_left = 0;
+double ymax_right = 0;
+
+double zmin_left = 0;
+double zmin_right = 0;
+
+double zmax_left = 0;
+double zmax_right = 0;
+
+
+
 
 sensor_msgs::PointCloud2 obj_msg;
 sensor_msgs::PointCloud2 crop_cloud_msg;
 ros::Publisher pub_cropped_cloud;
 ros::Publisher pub_extracted_cloud;
+pcl::PointCloud<pcl::PointXYZ>::Ptr no_plane_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 void crop_bb(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> >  input_cloud_ptr, boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > output_cloud_ptr,
 double x_min, double x_max,double  y_min,double  y_max,double  z_min,double z_max);
 void extractObject(pcl::PointCloud<pcl::PointXYZ>::Ptr crop_cloud_ptr);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void BBoxCallback (const testrobots::Boundingbox::ConstPtr &msg){
-    xmin = msg->xmin;
-    xmax = msg->xmax;
-    ymin = msg->ymin;
-    ymax = msg->ymax;
+void BBoxCallback (const testrobots::newBoundingbox::ConstPtr &msg){
+
+   A_x = msg->A_x;
+   A_y = msg->A_y;
+   A_z = msg->A_z;
+
+   B_x = msg->B_x;
+   B_y = msg->B_y;
+   B_z = msg->B_z;
+
+   C_x = msg->C_x;
+   C_y = msg->C_y;
+   C_z = msg->C_z;
+
+   D_x = msg->D_x;
+   D_y = msg->D_y;
+   D_z = msg->D_z;
+   
+  
+
+   xmin_left = std::min(A_x, B_x);
+   xmin_right = std::min(C_x, D_x);
+   xmin = std::min(xmin_left,xmin_right);
+
+   xmax_left = std::max(A_x, B_x);
+   xmax_right= std::max(C_x, D_x);
+   xmax = std::max(xmax_left,xmax_right);
+
+   ymin_left = std::min(A_y, B_y);
+   ymin_right = std::min(C_y,D_y);
+   ymin = std::min(ymin_left,ymin_right);
+
+   ymax_left = std::max(A_y, B_y);
+   ymax_right = std::max(C_y,D_y);
+   ymax = std::max(ymax_left,ymax_right);
+
+   zmin_left = std::min(A_z, B_z);
+   zmin_right = std::min(C_z, D_z);
+   zmin = std::min(zmin_left, zmin_right);
+
+   zmax_left = std::max(A_z, B_z);
+   zmax_right = std::max(C_z, D_z);
+   zmax = std::max(zmax_left, zmax_right);
+
+   std::cout<<"xmin: "<< xmin <<std::endl;
+   std::cout<<"xmax: "<< xmax <<std::endl;
+   std::cout<<"ymin: "<< ymin <<std::endl;
+   std::cout<<"ymax: "<< ymax << std::endl;
+   std::cout<<"zmin: "<< zmin << std::endl;
+   std::cout<<"zmax: "<< zmax << std::endl;
+
+  
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void blah(const sensor_msgs::PointCloud2 &cloud_msg){
    
    auto start1 = high_resolution_clock::now();
@@ -149,11 +234,13 @@ void blah(const sensor_msgs::PointCloud2 &cloud_msg){
    pcl::fromPCLPointCloud2(*outputCloud, *output_ptr);
    pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
    
-
+   
 
    //call crop bounding boxfunction and convert to ros msg  
-   std::cout<<"cropping bounding box...\n"<< std::endl;  
-   crop_bb(output_ptr,cropped_cloud_ptr,-2.0,0.0,-1.5,0.0, 2.0,4.0);   
+   std::cout<<"cropping bounding box...\n"<< std::endl; 
+  
+
+   crop_bb(output_ptr,cropped_cloud_ptr,xmin,xmax,ymin,ymax,zmin,zmax);   
    pcl::toROSMsg(*cropped_cloud_ptr.get(),crop_cloud_msg );
 
    //save cropped cloud to pcd and publish
@@ -227,8 +314,8 @@ void extractObject(pcl::PointCloud<pcl::PointXYZ>::Ptr crop_cloud_ptr)
     pcl::removeNaNFromPointCloud(*no_plane_cloud,*no_plane_cloud,no_Nan_vector);
    //}
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void crop_bb(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > input_cloud_ptr, boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > output_cloud_ptr,
 double x_min, double x_max,double  y_min,double  y_max,double  z_min,double z_max){
@@ -341,8 +428,8 @@ int main(int argc, char **argv)
    ros::init (argc, argv, "plotting_human");
    ros::NodeHandle nh;
    //subscribe
-   ros::Subscriber BBsub = nh.subscribe("/BBox", 10, BBoxCallback);
-   ros::Subscriber sub = nh.subscribe(PCL_TOPIC, 10, blah);
+   ros::Subscriber BBsub = nh.subscribe("/Box_values", 100, BBoxCallback);
+   ros::Subscriber PCLsub = nh.subscribe(PCL_TOPIC, 100, blah);
 
    //publish
    std::string frame_id="camera_rgb_optical_frame";

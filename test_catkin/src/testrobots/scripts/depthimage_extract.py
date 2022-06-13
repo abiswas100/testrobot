@@ -24,7 +24,7 @@ import numpy as np
 import os
 import math
 import pcl_ros
-import open3d as o3d
+# import open3d as o3d
 import pcl_ros
 import ros_numpy
 
