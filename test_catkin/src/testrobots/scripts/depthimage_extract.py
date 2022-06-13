@@ -1,34 +1,29 @@
 #!/usr/bin/env python
 #!/usr/bin/env python3
 
-
-import queue
 from numpy import NaN
 import rospy
+import ros_numpy
+
 from sensor_msgs.msg import Image
-from sensor_msgs.msg import LaserScan 
 from sensor_msgs.msg import PointCloud2 as pc2
 from sensor_msgs.msg import PointField
 import sensor_msgs.msg as sensor_msgs
 from std_msgs.msg import Header
 from sensor_msgs import point_cloud2
-import struct
 
-import tf, tf2_ros
+
 from geometry_msgs.msg import Point, PointStamped
 
-import csv
+import struct
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 import yolo as Yolo
 import numpy as np
-import os
-import math
-import pcl_ros
+
 # import open3d as o3d
-import pcl_ros
-import ros_numpy
-import time
+
+
 from testrobots.msg import newBoundingbox
 
 
@@ -63,25 +58,14 @@ class Detection(object):
     def pointcallback(self,data):
         #use the same header and data as input message
         header = data.header
-        height = data.height
-        width = data.width
-        # fields = data.fields
-        is_bigendian = data.is_bigendian
-        point_step =  data.point_step
-        row_step = data.row_step
-        is_dense = data.is_dense
-
-        
-        # print(point_step, row_step)
-        # print(type(data.data))
-        
-        # convert pointcloud into ros message
+                
+        # convert ROS_pointcloud into 
         pcl_np = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data, remove_nans=False)  # remove_nans=True
         item =  pcl_np[0]
 
-        
+    
         if len(self.center_pixel) == 0:
-             pass
+            print("no bounding box to extract")
             
         else:    
             
@@ -163,10 +147,7 @@ class Detection(object):
             
             
             #publishing pointcloud
-            # dtype = np.float32
-            # data = pcl_np.astype(dtype).tobytes()
-            # pcl2 = point_cloud2.create_cloud_xyz32(header,pcl_np)
-            # self.croppedpcl.publish(pcl2)
+
             pc2 = point_cloud2.create_cloud(header, fields, points)
             self.croppedpcl.publish(pc2)
             
