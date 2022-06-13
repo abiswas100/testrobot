@@ -27,7 +27,7 @@ import pcl_ros
 # import open3d as o3d
 import pcl_ros
 import ros_numpy
-
+import time
 from testrobots.msg import newBoundingbox
 
 
@@ -57,7 +57,7 @@ class Detection(object):
 
         self.croppedpcl = rospy.Publisher("cropedPCL", pc2, queue_size=100)
 
-        self.boundingbox = rospy.Publisher("Box_values", newBoundingbox, queue_size=100)
+        self.boundingbox = rospy.Publisher("Box_values", newBoundingbox, queue_size=100, latch=True)
 
     def pointcallback(self,data):
         #use the same header and data as input message
@@ -69,17 +69,16 @@ class Detection(object):
         point_step =  data.point_step
         row_step = data.row_step
         is_dense = data.is_dense
-        fields = [PointField('x', 0, PointField.FLOAT32, 1),
-              PointField('y', 4, PointField.FLOAT32, 1),
-              PointField('z', 8, PointField.FLOAT32, 1)]
+
         
-        print(point_step, row_step)
-        print(type(data.data))
+        # print(point_step, row_step)
+        # print(type(data.data))
         
         # convert pointcloud into ros message
         pcl_np = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data, remove_nans=False)  # remove_nans=True
         item =  pcl_np[0]
 
+        
         if len(self.center_pixel) == 0:
              pass
             
@@ -122,7 +121,30 @@ class Detection(object):
                             # print("after change",pcl_np[row_no][col_no])
             # print(i)
             # print(pcl_np)
-                                        
+            
+            points = []
+            for row_no in range(0,1079):
+                    for col_no in range(0,1919):
+                        row = pcl_np[row_no]
+                        value = row[col_no]
+                        x = value[0]
+                        y = value[1]
+                        z = value[2]
+                        try:
+                            r = int(x*255.0)
+                            g = int(x*255.0)
+                            b = int(x*255.0)
+                        except ValueError:
+                            r = 0 
+                            g = 0
+                            b = 0
+            fields = [PointField('x', 0, PointField.FLOAT32, 1),
+                        PointField('y', 4, PointField.FLOAT32, 1),
+                        PointField('z', 8, PointField.FLOAT32, 1),
+                        PointField('rgba', 12, PointField.UINT32, 1),
+                        ]
+            
+            
             #publishing pointcloud
             # dtype = np.float32
             # data = pcl_np.astype(dtype).tobytes()
@@ -132,6 +154,7 @@ class Detection(object):
             
             #  creating bounding box message for apala
             box = newBoundingbox()
+  
             for row_no in range(0,1079):
                     for col_no in range(0,1919):
                         row = pcl_np[row_no]
@@ -168,6 +191,7 @@ class Detection(object):
                             box.D_x = value[0]
                             box.D_y = value[1]
                             box.D_z = value[2]
+            
             print(box)
             self.boundingbox.publish(box)            
             
