@@ -12,6 +12,7 @@ from sensor_msgs.msg import PointField
 import sensor_msgs.msg as sensor_msgs
 from std_msgs.msg import Header
 from sensor_msgs import point_cloud2
+import struct
 
 import tf, tf2_ros
 from geometry_msgs.msg import Point, PointStamped
@@ -55,7 +56,7 @@ class Detection(object):
 
         self.depth_with_BB = rospy.Publisher("DepthBB", Image, queue_size=100, latch=True)
 
-        self.croppedpcl = rospy.Publisher("cropedPCL", pc2, queue_size=100)
+        self.croppedpcl = rospy.Publisher("cropedPCL", pc2, queue_size=1)
 
         self.boundingbox = rospy.Publisher("Box_values", newBoundingbox, queue_size=100, latch=True)
 
@@ -131,13 +132,29 @@ class Detection(object):
                         y = value[1]
                         z = value[2]
                         try:
-                            r = int(x*255.0)
-                            g = int(x*255.0)
-                            b = int(x*255.0)
+                            r = abs(int(x*255.0))
+                            g = abs(int(x*255.0))
+                            b = abs(int(x*255.0))
                         except ValueError:
-                            r = 0 
-                            g = 0
-                            b = 0
+                            r = 1 
+                            g = 1
+                            b = 1
+                        a = 255
+                        # print(r,g,b,a)
+                        if (r >= 255 or b >= 255 or g >= 255):
+                            r = 255 
+                            g = 255
+                            b =255
+                        try:
+                            rgb = struct.unpack('I', struct.pack('BBBB', b, g, r, a))[0]
+                            # print (hex(rgb))
+                        except struct.error:
+                            print("error",r,g,b)
+                        pt = [x, y, z, rgb]
+                        points.append(pt)
+                        
+            print(len(points))
+            
             fields = [PointField('x', 0, PointField.FLOAT32, 1),
                         PointField('y', 4, PointField.FLOAT32, 1),
                         PointField('z', 8, PointField.FLOAT32, 1),
@@ -150,50 +167,51 @@ class Detection(object):
             # data = pcl_np.astype(dtype).tobytes()
             # pcl2 = point_cloud2.create_cloud_xyz32(header,pcl_np)
             # self.croppedpcl.publish(pcl2)
-            
+            pc2 = point_cloud2.create_cloud(header, fields, points)
+            self.croppedpcl.publish(pc2)
             
             #  creating bounding box message for apala
-            box = newBoundingbox()
+            # box = newBoundingbox()
   
-            for row_no in range(0,1079):
-                    for col_no in range(0,1919):
-                        row = pcl_np[row_no]
-                        value = row[col_no]
+            # for row_no in range(0,1079):
+            #         for col_no in range(0,1919):
+            #             row = pcl_np[row_no]
+            #             value = row[col_no]
                         
                         
-                        if (row_no >= ymin and row_no <= ymax) and (col_no >= xmin and col_no <= xmax):
-                            i += 1
-                            # print(i)
-                            # print("row, col, value",row_no, col_no, value)       
+            #             if (row_no >= ymin and row_no <= ymax) and (col_no >= xmin and col_no <= xmax):
+            #                 i += 1
+            #                 # print(i)
+            #                 # print("row, col, value",row_no, col_no, value)       
 
-                            pass
-                        else:
-                            # print("before change",pcl_np[row_no][col_no])
-                            pcl_np[row_no][col_no] = NaN
-                            # print("after change",pcl_np[row_no][col_no])
-                        if(row_no == ymin and col_no == xmin):
-                            value = pcl_np[row_no][col_no]
-                            box.A_x = value[0]
-                            box.A_y = value[1]
-                            box.A_z = value[2]
-                        if(row_no == ymax and col_no == xmin):
-                            value = pcl_np[row_no][col_no]
-                            box.B_x = value[0]
-                            box.B_y = value[1]
-                            box.B_z = value[2]
-                        if(row_no == ymin and col_no == xmax):
-                            value = pcl_np[row_no][col_no]
-                            box.C_x = value[0]
-                            box.C_y = value[1]
-                            box.C_z = value[2]
-                        if(row_no == ymax and col_no == xmax):
-                            value = pcl_np[row_no][col_no]
-                            box.D_x = value[0]
-                            box.D_y = value[1]
-                            box.D_z = value[2]
+            #                 pass
+            #             else:
+            #                 # print("before change",pcl_np[row_no][col_no])
+            #                 pcl_np[row_no][col_no] = NaN
+            #                 # print("after change",pcl_np[row_no][col_no])
+            #             if(row_no == ymin and col_no == xmin):
+            #                 value = pcl_np[row_no][col_no]
+            #                 box.A_x = value[0]
+            #                 box.A_y = value[1]
+            #                 box.A_z = value[2]
+            #             if(row_no == ymax and col_no == xmin):
+            #                 value = pcl_np[row_no][col_no]
+            #                 box.B_x = value[0]
+            #                 box.B_y = value[1]
+            #                 box.B_z = value[2]
+            #             if(row_no == ymin and col_no == xmax):
+            #                 value = pcl_np[row_no][col_no]
+            #                 box.C_x = value[0]
+            #                 box.C_y = value[1]
+            #                 box.C_z = value[2]
+            #             if(row_no == ymax and col_no == xmax):
+            #                 value = pcl_np[row_no][col_no]
+            #                 box.D_x = value[0]
+            #                 box.D_y = value[1]
+            #                 box.D_z = value[2]
             
-            print(box)
-            self.boundingbox.publish(box)            
+            # # print(box)
+            # self.boundingbox.publish(box)            
             
 
  
