@@ -45,10 +45,11 @@ class Detection(object):
         self.depth = 0
         self.confidence = 0.0
         
-        rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=1)
-        rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
-        # rospy.Subscriber("/camera/depth/points",pc2, self.Depthcloud, queue_size=1)
+        # rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=1)
+        # rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
+        rospy.Subscriber("/camera/depth/points",pc2, self.Depthcloud, queue_size=1)
         # rospy.Subscriber("/map",OccupancyGrid,self.Occupancy, queue_size=1)
+        
         # publishing topics
         self.pub = rospy.Publisher("H_Detection_image", Image, queue_size=1)    
         self.msg_pub = rospy.Publisher("H_Detection_msg", H_detection, queue_size=1)
@@ -56,7 +57,8 @@ class Detection(object):
         self.vector_pub = rospy.Publisher("H_Vector", Image, queue_size=1)
         # self.point_pub = rospy.Publisher('/center_point', PointStamped, queue_size=1)
         self.boundingbox = rospy.Publisher("BBox", Boundingbox, queue_size=1)
-        self.depth_with_BB = rospy.Publisher("DepthBB", Image, queue_size=1)
+        self.depth_with_BB = rospy.Publisher("DepthBB", Image, queue_size=100, latch=True)
+        
         #initialize csv file
         self.path = os.getcwd()
         self.path = self.path+"/human_motion.csv"

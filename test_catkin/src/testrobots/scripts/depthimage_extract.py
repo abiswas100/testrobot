@@ -7,10 +7,11 @@ import rospy
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import LaserScan 
 from sensor_msgs.msg import PointCloud2 as pc2
+import sensor_msgs.msg as sensor_msgs
 
 import tf, tf2_ros
 from geometry_msgs.msg import Point, PointStamped
-from nav_msgs.msg import OccupancyGrid
+
 import csv
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
@@ -18,11 +19,10 @@ import yolo as Yolo
 import numpy as np
 import os
 import math
-# import pcl
 import pcl_ros
-# import ros_numpy
 import open3d as o3d
-from open3d_ros_helper import open3d_ros_helper as orh
+import pcl_ros
+import ros_numpy
 
 
 bridge = CvBridge() 
@@ -40,18 +40,83 @@ class Detection(object):
         self.confidence = 0.0
         
         rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=1)
-        rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
-
+        # rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
+        
+        rospy.Subscriber("camera/depth/points", pc2, self.pointcallback, queue_size=1)
+        
         # publishing topics
         self.pub = rospy.Publisher("H_Detection_image", Image, queue_size=1)    
 
-        self.depth_with_BB = rospy.Publisher("DepthBB", Image, queue_size=1)
+        self.depth_with_BB = rospy.Publisher("DepthBB", Image, queue_size=100, latch=True)
+
+        self.croppedpcl = rospy.Publisher("cropedPCL", pc2, queue_size=100)
 
     
+
+    def pointcallback(self,data):
+        #use the same header as data
+        header = data.header
+        
+        pcl_np = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data, remove_nans=False)  # remove_nans=True
+        item =  pcl_np[0]
+        # print("item row",pcl_np[0], "length" , len(pcl_np[0]))
+        # print(item[0])
+        print(pcl_np)
+        if len(self.center_pixel) == 0:
+             pass
+            
+        else:    
+            
+            # get all the corners of the box here 
+            corner = self.corners[0]
+            leftbottom_corner = corner[0]
+            rightbottom_corner = corner[1]
+            lefttop_corner = corner[2]
+            righttop_corner = corner[3]  
+            
+            
+            # from the corners cut out the xmin, xmax, ymin,max values
+            xmin = leftbottom_corner[0]
+            xmax = righttop_corner[0]
+            ymin = leftbottom_corner[1]
+            ymax = righttop_corner[1]
+
+            # get the width and height of the box
+            w = xmax - xmin
+            h = ymax - ymin
+        
+            i = 0
+            for row_no in range(0,1079):
+                    for col_no in range(0,1919):
+                        row = pcl_np[row_no]
+                        value = row[col_no]
+                        
+                        
+                        if (row_no >= ymin and row_no <= ymax) and (col_no >= xmin and col_no <= xmax):
+                            i += 1
+                            # print(i)
+                            # print("row, col, value",row_no, col_no, value)       
+                            
+                            # depth_array[row_no][col_no] = 2.00  
+                            pass
+                        else:
+                            # print("before change",pcl_np[row_no][col_no])
+                            pcl_np[row_no][col_no] = NaN
+                            # print("after change",pcl_np[row_no][col_no])
+            print(i)
+            print(pcl_np)
+       
+        
+        #publishing pointcloud
+        # newpcl = pc2()
+        # newpcl.header = header
+        # pcl_np2 = ros_numpy.point_cloud2.array_to_pointcloud2(pcl_np, header.stamp, header.frame_id)
+        # print(pcl_np2)
+ 
+ 
     '''
         This is a callback for RGB Image message
-    '''
-
+    '''       
     def image_callback(self,data):
         # print("here in callbaack")
         cv_img =  bridge.imgmsg_to_cv2(data)
@@ -61,7 +126,9 @@ class Detection(object):
         self.yolo_processing(cv_img)
 
         
-
+    '''
+        This function calls Yolo and Yolo related data and other
+    '''
     def yolo_processing(self,cv_img):       
         ''' 
         yolo processing node computes detection 
@@ -184,10 +251,11 @@ class Detection(object):
             depth_bbox = bridge.cv2_to_imgmsg(depth_array)
             self.depth_with_BB.publish(depth_bbox)
             
-            
-            pcl = o3d.geometry.PointCloud()
-            pcl.points = o3d.utility.Vector3dVector(np.random.randn(500,3))
-            o3d.visualization.draw_geometries([pcl])
+            #creating PCL value using open3d
+                    
+            # pcl = o3d.geometry.PointCloud()
+            # pcl.points = o3d.utility.Vector3dVector(np.random.randn(500,3))
+            # o3d.visualization.draw_geometries([pcl])
     
  
    
