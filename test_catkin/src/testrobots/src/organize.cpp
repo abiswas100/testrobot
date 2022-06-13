@@ -2,6 +2,7 @@
 
 #include <ros/ros.h>
 #include <testrobots/Boundingbox.h>
+#include <testrobots/newBoundingbox.h>
 #include <pclUtils.h>
 #include <convexHull.h>
 #include <map_writer.h>
@@ -16,6 +17,7 @@
 #include <sensor_msgs/PointCloud2.h> 
 #include <pcl_ros/point_cloud.h>  
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+
 
 // OpenCV
 #include <cv_bridge/cv_bridge.h>
@@ -78,6 +80,7 @@
 #include <pcl/filters/crop_hull.h>
 #include <pcl/surface/concave_hull.h>
 #include <pcl/point_types.h>
+
 using namespace std::chrono;
 static const std::string PCL_TOPIC = "/camera/depth/points";
 
@@ -119,7 +122,7 @@ void blah(const sensor_msgs::PointCloud2 &cloud_msg){
    std::cerr << "\nSaved " << org_cloud.size () << " data points to organized.pcd.\n" << std::endl;
 
    std::cout<<"width = "<< org_cloud.width<<std::endl;
-   std::cout<<"height = "<< org_cloud.height<<std::endl;
+   std::cout<<"height = "<< org_cloud.height<<"\n"<<std::endl;
 
    //read the file
    pcl::PCDReader reader;
@@ -338,7 +341,7 @@ int main(int argc, char **argv)
    ros::init (argc, argv, "plotting_human");
    ros::NodeHandle nh;
    //subscribe
-   //ros::Subscriber BBsub = nh.subscribe("/BBox", 10, BBoxCallback);
+   ros::Subscriber BBsub = nh.subscribe("/BBox", 10, BBoxCallback);
    ros::Subscriber sub = nh.subscribe(PCL_TOPIC, 10, blah);
 
    //publish
