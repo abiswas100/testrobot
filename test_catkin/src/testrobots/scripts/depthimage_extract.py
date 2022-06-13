@@ -153,12 +153,12 @@ class Detection(object):
                             box.A_x = value[0]
                             box.A_y = value[1]
                             box.A_z = value[2]
-                        if(row_no == ymin and col_no == xmax):
+                        if(row_no == ymax and col_no == xmin):
                             value = pcl_np[row_no][col_no]
                             box.B_x = value[0]
                             box.B_y = value[1]
                             box.B_z = value[2]
-                        if(row_no == ymax and col_no == xmin):
+                        if(row_no == ymin and col_no == xmax):
                             value = pcl_np[row_no][col_no]
                             box.C_x = value[0]
                             box.C_y = value[1]
