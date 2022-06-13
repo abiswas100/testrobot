@@ -84,10 +84,6 @@
 using namespace std::chrono;
 static const std::string PCL_TOPIC = "/camera/depth/points";
 
-
-ros::Publisher organizer;
-pcl::PCDWriter m_writer;
-
 double xmin = 0;
 double xmax = 0;
 double ymin = 0;
@@ -95,14 +91,14 @@ double ymax = 0;
 double zmin = 0;
 double zmax = 0;
 
-double A_x;
-double A_y;
-double A_z;
-double B_x;
-double B_y;
-double B_z;
-double C_x;
-double C_y;
+double A_x = 0;
+double A_y = 0;
+double A_z = 0;
+double B_x = 0;
+double B_y = 0;
+double B_z = 0;
+double C_x = 0;
+double C_y = 0;
 double C_z;
 double D_x;
 double D_y;
@@ -126,14 +122,37 @@ double zmin_right = 0;
 double zmax_left = 0;
 double zmax_right = 0;
 
+int counter = 0;
 
-
-
-sensor_msgs::PointCloud2 obj_msg;
-sensor_msgs::PointCloud2 crop_cloud_msg;
+pcl::PCDReader reader; 
+pcl::PCDWriter writer;
+ros::Publisher organizer;
+pcl::PCDWriter m_writer;
 ros::Publisher pub_cropped_cloud;
 ros::Publisher pub_extracted_cloud;
+ros::Publisher passthrough_filtered;
+sensor_msgs::PointCloud2 obj_msg;
+pcl::PCLPointCloud2 passfiltered_pcl2;
+sensor_msgs::PointCloud2 crop_cloud_msg;
+sensor_msgs::PointCloud2 passfiltered_ros;
+
+
+
+pcl::PointCloud<pcl::PointXYZ> extract;
+pcl::PointCloud<pcl::PointXYZ> org_cloud;
+pcl::PointCloud<pcl::PointXYZ> save_cloud;
+pcl::PointCloud<pcl::PointXYZ> pass_filtered_cloud;
+boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > surface_hull;
+pcl::PCLPointCloud2::Ptr inputCloud (new pcl::PCLPointCloud2());
+pcl::PCLPointCloud2::Ptr outputCloud (new pcl::PCLPointCloud2());
+pcl::PointCloud<pcl::PointXYZ>::Ptr output_ptr(new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZ>::Ptr no_plane_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+pcl::PointCloud<pcl::PointXYZ>::Ptr passfiltered_pclXYZ (new pcl::PointCloud<pcl::PointXYZ>);
+boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > bb_ptr (new pcl::PointCloud<pcl::PointXYZ>);
+
+
+
 void crop_bb(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> >  input_cloud_ptr, boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > output_cloud_ptr,
 double x_min, double x_max,double  y_min,double  y_max,double  z_min,double z_max);
 void extractObject(pcl::PointCloud<pcl::PointXYZ>::Ptr crop_cloud_ptr);
@@ -142,6 +161,7 @@ void extractObject(pcl::PointCloud<pcl::PointXYZ>::Ptr crop_cloud_ptr);
 
 void BBoxCallback (const testrobots::newBoundingbox::ConstPtr &msg){
 
+   //getting coordinated from msg
    A_x = msg->A_x;
    A_y = msg->A_y;
    A_z = msg->A_z;
@@ -159,7 +179,7 @@ void BBoxCallback (const testrobots::newBoundingbox::ConstPtr &msg){
    D_z = msg->D_z;
    
   
-
+   //calculating max and min for each axis
    xmin_left = std::min(A_x, B_x);
    xmin_right = std::min(C_x, D_x);
    xmin = std::min(xmin_left,xmin_right);
@@ -184,12 +204,7 @@ void BBoxCallback (const testrobots::newBoundingbox::ConstPtr &msg){
    zmax_right = std::max(C_z, D_z);
    zmax = std::max(zmax_left, zmax_right);
 
-   std::cout<<"xmin: "<< xmin <<std::endl;
-   std::cout<<"xmax: "<< xmax <<std::endl;
-   std::cout<<"ymin: "<< ymin <<std::endl;
-   std::cout<<"ymax: "<< ymax << std::endl;
-   std::cout<<"zmin: "<< zmin << std::endl;
-   std::cout<<"zmax: "<< zmax << std::endl;
+   
 
   
 }
@@ -199,54 +214,42 @@ void BBoxCallback (const testrobots::newBoundingbox::ConstPtr &msg){
 void blah(const sensor_msgs::PointCloud2 &cloud_msg){
    
    auto start1 = high_resolution_clock::now();
-   pcl::PointCloud<pcl::PointXYZ> org_cloud;
+   counter++;
 
-   //save from rosmsg 
+   //save to pcd from rosmsg 
    pcl::fromROSMsg(cloud_msg,org_cloud);
-   pcl::io::savePCDFileASCII ("organized.pcd", org_cloud);
+   pcl::io::savePCDFileASCII ("organized"+std::to_string(counter)+".pcd", org_cloud);
    std::cerr << "\nSaved " << org_cloud.size () << " data points to organized.pcd.\n" << std::endl;
 
    std::cout<<"width = "<< org_cloud.width<<std::endl;
    std::cout<<"height = "<< org_cloud.height<<"\n"<<std::endl;
 
-   //read the file
-   pcl::PCDReader reader;
-   pcl::PCLPointCloud2::Ptr inputCloud (new pcl::PCLPointCloud2());
-   pcl::PCLPointCloud2::Ptr outputCloud (new pcl::PCLPointCloud2());
-   reader.read ("organized.pcd", *inputCloud);
+   //read the file from pcd   
+   reader.read ("organized"+std::to_string(counter)+".pcd", *inputCloud);
 
 
    //do voxel filtering and save to pcd
    pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
    vg.setInputCloud(inputCloud);
-   vg.setLeafSize(0.05,0.05,0.0);
+   vg.setLeafSize(0.01,0.01,0.01);
    vg.filter(*outputCloud);
-   std::cerr << "PointCloud after filtering: " << outputCloud->width * outputCloud->height 
-      << " data points (" << pcl::getFieldsList (*outputCloud) << ").\n" << std::endl;
 
-    pcl::PCDWriter writer;
-    writer.write ("filtered.pcd", *outputCloud, 
-         Eigen::Vector4f::Zero (), Eigen::Quaternionf::Identity (), false);
 
-   
-   
-   pcl::PointCloud<pcl::PointXYZ>::Ptr output_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+   //write output to pcd file
+   std::cerr << "PointCloud after filtering: " << outputCloud->width * outputCloud->height << " data points (" << pcl::getFieldsList (*outputCloud) << ").\n" << std::endl;    
+   writer.write ("filtered"+std::to_string(counter)+".pcd", *outputCloud, Eigen::Vector4f::Zero (), Eigen::Quaternionf::Identity (), false);
    pcl::fromPCLPointCloud2(*outputCloud, *output_ptr);
-   pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-   
    
 
    //call crop bounding boxfunction and convert to ros msg  
    std::cout<<"cropping bounding box...\n"<< std::endl; 
-  
-
    crop_bb(output_ptr,cropped_cloud_ptr,xmin,xmax,ymin,ymax,zmin,zmax);   
    pcl::toROSMsg(*cropped_cloud_ptr.get(),crop_cloud_msg );
 
-   //save cropped cloud to pcd and publish
-   pcl::PointCloud<pcl::PointXYZ> save_cloud;
+
+   //save cropped cloud to pcd and publish   
    pcl::fromROSMsg(crop_cloud_msg,save_cloud);
-   pcl::io::savePCDFileASCII ("cropped.pcd", save_cloud);
+   pcl::io::savePCDFileASCII ("cropped"+std::to_string(counter)+".pcd", save_cloud);
    pub_cropped_cloud.publish (crop_cloud_msg);
 
 
@@ -255,13 +258,30 @@ void blah(const sensor_msgs::PointCloud2 &cloud_msg){
    extractObject(output_ptr);
    pcl::toROSMsg(*no_plane_cloud.get(),obj_msg );
 
-   //save extracted cloud to pcd and publish
-   pcl::PointCloud<pcl::PointXYZ> extract;
+   
+   //save extracted cloud to pcd and publish   
    pcl::fromROSMsg(crop_cloud_msg,extract);
-   pcl::io::savePCDFileASCII ("extracted.pcd", extract);
+   pcl::io::savePCDFileASCII ("extracted"+std::to_string(counter)+".pcd", extract);
    pub_extracted_cloud.publish(obj_msg);
 
-   
+
+   // //use passthrough filter:
+   // pcl::PassThrough<pcl::PointXYZ> pass_filter;
+   // pass_filter.setInputCloud (no_plane_cloud);
+   // pass_filter.setFilterFieldName ("x");
+   // pass_filter.setFilterLimits (0.0, 1.0);
+   // pass_filter.setFilterLimitsNegative (false); 
+   // pass_filter.filter (*passfiltered_pclXYZ);
+
+
+   // //save filtered cloud to pcd and publish
+   // pcl::toPCLPointCloud2(*passfiltered_pclXYZ, passfiltered_pcl2);
+   // pcl_conversions::fromPCL(passfiltered_pcl2, passfiltered_ros);
+   // pcl::fromPCLPointCloud2(passfiltered_pcl2, pass_filtered_cloud);
+   // pcl::io::savePCDFileASCII ("pass_filrered"+std::to_string(counter)+".pcd", pass_filtered_cloud);
+   // passthrough_filtered.publish (passfiltered_ros);
+
+
    //calculate computation time
    auto stop1 = high_resolution_clock::now();
    auto duration1 = duration_cast<microseconds>(stop1 - start1);
@@ -320,82 +340,82 @@ void extractObject(pcl::PointCloud<pcl::PointXYZ>::Ptr crop_cloud_ptr)
 void crop_bb(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > input_cloud_ptr, boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > output_cloud_ptr,
 double x_min, double x_max,double  y_min,double  y_max,double  z_min,double z_max){
  
-   boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > bb_ptr (new pcl::PointCloud<pcl::PointXYZ>);
+   
 
-    pcl::PointXYZ point;
+   pcl::PointXYZ point;
 
-    point.x = xmin;
-    point.y = y_min;
-    point.z = z_min;
+   point.x = xmin;
+   point.y = y_min;
+   point.z = z_min;
 
-    bb_ptr->push_back(point);
+   bb_ptr->push_back(point);
 
-    point.x = x_min;
-    point.y = y_min;
-    point.z = z_max;
+   point.x = x_min;
+   point.y = y_min;
+   point.z = z_max;
 
-    bb_ptr->push_back(point);
+   bb_ptr->push_back(point);
 
-    //x_min,y_max,z_min
-    point.x = x_min;
-    point.y = y_max;
-    point.z = z_min;
+   //x_min,y_max,z_min
+   point.x = x_min;
+   point.y = y_max;
+   point.z = z_min;
 
-    bb_ptr->push_back(point);
+   bb_ptr->push_back(point);
 
-    //x_min,y_max,z_max
-    point.x = x_min;
-    point.y = y_min;
-    point.z = z_min;
+   //x_min,y_max,z_max
+   point.x = x_min;
+   point.y = y_min;
+   point.z = z_min;
 
-    bb_ptr->push_back(point);
+   bb_ptr->push_back(point);
 
-    //x_max,y_min,z_min
-    point.x = x_max;
-    point.y = y_min;
-    point.z = z_min;
+   //x_max,y_min,z_min
+   point.x = x_max;
+   point.y = y_min;
+   point.z = z_min;
 
-    bb_ptr->push_back(point);
+   bb_ptr->push_back(point);
 
-    //x_max,y_min,z_max
-    point.x = x_max;
-    point.y = y_min;
-    point.z = z_max;
+   //x_max,y_min,z_max
+   point.x = x_max;
+   point.y = y_min;
+   point.z = z_max;
 
-    bb_ptr->push_back(point);
+   bb_ptr->push_back(point);
 
     //x_max,y_max,z_min
-    point.x = x_max;
-    point.y = y_max;
-    point.z = z_min;
+   point.x = x_max;
+   point.y = y_max;
+   point.z = z_min;
 
-    bb_ptr->push_back(point);
+   bb_ptr->push_back(point);
 
-    //x_max,y_max,z_max
-    point.x = x_max;
-    point.y = y_max;
-    point.z = z_max;
+   //x_max,y_max,z_max
+   point.x = x_max;
+   point.y = y_max;
+   point.z = z_max;
 
-    bb_ptr->push_back(point);
+   bb_ptr->push_back(point);
 
-    pcl::io::savePCDFileASCII ("bb_ptr.pcd", *bb_ptr.get());
+   pcl::io::savePCDFileASCII ("bb_ptr.pcd", *bb_ptr.get());
 
     
 
-    pcl::ConvexHull<pcl::PointXYZ> hull;
-    std::vector<pcl::Vertices> polygons;
+   pcl::ConvexHull<pcl::PointXYZ> hull;
+   std::vector<pcl::Vertices> polygons;
 
-    boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > surface_hull;
+    
 
-    hull.setInputCloud(bb_ptr);
-    hull.setDimension(3);
+   hull.setInputCloud(bb_ptr);
+   hull.setDimension(3);
 
    
 
-    surface_hull.reset(new pcl::PointCloud<pcl::PointXYZ>);
-    hull.reconstruct(*surface_hull, polygons);
+   surface_hull.reset(new pcl::PointCloud<pcl::PointXYZ>);
+   hull.reconstruct(*surface_hull, polygons);
     
-    pcl::CropHull<pcl::PointXYZ> bb_filter;
+   pcl::CropHull<pcl::PointXYZ> bb_filter;
 
    
 
@@ -421,6 +441,7 @@ double x_min, double x_max,double  y_min,double  y_max,double  z_min,double z_ma
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+
 //main function
 
 int main(int argc, char **argv)
@@ -428,8 +449,8 @@ int main(int argc, char **argv)
    ros::init (argc, argv, "plotting_human");
    ros::NodeHandle nh;
    //subscribe
-   ros::Subscriber BBsub = nh.subscribe("/Box_values", 100, BBoxCallback);
-   ros::Subscriber PCLsub = nh.subscribe(PCL_TOPIC, 100, blah);
+   ros::Subscriber BBsub = nh.subscribe("/Box_values", 10, BBoxCallback);
+   ros::Subscriber PCLsub = nh.subscribe(PCL_TOPIC, 10, blah);
 
    //publish
    std::string frame_id="camera_rgb_optical_frame";
@@ -438,6 +459,7 @@ int main(int argc, char **argv)
    
    pub_cropped_cloud=nh.advertise<sensor_msgs::PointCloud2>("cropped_cloud",1);
    pub_extracted_cloud=nh.advertise<sensor_msgs::PointCloud2>("extracted_cloud",1);
+   passthrough_filtered=nh.advertise<sensor_msgs::PointCloud2>("pass_filtered",1);
    
    
 
