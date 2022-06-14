@@ -3,9 +3,11 @@
 #include <ros/ros.h>
 #include <testrobots/Boundingbox.h>
 #include <testrobots/newBoundingbox.h>
+#include <tf/transform_listener.h>
 #include <pclUtils.h>
 #include <convexHull.h>
 #include <map_writer.h>
+// #include <buffer.h>
 #include <string>
 #include <vector>
 #include<iostream>
@@ -127,7 +129,9 @@ int counter = 0;
 pcl::PCDReader reader; 
 pcl::PCDWriter writer;
 ros::Publisher organizer;
+ros::Publisher tf_pub;
 pcl::PCDWriter m_writer;
+tf::TransformListener *tf_listener; 
 ros::Publisher pub_cropped_cloud;
 ros::Publisher pub_extracted_cloud;
 ros::Publisher passthrough_filtered;
@@ -141,6 +145,7 @@ sensor_msgs::PointCloud2 passfiltered_ros;
 pcl::PointCloud<pcl::PointXYZ> extract;
 pcl::PointCloud<pcl::PointXYZ> org_cloud;
 pcl::PointCloud<pcl::PointXYZ> save_cloud;
+pcl::PointCloud<pcl::PointXYZ> transformed;
 pcl::PointCloud<pcl::PointXYZ> pass_filtered_cloud;
 boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > surface_hull;
 pcl::PCLPointCloud2::Ptr inputCloud (new pcl::PCLPointCloud2());
@@ -211,34 +216,17 @@ void BBoxCallback (const testrobots::newBoundingbox::ConstPtr &msg){
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void blah(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) { //const sensor_msgs::PointCloud2 &cloud_msg
+void blah(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) { 
    
    auto start1 = high_resolution_clock::now();
    counter++;
 
-   // //save to pcd from rosmsg 
-   // pcl::fromROSMsg(cloud_msg,org_cloud);
-   // pcl::io::savePCDFileASCII ("organized"+std::to_string(counter)+".pcd", org_cloud);
-   // std::cerr << "\nSaved " << org_cloud.size () << " data points to organized.pcd.\n" << std::endl;
-
-   // std::cout<<"width = "<< org_cloud.width<<std::endl;
-   // std::cout<<"height = "<< org_cloud.height<<"\n"<<std::endl;
-
-   // //read the file from pcd   
-   // reader.read ("organized"+std::to_string(counter)+".pcd", *inputCloud);
-
-   // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); 
-   // pcl::PCLPointCloud2::Ptr pcl_pc2;
-   // pcl_conversions::toPCL(*cloud_msg,pcl_pc2);
-   // pcl::fromPCLPointCloud2(*pcl_pc2,*cloud);
-
-   //const pcl::PCLPointCloud2::ConstPtr &cloud)
    pcl_conversions::toPCL(*cloud_msg, *inputCloud);
 
    //do voxel filtering and save to pcd
    pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
    vg.setInputCloud(inputCloud);
-   vg.setLeafSize(0.07,0.07,0.0);
+   vg.setLeafSize(0.07,0.0,0.07);
    vg.filter(*outputCloud);
 
 
@@ -270,6 +258,15 @@ void blah(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) { //const sensor_ms
    pcl::fromROSMsg(crop_cloud_msg,extract);
    // pcl::io::savePCDFileASCII ("extracted"+std::to_string(counter)+".pcd", extract);
    pub_extracted_cloud.publish(obj_msg);
+
+   //transform to world frame:
+   // bool pcl_ros::transformPointCloud	(	const std::string & 	target_frame,
+   // const pcl::PointCloud<pcl::PointXYZ> & 	cloud_in,
+   // pcl::PointCloud< pcl::PointXYZ > & 	cloud_out,
+   // const tf2_ros::Buffer & 	tf_buffer )
+   // tf_listener->waitForTransform("/map", (*no_plane_cloud).header.frame_id, (*no_plane_cloud).header.stamp, ros::Duration(5.0));
+   // transformPointCloud("/map",*no_plane_cloud, transformed,*tf_listener);
+
 
 
    //calculate computation time
@@ -450,6 +447,8 @@ int main(int argc, char **argv)
    pub_cropped_cloud=nh.advertise<sensor_msgs::PointCloud2>("cropped_cloud",1);
    pub_extracted_cloud=nh.advertise<sensor_msgs::PointCloud2>("extracted_cloud",1);
    passthrough_filtered=nh.advertise<sensor_msgs::PointCloud2>("pass_filtered",1);
+   // tf_pub = nh.advertise<PointCloud> ("tf_points2", 1);
+   // tf_listener = new tf::TransformListener();
    
    
 
