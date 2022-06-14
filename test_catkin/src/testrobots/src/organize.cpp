@@ -211,33 +211,40 @@ void BBoxCallback (const testrobots::newBoundingbox::ConstPtr &msg){
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void blah(const sensor_msgs::PointCloud2 &cloud_msg){
+void blah(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) { //const sensor_msgs::PointCloud2 &cloud_msg
    
    auto start1 = high_resolution_clock::now();
    counter++;
 
-   //save to pcd from rosmsg 
-   pcl::fromROSMsg(cloud_msg,org_cloud);
-   pcl::io::savePCDFileASCII ("organized"+std::to_string(counter)+".pcd", org_cloud);
-   std::cerr << "\nSaved " << org_cloud.size () << " data points to organized.pcd.\n" << std::endl;
+   // //save to pcd from rosmsg 
+   // pcl::fromROSMsg(cloud_msg,org_cloud);
+   // pcl::io::savePCDFileASCII ("organized"+std::to_string(counter)+".pcd", org_cloud);
+   // std::cerr << "\nSaved " << org_cloud.size () << " data points to organized.pcd.\n" << std::endl;
 
-   std::cout<<"width = "<< org_cloud.width<<std::endl;
-   std::cout<<"height = "<< org_cloud.height<<"\n"<<std::endl;
+   // std::cout<<"width = "<< org_cloud.width<<std::endl;
+   // std::cout<<"height = "<< org_cloud.height<<"\n"<<std::endl;
 
-   //read the file from pcd   
-   reader.read ("organized"+std::to_string(counter)+".pcd", *inputCloud);
+   // //read the file from pcd   
+   // reader.read ("organized"+std::to_string(counter)+".pcd", *inputCloud);
 
+   // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); 
+   // pcl::PCLPointCloud2::Ptr pcl_pc2;
+   // pcl_conversions::toPCL(*cloud_msg,pcl_pc2);
+   // pcl::fromPCLPointCloud2(*pcl_pc2,*cloud);
+
+   //const pcl::PCLPointCloud2::ConstPtr &cloud)
+   pcl_conversions::toPCL(*cloud_msg, *inputCloud);
 
    //do voxel filtering and save to pcd
    pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
    vg.setInputCloud(inputCloud);
-   vg.setLeafSize(0.01,0.01,0.01);
+   vg.setLeafSize(0.07,0.07,0.0);
    vg.filter(*outputCloud);
 
 
    //write output to pcd file
    std::cerr << "PointCloud after filtering: " << outputCloud->width * outputCloud->height << " data points (" << pcl::getFieldsList (*outputCloud) << ").\n" << std::endl;    
-   writer.write ("filtered"+std::to_string(counter)+".pcd", *outputCloud, Eigen::Vector4f::Zero (), Eigen::Quaternionf::Identity (), false);
+   // writer.write ("filtered"+std::to_string(counter)+".pcd", *outputCloud, Eigen::Vector4f::Zero (), Eigen::Quaternionf::Identity (), false);
    pcl::fromPCLPointCloud2(*outputCloud, *output_ptr);
    
 
@@ -249,7 +256,7 @@ void blah(const sensor_msgs::PointCloud2 &cloud_msg){
 
    //save cropped cloud to pcd and publish   
    pcl::fromROSMsg(crop_cloud_msg,save_cloud);
-   pcl::io::savePCDFileASCII ("cropped"+std::to_string(counter)+".pcd", save_cloud);
+   // pcl::io::savePCDFileASCII ("cropped"+std::to_string(counter)+".pcd", save_cloud);
    pub_cropped_cloud.publish (crop_cloud_msg);
 
 
@@ -261,25 +268,8 @@ void blah(const sensor_msgs::PointCloud2 &cloud_msg){
    
    //save extracted cloud to pcd and publish   
    pcl::fromROSMsg(crop_cloud_msg,extract);
-   pcl::io::savePCDFileASCII ("extracted"+std::to_string(counter)+".pcd", extract);
+   // pcl::io::savePCDFileASCII ("extracted"+std::to_string(counter)+".pcd", extract);
    pub_extracted_cloud.publish(obj_msg);
-
-
-   // //use passthrough filter:
-   // pcl::PassThrough<pcl::PointXYZ> pass_filter;
-   // pass_filter.setInputCloud (no_plane_cloud);
-   // pass_filter.setFilterFieldName ("x");
-   // pass_filter.setFilterLimits (0.0, 1.0);
-   // pass_filter.setFilterLimitsNegative (false); 
-   // pass_filter.filter (*passfiltered_pclXYZ);
-
-
-   // //save filtered cloud to pcd and publish
-   // pcl::toPCLPointCloud2(*passfiltered_pclXYZ, passfiltered_pcl2);
-   // pcl_conversions::fromPCL(passfiltered_pcl2, passfiltered_ros);
-   // pcl::fromPCLPointCloud2(passfiltered_pcl2, pass_filtered_cloud);
-   // pcl::io::savePCDFileASCII ("pass_filrered"+std::to_string(counter)+".pcd", pass_filtered_cloud);
-   // passthrough_filtered.publish (passfiltered_ros);
 
 
    //calculate computation time
@@ -398,7 +388,7 @@ double x_min, double x_max,double  y_min,double  y_max,double  z_min,double z_ma
 
    bb_ptr->push_back(point);
 
-   pcl::io::savePCDFileASCII ("bb_ptr.pcd", *bb_ptr.get());
+   // pcl::io::savePCDFileASCII ("bb_ptr.pcd", *bb_ptr.get());
 
     
 
