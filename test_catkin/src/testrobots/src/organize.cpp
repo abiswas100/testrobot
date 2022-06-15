@@ -478,25 +478,25 @@ int main(int argc, char **argv)
 {
    ros::init (argc, argv, "plotting_human");
    ros::NodeHandle nh;
+
+
    //subscribe
    ros::Subscriber BBsub = nh.subscribe("/Box_values", 10, BBoxCallback);
    ros::Subscriber PCLsub = nh.subscribe(PCL_TOPIC, 10, blah);
 
-   //publish
+   //set frame
    std::string frame_id="camera_rgb_optical_frame";
    crop_cloud_msg.header.frame_id=frame_id;
    obj_msg.header.frame_id = frame_id;
+   proj_msg.header.frame_id = frame_id;
    
+   //publish
    pub_cropped_cloud=nh.advertise<sensor_msgs::PointCloud2>("cropped_cloud",1);
    pub_extracted_cloud=nh.advertise<sensor_msgs::PointCloud2>("extracted_cloud",1);
-   passthrough_filtered=nh.advertise<sensor_msgs::PointCloud2>("pass_filtered",1);
    pub_projected_cloud=nh.advertise<sensor_msgs::PointCloud2>("projected",1);
-   // tf_pub = nh.advertise<PointCloud> ("tf_points2", 1);
-   // tf_listener = new tf::TransformListener();
-   
    
 
-  ros::spin();
-  return 0;
+   ros::spin();
+   return 0;
 
 }
