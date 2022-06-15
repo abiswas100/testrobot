@@ -283,10 +283,11 @@ void blah(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
    // tf_listener->waitForTransform("/map", (*no_plane_cloud).header.frame_id, (*no_plane_cloud).header.stamp, ros::Duration(5.0));
    // transformPointCloud("/map",*no_plane_cloud, transformed,*tf_listener);
 
-   //project points on XY plane:
+   //project points on XZ plane:
    coefficients->values.resize (4);
-   coefficients->values[0] = coefficients->values[1] = 0;
-   coefficients->values[2] = 1.0;
+   coefficients->values[0] = 0;
+   coefficients->values[1] = 1;
+   coefficients->values[2] = 0.0;
    coefficients->values[3] = 0;
    pcl::ProjectInliers<pcl::PointXYZ> proj;
    proj.setModelType (pcl::SACMODEL_PLANE);
@@ -303,6 +304,8 @@ void blah(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
 
    pcl::toROSMsg(*cloud_projected.get(),proj_msg);
    pub_projected_cloud.publish(proj_msg);
+
+   //save in pcd
    // pcl::fromROSMsg(proj_msg,project);
    // pcl::io::savePCDFileASCII ("projected"+std::to_string(counter)+".pcd", project);
   
