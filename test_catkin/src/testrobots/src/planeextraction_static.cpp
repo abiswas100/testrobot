@@ -63,8 +63,8 @@ const unsigned CAMERA_NUM_PIXELS_HEIGHT(1080);
 const double CAMERA_HORIZONTAL_VIEW_ANGLE(1.19);
 
 // bounding box attributes
-unsigned xmin = 894;
-unsigned xmax = 664;
+unsigned xmin = 664;
+unsigned xmax = 894;
 unsigned ymin = 563;
 unsigned ymax = 663;
 unsigned imagewidth = 1920;
