@@ -20,9 +20,7 @@ import cv2
 from cv_bridge import CvBridge, CvBridgeError
 import yolo as Yolo
 import numpy as np
-
-# import open3d as o3d
-
+import time
 
 from testrobots.msg import newBoundingbox
 
@@ -41,28 +39,31 @@ class Detection(object):
         self.depth = 0
         self.confidence = 0.0
         
-        rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=1)
-        # rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
-        
+        rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=5)        
         rospy.Subscriber("camera/depth/points", pc2, self.pointcallback, queue_size=1)
         
         # publishing topics
         self.pub = rospy.Publisher("H_Detection_image", Image, queue_size=1)    
-
-        self.depth_with_BB = rospy.Publisher("DepthBB", Image, queue_size=100, latch=True)
 
         self.croppedpcl = rospy.Publisher("cropedPCL", pc2, queue_size=1)
 
         self.boundingbox = rospy.Publisher("Box_values", newBoundingbox, queue_size=100, latch=True)
 
     def pointcallback(self,data):
+        print("Here in Pointcloud bounding Box extraction ---- ")
+        print("")
         #use the same header and data as input message
         header = data.header
-                
-        # convert ROS_pointcloud into 
+        #use this to generate finished pointcloud
+        fields = [PointField('x', 0, PointField.FLOAT32, 1),
+            PointField('y', 4, PointField.FLOAT32, 1),
+            PointField('z', 8, PointField.FLOAT32, 1),
+            PointField('rgba', 12, PointField.UINT32, 1),
+            ]
+        
+        # convert ROS_pointcloud into numpy array
         pcl_np = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data, remove_nans=False)  # remove_nans=True
-        item =  pcl_np[0]
-
+        
     
         if len(self.center_pixel) == 0:
             print("no bounding box to extract")
@@ -72,8 +73,6 @@ class Detection(object):
             # get all the corners of the box here 
             corner = self.corners[0]
             leftbottom_corner = corner[0]
-            rightbottom_corner = corner[1]
-            lefttop_corner = corner[2]
             righttop_corner = corner[3]  
             
             
@@ -83,11 +82,22 @@ class Detection(object):
             ymin = leftbottom_corner[1]
             ymax = righttop_corner[1]
 
-            # get the width and height of the box
-            w = xmax - xmin
-            h = ymax - ymin
-        
-            i = 0
+            points = []
+            no_of_points = 0
+            
+                        
+            #  creating bounding box message for apala
+            box = newBoundingbox()
+
+            '''
+                Part 1 - iterate over the pointcloud and cut the points of the box and make all the rest of the point NaN
+                Part 2 - extract the point for the corners of the BB and publish it
+                
+                you can run any one of them or both of them
+            '''
+  
+            
+            start = time.time()
             for row_no in range(0,1079):
                     for col_no in range(0,1919):
                         row = pcl_np[row_no]
@@ -95,26 +105,18 @@ class Detection(object):
                         
                         
                         if (row_no >= ymin and row_no <= ymax) and (col_no >= xmin and col_no <= xmax):
-                            i += 1
-                            # print(i)
+                            no_of_points += 1
+                    
                             # print("row, col, value",row_no, col_no, value)       
-
-                            pass
                         else:
-                            # print("before change",pcl_np[row_no][col_no])
                             pcl_np[row_no][col_no] = NaN
-                            # print("after change",pcl_np[row_no][col_no])
-            # print(i)
-            # print(pcl_np)
-            
-            points = []
-            for row_no in range(0,1079):
-                    for col_no in range(0,1919):
-                        row = pcl_np[row_no]
-                        value = row[col_no]
+                        
+                        
+                        # getting the values of each x,y,z point and creating their corresponding rgb values
                         x = value[0]
                         y = value[1]
                         z = value[2]
+                    
                         try:
                             r = abs(int(x*255.0))
                             g = abs(int(x*255.0))
@@ -122,13 +124,15 @@ class Detection(object):
                         except ValueError:
                             r = 1 
                             g = 1
-                            b = 1
+                            b = 1   
+                        
                         a = 255
                         # print(r,g,b,a)
                         if (r >= 255 or b >= 255 or g >= 255):
                             r = 255 
                             g = 255
                             b =255
+                        #creating a pointcloud sensor message type array with rgb values
                         try:
                             rgb = struct.unpack('I', struct.pack('BBBB', b, g, r, a))[0]
                             # print (hex(rgb))
@@ -137,62 +141,35 @@ class Detection(object):
                         pt = [x, y, z, rgb]
                         points.append(pt)
                         
-            print(len(points))
+                        if(row_no == ymin and col_no == xmin):
+                            box.A_x = x
+                            box.A_y = y
+                            box.A_z = z
+                        if(row_no == ymax and col_no == xmin):
+                            box.B_x = x
+                            box.B_y = y
+                            box.B_z = z
+                        if(row_no == ymin and col_no == xmax):
+                            box.C_x = x
+                            box.C_y = y
+                            box.C_z = z
+                        if(row_no == ymax and col_no == xmax):
+                            box.D_x = x
+                            box.D_y = y
+                            box.D_z = z
             
-            fields = [PointField('x', 0, PointField.FLOAT32, 1),
-                        PointField('y', 4, PointField.FLOAT32, 1),
-                        PointField('z', 8, PointField.FLOAT32, 1),
-                        PointField('rgba', 12, PointField.UINT32, 1),
-                        ]
-            
-            
-            #publishing pointcloud
-
+            seconds = time.time() - start
+            # print('Time Taken:', time.strftime("%H:%M:%S",time.gmtime(seconds)))  # get the time of working for the pointcloud process
+            #publishing pointcloud and bounding box points
+            print("")
+            print(box)
+            print("")
             pc2 = point_cloud2.create_cloud(header, fields, points)
+            
             self.croppedpcl.publish(pc2)
+            self.boundingbox.publish(box)  
             
-            #  creating bounding box message for apala
-            # box = newBoundingbox()
-  
-            # for row_no in range(0,1079):
-            #         for col_no in range(0,1919):
-            #             row = pcl_np[row_no]
-            #             value = row[col_no]
-                        
-                        
-            #             if (row_no >= ymin and row_no <= ymax) and (col_no >= xmin and col_no <= xmax):
-            #                 i += 1
-            #                 # print(i)
-            #                 # print("row, col, value",row_no, col_no, value)       
 
-            #                 pass
-            #             else:
-            #                 # print("before change",pcl_np[row_no][col_no])
-            #                 pcl_np[row_no][col_no] = NaN
-            #                 # print("after change",pcl_np[row_no][col_no])
-            #             if(row_no == ymin and col_no == xmin):
-            #                 value = pcl_np[row_no][col_no]
-            #                 box.A_x = value[0]
-            #                 box.A_y = value[1]
-            #                 box.A_z = value[2]
-            #             if(row_no == ymax and col_no == xmin):
-            #                 value = pcl_np[row_no][col_no]
-            #                 box.B_x = value[0]
-            #                 box.B_y = value[1]
-            #                 box.B_z = value[2]
-            #             if(row_no == ymin and col_no == xmax):
-            #                 value = pcl_np[row_no][col_no]
-            #                 box.C_x = value[0]
-            #                 box.C_y = value[1]
-            #                 box.C_z = value[2]
-            #             if(row_no == ymax and col_no == xmax):
-            #                 value = pcl_np[row_no][col_no]
-            #                 box.D_x = value[0]
-            #                 box.D_y = value[1]
-            #                 box.D_z = value[2]
-            
-            # # print(box)
-            # self.boundingbox.publish(box)            
             
 
  
@@ -269,75 +246,75 @@ class Detection(object):
             self.queue_center.append(self.center_pixel)
             
 
-    def DepthCamSub(self,depth_data):
+    # def DepthCamSub(self,depth_data):
         
        
-        # depth_cv_img =  bridge.imgmsg_to_cv2(depth_data, '32FC1')
+    #     # depth_cv_img =  bridge.imgmsg_to_cv2(depth_data, '32FC1')
         
-        depth_image = bridge.imgmsg_to_cv2(depth_data,desired_encoding='passthrough' )
+    #     depth_image = bridge.imgmsg_to_cv2(depth_data,desired_encoding='passthrough' )
         
     
-        depth_array = np.array(depth_image, dtype=np.float32)
+    #     depth_array = np.array(depth_image, dtype=np.float32)
         
-        # rospy.loginfo(depth_array)
+    #     # rospy.loginfo(depth_array)
         
-        # depth_array = depth_array.astype(np.uint8)
-        cv2.imwrite("depth_img.png", depth_array)
+    #     # depth_array = depth_array.astype(np.uint8)
+    #     cv2.imwrite("depth_img.png", depth_array)
         
-        if len(self.center_pixel) == 0:
-             pass
+    #     if len(self.center_pixel) == 0:
+    #          pass
             
-        else:    
+    #     else:    
             
-            print("Corners in Depth Camera Bounding Box",self.corners[0])
-            # get all the corners of the box here 
-            corner = self.corners[0]
-            leftbottom_corner = corner[0]
-            rightbottom_corner = corner[1]
-            lefttop_corner = corner[2]
-            righttop_corner = corner[3]  
+    #         print("Corners in Depth Camera Bounding Box",self.corners[0])
+    #         # get all the corners of the box here 
+    #         corner = self.corners[0]
+    #         leftbottom_corner = corner[0]
+    #         rightbottom_corner = corner[1]
+    #         lefttop_corner = corner[2]
+    #         righttop_corner = corner[3]  
             
             
-            # from the corners cut out the xmin, xmax, ymin,max values
-            xmin = leftbottom_corner[0]
-            xmax = righttop_corner[0]
-            ymin = leftbottom_corner[1]
-            ymax = righttop_corner[1]
+    #         # from the corners cut out the xmin, xmax, ymin,max values
+    #         xmin = leftbottom_corner[0]
+    #         xmax = righttop_corner[0]
+    #         ymin = leftbottom_corner[1]
+    #         ymax = righttop_corner[1]
 
-            # get the width and height of the box
-            w = xmax - xmin
-            h = ymax - ymin
+    #         # get the width and height of the box
+    #         w = xmax - xmin
+    #         h = ymax - ymin
         
-            i = 0
-            print(depth_array.shape) 
-            # print(depth_img_cpy)
-            totalrows, totalcols = depth_array.shape   ## 1080*1920
+    #         i = 0
+    #         print(depth_array.shape) 
+    #         # print(depth_img_cpy)
+    #         totalrows, totalcols = depth_array.shape   ## 1080*1920
             
-            for row_no in range(0,1079):
-                for col_no in range(0,1919):
-                    row = depth_array[row_no]
-                    value = row[col_no]
+    #         for row_no in range(0,1079):
+    #             for col_no in range(0,1919):
+    #                 row = depth_array[row_no]
+    #                 value = row[col_no]
                     
                     
-                    if (row_no >= ymin and row_no <= ymax) and (col_no >= xmin and col_no <= xmax):
-                        i += 1
-                        # print("row, col, value",row_no, col_no, value)        
-                        # depth_array[row_no][col_no] = 2.00  
-                        pass
-                    else:
-                        depth_array[row_no][col_no] = NaN
-            print("no of points in the bbox in depth_image",i)
+    #                 if (row_no >= ymin and row_no <= ymax) and (col_no >= xmin and col_no <= xmax):
+    #                     i += 1
+    #                     # print("row, col, value",row_no, col_no, value)        
+    #                     # depth_array[row_no][col_no] = 2.00  
+    #                     pass
+    #                 else:
+    #                     depth_array[row_no][col_no] = NaN
+    #         print("no of points in the bbox in depth_image",i)
             
-            print(depth_array) 
-            cv2.imwrite('depth_with_BBox.jpeg', depth_array)
-            depth_bbox = bridge.cv2_to_imgmsg(depth_array)
-            self.depth_with_BB.publish(depth_bbox)
+    #         print(depth_array) 
+    #         cv2.imwrite('depth_with_BBox.jpeg', depth_array)
+    #         depth_bbox = bridge.cv2_to_imgmsg(depth_array)
+    #         self.depth_with_BB.publish(depth_bbox)
             
-            #creating PCL value using open3d
+    #         #creating PCL value using open3d
                     
-            # pcl = o3d.geometry.PointCloud()
-            # pcl.points = o3d.utility.Vector3dVector(np.random.randn(500,3))
-            # o3d.visualization.draw_geometries([pcl])
+    #         # pcl = o3d.geometry.PointCloud()
+    #         # pcl.points = o3d.utility.Vector3dVector(np.random.randn(500,3))
+    #         # o3d.visualization.draw_geometries([pcl])
     
  
    
