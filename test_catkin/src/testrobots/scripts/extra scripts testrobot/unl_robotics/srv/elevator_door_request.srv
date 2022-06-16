@@ -1,0 +1,6 @@
+bool both_doors  #Open/close both doors = True, only 1 door = False
+bool side        #From outside facing the elevator door, True = LHS, False = RHS (applicable if only 1 door, else ignored)
+int8 floor       #The floor number. Can be negative for basement floors.
+bool open        #Whether to open or close the door(s).  T = open, F = close
+---
+bool result      #Whether the open/close was completed successfully

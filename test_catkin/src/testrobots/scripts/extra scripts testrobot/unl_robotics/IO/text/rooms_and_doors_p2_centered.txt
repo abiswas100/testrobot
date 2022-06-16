@@ -1,0 +1,151 @@
+Number_of_text_lines: 15
+--
+frame_id: world
+x:        -1
+y:        -3.2
+z:        3.5
+size:     0.5
+r:        1.0
+g:        1.0
+b:        1.0
+text:     Room 1
+--
+frame_id: world
+x:        -0.55
+y:        -6.7
+z:        3.5
+size:     0.5
+r:        1.0
+g:        1.0
+b:        1.0
+text:     Room 2
+--
+frame_id: world
+x:        -0.25
+y:        -8.5
+z:        3.5
+size:     0.5
+r:        1.0
+g:        1.0
+b:        1.0
+text:     Room 3
+--
+frame_id: world
+x:        -0.4
+y:        -11
+z:        3.5
+size:     0.5
+r:        1.0
+g:        1.0
+b:        1.0
+text:     Room 4
+--
+frame_id: world
+x:        1.3
+y:        -11
+z:        3.5
+size:     0.5
+r:        1.0
+g:        1.0
+b:        1.0
+text:     Room 5
+--
+frame_id: world
+x:        0.9
+y:        -8.5
+z:        3.5
+size:     0.5
+r:        1.0
+g:        1.0
+b:        1.0
+text:     Room 6
+--
+frame_id: world
+x:        3.2
+y:        -11
+z:        3.5
+size:     0.5
+r:        1.0
+g:        1.0
+b:        1.0
+text:     Room 7
+--
+frame_id: world
+x:        3.7
+y:        -8.2
+z:        3.5
+size:     0.5
+r:        1.0
+g:        1.0
+b:        1.0
+text:     Room 8
+--
+frame_id: world
+x:        1.8
+y:        -6.5
+z:        3.5
+size:     0.5
+r:        1.0
+g:        1.0
+b:        1.0
+text:     Room 9
+--
+frame_id: world
+x:        2.7
+y:        -5.95
+z:        3.0
+size:     0.5
+r:        1.0
+g:        1.0
+b:        1.0
+text:     Room 10
+--
+frame_id: world
+x:        3.4
+y:        -3.5
+z:        3.5
+size:     0.5
+r:        1.0
+g:        1.0
+b:        1.0
+text:     Room 11
+--
+frame_id: world
+x:        1.3
+y:        -3.5
+z:        3.5
+size:     0.5
+r:        1.0
+g:        1.0
+b:        1.0
+text:     Room 12
+--
+frame_id: world
+x:        -1.6
+y:        -9
+z:        8.0
+size:     0.5
+r:        0.2
+g:        0.8
+b:        0.5
+text:     Door 1
+--
+frame_id: world
+x:        1.9
+y:        -10.5
+z:        8.0
+size:     0.5
+r:        0.2
+g:        0.8
+b:        0.5
+text:     Door 2
+--
+frame_id: world
+x:        -1.3
+y:        -5.7
+z:        8.0
+size:     0.5
+r:        0.2
+g:        0.8
+b:        0.5
+text:     Door 3

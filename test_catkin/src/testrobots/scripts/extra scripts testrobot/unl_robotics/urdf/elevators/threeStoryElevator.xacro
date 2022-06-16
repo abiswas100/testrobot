@@ -1,0 +1,314 @@
+<?xml version="1.0"?>
+<robot name="elevator" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:property name="M_PI" value="3.141592653589793" />
+  <xacro:property name="storey_height" value="2" />
+  <xacro:property name="elev_door_height" value="2" />
+  <xacro:property name="wall_x_loc" value="1.25" />
+
+  
+  <link name="world" />
+
+  <!-- floor 1 -->
+  <joint name="floor1_joint" type="fixed">
+    <parent link="world" />
+    <origin xyz="${wall_x_loc} 0.65 0.0" rpy="0 0 0" />
+    <child link="floor1_link" />
+  </joint>
+  <link name="floor1_link">
+    <inertial>
+      <mass value="100" />
+      <com xyz="0 0 0.0" />
+      <inertia ixx="10" ixy="0"  ixz="0"
+                        iyy="10" iyz="0"
+                                 izz="10" />
+    </inertial> 
+    <visual>
+      <origin xyz="0 8 0.001" rpy="0 0 0" />
+      <geometry name="floor1_visual_geom">
+        <box size="8 8 0.002" />
+      </geometry>
+    </visual> 
+    <collision>
+      <origin xyz="0 8 0.001" rpy="0.0 0.0 0.0" />
+      <geometry name="floor1_collision_geom">
+        <box size="8 8 0.002" />
+      </geometry>
+    </collision>
+  </link>
+  <gazebo reference="floor1_link">
+    <material>PR2/Grey</material>
+    <mu1>50.0</mu1>
+    <mu2>50.0</mu2>
+    <kp>1000000000.0</kp>
+    <kd>1.0</kd>
+  </gazebo>
+
+
+  <!-- floor 2 -->
+  <joint name="floor2_joint" type="fixed">
+    <parent link="world" />
+    <origin xyz="2.82  1  ${storey_height - 0.02}" rpy="0 0 0" />
+    <child link="floor2_link" />
+  </joint>
+  <link name="floor2_link">
+    <inertial>
+      <mass value="100" />
+      <com xyz="0 0 0" />
+      <inertia ixx="10" ixy="0"  ixz="0"
+                        iyy="10" iyz="0"
+                                 izz="10" />
+    </inertial> 
+    <visual>
+      <origin xyz="0 0 0.001" rpy="0 0 0" />
+      <geometry name="floor2_visual_geom">
+        <box size="3 5 0.01" />
+      </geometry>
+    </visual> 
+    <collision>
+      <origin xyz="0 0 0.001" rpy="0 0 0" />
+      <geometry name="floor2_collision_geom">
+        <box size="3 5 0.01" />
+      </geometry>
+    </collision>
+  </link>
+  <gazebo reference="floor2_link">
+    <material>PR2/Grey</material>
+    <mu1>50.0</mu1>
+    <mu2>50.0</mu2>
+    <kp>1000000000.0</kp>
+    <kd>1.0</kd>
+  </gazebo>
+  
+
+
+  
+  <!-- RHS Door -->
+  <joint name="wall_rhs_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="0 0.0 0" rpy="0 0 0" />
+    <child link="wall_rhs_link" />
+  </joint>
+  <link name="wall_rhs_link">
+    <inertial>
+      <mass value="100" />
+      <com xyz="0 5 1" />
+      <inertia ixx="10" ixy="0"  ixz="0"
+                        iyy="10" iyz="0"
+                                 izz="10" />
+    </inertial> 
+    <visual>
+      <origin xyz="0 5 1" rpy="0 0 0" />
+      <geometry name="wall_rhs_visual_geom">
+        <box size="0.4 10 ${storey_height}" />
+      </geometry>
+    </visual> 
+    <collision>
+      <origin xyz="0 5 1" rpy="0.0 0.0 0.0" />
+      <geometry name="wall_rhs_collision_geom">
+        <box size="0.4 10 ${storey_height}" />
+      </geometry>
+    </collision>
+  </link>
+  <gazebo reference="wall_rhs_link">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+    <turnGravityOff>true</turnGravityOff>
+  </gazebo>
+  
+  <joint name="elevator_door_rhs_joint" type="prismatic" >
+    <parent link="wall_rhs_link" />
+    <child link="elevator_door_rhs_link" />
+    <origin xyz="0 0 0.05" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <dynamics damping="0.7" />
+    <limit lower="0"  upper="1"  effort="100000"  velocity="100000" />
+  </joint>
+  
+  <link name="elevator_door_rhs_link">
+    <inertial >
+      <mass value="30" />
+      <com xyz="0.0 -0.5 1.0" /> 
+      <inertia  ixx="1.0" ixy="0.0" ixz="0.0"
+                          iyy="1.0" iyz="0.0"
+                                    izz="3.0" />
+    </inertial>
+    <visual >
+      <origin xyz="0.0 -0.5 1.0" rpy="0 0 ${M_PI}" />
+      <geometry name="sholder_roll_mesh_file">
+        <box size="0.1 1.0 ${elev_door_height}" />
+      </geometry>
+    </visual>
+    <collision >
+      <origin xyz="0.0 -0.5 1.0" rpy="0 0 ${M_PI}" />
+      <geometry name="door_collision_geom">
+        <box size="0.1 1.0 ${elev_door_height}" />
+      </geometry>
+    </collision>
+  </link>
+  <gazebo reference="elevator_door_rhs_link">
+    <material>PR2/Grey</material>
+    <laserRetro>2000</laserRetro>
+    <turnGravityOff>true</turnGravityOff>
+    <selfCollide>false</selfCollide>
+    <dampingFactor>0.01</dampingFactor>
+  </gazebo>
+
+  <!-- LHS Door -->
+  
+  <joint name="wall_lhs_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="0 0.0 0" rpy="0 0 0" />
+    <child link="wall_lhs_link" />
+  </joint>
+  <link name="wall_lhs_link">
+    <inertial>
+      <mass value="100" />
+      <com xyz="0 -7 1" />
+      <inertia ixx="10" ixy="0"  ixz="0"
+                        iyy="10" iyz="0"
+                                 izz="10" />
+    </inertial> 
+    <visual>
+      <origin xyz="0 -7 1" rpy="0 0 0" />
+      <geometry name="wall_lhs_visual_geom">
+        <box size="0.4 10 ${storey_height}" />
+      </geometry>
+    </visual> 
+    <collision>
+      <origin xyz="0 -7 1" rpy="0.0 0.0 0.0" />
+      <geometry name="wall_lhs_collision_geom">
+        <box size="0.4 10 ${storey_height}" />
+      </geometry>
+    </collision>
+  </link>
+  <gazebo reference="wall_lhs_link">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+    <turnGravityOff>true</turnGravityOff>
+  </gazebo>
+  
+  <joint name="elevator_door_lhs_joint" type="prismatic" >
+    <parent link="wall_lhs_link" />
+    <child link="elevator_door_lhs_link" />
+    <origin xyz="0 0 0.05" rpy="0 0 0" />
+    <axis xyz="0 -1 0" />
+    <dynamics damping="0.7" />
+    <limit lower="0"  upper="1"  effort="100000"  velocity="100000" />
+  </joint>
+  
+  <link name="elevator_door_lhs_link">
+    <inertial >
+      <mass value="30" />
+      <com xyz="0.0 -1.5 1.0" /> 
+      <inertia  ixx="1.0" ixy="0.0" ixz="0.0"
+                          iyy="1.0" iyz="0.0"
+                                    izz="3.0" />
+    </inertial>
+    <visual >
+      <origin xyz="0.0 -1.5 1.0" rpy="0 0 ${M_PI}" />
+      <geometry name="sholder_roll_mesh_file">
+        <box size="0.1 1.0 ${elev_door_height}" />
+      </geometry>
+    </visual>
+    <collision >
+      <origin xyz="0.0 -1.5 1.0" rpy="0 0 ${M_PI}" />
+      <geometry name="door_collision_geom">
+        <box size="0.1 1.0 ${elev_door_height}" />
+      </geometry>
+    </collision>
+  </link>
+  <gazebo reference="elevator_door_lhs_link">
+    <material>PR2/Grey</material>
+    <laserRetro>2000</laserRetro>
+    <turnGravityOff>true</turnGravityOff>
+    <selfCollide>false</selfCollide>
+    <dampingFactor>0.01</dampingFactor>
+  </gazebo>
+
+  <!-- Elevator car -->
+  
+  <joint name="elevator_car_joint" type="prismatic" >
+    <parent link="wall_lhs_link" />
+    <child link="elevator_car_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <axis xyz="0 0 1" />
+    <dynamics damping="0.2" />
+    <limit lower="0"  upper="2"  effort="10"  velocity="10" />
+  </joint>
+  
+  <link name="elevator_car_link">
+    <inertial >
+      <mass value="30" />
+      <inertia  ixx="1.0" ixy="0.0" ixz="0.0"
+                          iyy="1.0" iyz="0.0"
+                                    izz="3.0" />
+    </inertial>
+    <visual >
+      <origin xyz="-1.05 -1.0  -0.02" rpy="0 0 0" />
+      <geometry name="elevator_car_visual">
+        <box size="2.0  1.99  0.05" />
+      </geometry>
+    </visual>
+    <collision >
+      <origin xyz="-1.05 -1.0  -0.02" rpy="0 0 0" />
+      <geometry name="elevator_car_collision">
+        <box size="2.0  1.99  0.05" />
+      </geometry>
+    </collision>
+  </link>
+  <gazebo reference="elevator_car_link">
+    <material>PR2/Grey</material>
+    <laserRetro>2000</laserRetro>
+    <turnGravityOff>true</turnGravityOff>
+    <selfCollide>false</selfCollide>
+    <dampingFactor>0.01</dampingFactor>
+  </gazebo>
+
+
+  
+  <!-- Controllers and transmissions -->
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>elevator_bot</robotNamespace>
+      <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+      <legacyModeNS>true</legacyModeNS>      
+    </plugin>
+  </gazebo>
+
+  <transmission name="trans_elevator_door_rhs">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="elevator_door_rhs_joint">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="elevator_door_rhs_motor">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="trans_elevator_door_lhs">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="elevator_door_lhs_joint">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="elevator_door_lhs_motor">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="trans_elevator_car">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="elevator_car_joint">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="elevator_car_motor">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  
+</robot>

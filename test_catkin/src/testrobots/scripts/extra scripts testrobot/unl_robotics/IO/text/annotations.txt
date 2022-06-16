@@ -1,0 +1,51 @@
+Number_of_text_lines: 5
+--
+frame_id: world
+x:        -8.5
+y:        2.5
+z:        3.0
+size:     0.5
+r:        1.0
+g:        0.6
+b:        0.6
+text:     Slab 1284
+--
+frame_id: world
+x:        -3
+y:        2.5
+z:        3
+size:     0.5
+r:        1.0
+g:        0.6
+b:        0.6
+text:     Slab 2061
+--
+frame_id: world
+x:        -8.5
+y:        -1.8
+z:        3.0
+size:     0.5
+r:        1.0
+g:        0.6
+b:        0.6
+text:     Slab 3088
+--
+frame_id: world
+x:        -3
+y:        -1.8
+z:        3
+size:     0.5
+r:        1.0
+g:        0.6
+b:        0.6
+text:     Slab 274
+--
+frame_id: world
+x:        -6.4
+y:        0.0
+z:        4.5
+size:     0.4
+r:        1.0
+g:        1.0
+b:        1.0
+text:     Column 4519

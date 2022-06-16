@@ -177,12 +177,12 @@ void extractObject(pcl::PointCloud<pcl::PointXYZ>::Ptr crop_cloud_ptr);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void save_pcd(sensor_msgs::PointCloud2 ros_msg, int counter,string file_name ){
-   pcl::PointCloud<pcl::PointXYZ> save_cloud;
-   pcl::fromROSMsg(ros_msg,save_cloud);
-   pcl::io::savePCDFileASCII (file_name + std::to_string(counter)+".pcd", save_cloud);
+// void save_pcd(sensor_msgs::PointCloud2 ros_msg, int counter,string file_name ){
+//    pcl::PointCloud<pcl::PointXYZ> save_cloud;
+//    pcl::fromROSMsg(ros_msg,save_cloud);
+//    pcl::io::savePCDFileASCII (file_name + std::to_string(counter)+".pcd", save_cloud);
 
-}
+// }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -249,8 +249,17 @@ void blah(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
    wait = 0;
 
    
-   pcl_conversions::toPCL(*cloud_msg, *inputCloud);
-   save_pcd(crop_cloud_msg,counter, "output_ptr");
+
+
+   
+   // pcl_conversions::toPCL(*cloud_msg, *inputCloud);
+   pcl::PointCloud<pcl::PointXYZ> save_cloud;
+   // save_cloud = *cloud_msg;
+   pcl::fromROSMsg(cloud_msg,save_cloud);
+   pcl::io::savePCDFileASCII ("original.pcd", save_cloud);
+   // pcl::io::savePCDFileASCII ("crpped" + std::to_string(counter)+".pcd", save_cloud);
+
+   // save_pcd(crop_cloud_msg,counter, "output_ptr");
    //do voxel filtering and save to pcd
    // pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
    // vg.setInputCloud(inputCloud);

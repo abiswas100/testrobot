@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+  <arg name="world_name" default="$(find unl_smart_robotic_home)/worlds/hallway_world/hallway.world"/>
+
+  <!-- Initial pose of the robot -->
+  <arg name="initial_pose_x" default="2.0"/>
+  <arg name="initial_pose_y" default="2.0"/>
+  <arg name="initial_pose_a" default="0.0"/>
+
+  
+  <!-- === Utilities === -->
+  <arg name="rviz" default="true"/>
+  <arg name="yolo" default="true"/>
+  <arg name="map_file_000" default="$(find unl_smart_robotic_home)/buildings/hallway/maps/hallway.yaml"/>
+
+  
+  <!-- === Spawn Gazebo === -->
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+  
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world_name)"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="debug" value="$(arg debug)"/>
+  </include>
+
+  <!-- Set up the map server and relay node-->
+  <node name="map_server_000" pkg="map_server" type="map_server" args="$(arg map_file_000)">
+    <remap from="/map" to="/map_000" /> 
+  </node>
+
+  <node name="map_relay" pkg="topic_tools" type="relay"
+        args="/map_000 /map">
+  </node>
+  
+  <!-- The building is rooted in the world frame. Establish the relationship between the world and map frames -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="world_map_tf_broadcaster"
+        args="0   0   0   0   0   0   world   map" />
+  
+
+  <!-- === Spawn the Hallway "robot" ===-->
+  <arg name="hallway_name" value="hallway_bot"/>           <!-- The model name for this robot -->
+  <arg name="hallway_namespace" value="hallway_bot_ns"/>   <!-- Namespace used for this robot -->
+  <group ns="$(arg hallway_namespace)">
+    <param name="robot_description"
+           command="$(find xacro)/xacro --inorder '$(find unl_smart_robotic_home)/urdf/buildings/hallway/hallway.xacro'
+                    robot_name:=$(arg hallway_name)
+                    hallway_namespace:=$(arg hallway_namespace)" />
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model"
+          args="-urdf -param /$(arg hallway_namespace)/robot_description -model $(arg hallway_name)"
+          respawn="false" output="screen" />
+
+    <!-- Provide transform between the Hallway robot frame and the real world frame -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="$(arg hallway_name)_tf_broadcaster"
+          args="0   0   0   0   0   0   world  $(arg hallway_namespace)/building_footprint_link" />
+  
+    <!-- Start the robot state publisher for the hallway bot within the hallway namespace  -->
+    <node name="robot_state_publisher"
+          pkg="robot_state_publisher"
+          type="robot_state_publisher"
+	        respawn="false" output="screen"
+          ns="$(arg hallway_namespace)">
+      <param name="tf_prefix" value="$(arg hallway_namespace)" />
+    </node>
+    
+    <!-- Add any controllers for the building, if applicable -->
+  </group>
+
+
+  <!-- === Spawn the "robot" doors ===-->
+
+
+  <!-- door01 -->
+  <arg name="door01_name" value="door01_bot"/>           <!-- The model name for this door robot -->
+  <arg name="door01_namespace" value="door01_bot_ns"/>   <!-- Namespace used for this door robot -->
+  <group ns="$(arg door01_namespace)">
+    <param name="robot_description"
+           command="$(find xacro)/xacro --inorder '$(find unl_smart_robotic_home)/urdf/doors/pr2_door_parameterized.urdf.xacro'
+                    robot_name:=$(arg door01_name)
+                    door_bot_namespace:=$(arg door01_namespace)
+                    hinge_x:=0.0
+                    hinge_y:=9.02
+                    init_door_orientation:=3.14159265
+                    door_width:=0.96
+                    door_height:=3.0"/>
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model"
+          args="-urdf -param /$(arg door01_namespace)/robot_description -model $(arg door01_name)"
+          respawn="false" output="screen" />
+    
+    <!-- Provide transform between the door robot frame and the real world frame -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="$(arg door01_name)_tf_broadcaster"
+          args="0  0   0   0   0   0   world  $(arg door01_namespace)/world" />
+  </group>
+  <include file="$(find unl_smart_robotic_home)/launch/controllers/pr2_door_controllers.launch">
+    <arg name="door_bot_namespace" value="$(arg door01_namespace)"/>
+  </include>
+
+  <!-- door02 -->
+  <arg name="door02_name" value="door02_bot"/>           <!-- The model name for this door robot -->
+  <arg name="door02_namespace" value="door02_bot_ns"/>   <!-- Namespace used for this door robot -->
+  <group ns="$(arg door02_namespace)">
+    <param name="robot_description"
+           command="$(find xacro)/xacro --inorder '$(find unl_smart_robotic_home)/urdf/doors/pr2_door_parameterized.urdf.xacro'
+                    robot_name:=$(arg door02_name)
+                    door_bot_namespace:=$(arg door02_namespace)
+                    hinge_x:=0.0
+                    hinge_y:=11.02
+                    init_door_orientation:=3.14159265
+                    door_width:=0.96
+                    door_height:=3.0"/>
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model"
+          args="-urdf -param /$(arg door02_namespace)/robot_description -model $(arg door02_name)"
+          respawn="false" output="screen" />
+    
+    <!-- Provide transform between the door robot frame and the real world frame -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="$(arg door02_name)_tf_broadcaster"
+          args="0  0   0   0   0   0   world  $(arg door02_namespace)/world" />
+  </group>
+  <include file="$(find unl_smart_robotic_home)/launch/controllers/pr2_door_controllers.launch">
+    <arg name="door_bot_namespace" value="$(arg door02_namespace)"/>
+  </include>
+
+  <!-- door03 -->
+  <arg name="door03_name" value="door03_bot"/>           <!-- The model name for this door robot -->
+  <arg name="door03_namespace" value="door03_bot_ns"/>   <!-- Namespace used for this door robot -->
+  <group ns="$(arg door03_namespace)">
+    <param name="robot_description"
+           command="$(find xacro)/xacro --inorder '$(find unl_smart_robotic_home)/urdf/doors/pr2_door_parameterized.urdf.xacro'
+                    robot_name:=$(arg door03_name)
+                    door_bot_namespace:=$(arg door03_namespace)
+                    hinge_x:=0.0
+                    hinge_y:=13.02
+                    init_door_orientation:=3.14159265
+                    door_width:=0.96
+                    door_height:=3.0"/>
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model"
+          args="-urdf -param /$(arg door03_namespace)/robot_description -model $(arg door03_name)"
+          respawn="false" output="screen" />
+    
+    <!-- Provide transform between the door robot frame and the real world frame -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="$(arg door03_name)_tf_broadcaster"
+          args="0  0   0   0   0   0   world  $(arg door03_namespace)/world" />
+  </group>
+  <include file="$(find unl_smart_robotic_home)/launch/controllers/pr2_door_controllers.launch">
+    <arg name="door_bot_namespace" value="$(arg door03_namespace)"/>
+  </include>
+
+
+  <!-- door11 -->
+  <arg name="door11_name" value="door11_bot"/>           <!-- The model name for this door robot -->
+  <arg name="door11_namespace" value="door11_bot_ns"/>   <!-- Namespace used for this door robot -->
+  <group ns="$(arg door11_namespace)">
+    <param name="robot_description"
+           command="$(find xacro)/xacro --inorder '$(find unl_smart_robotic_home)/urdf/doors/pr2_door_parameterized.urdf.xacro'
+                    robot_name:=$(arg door11_name)
+                    door_bot_namespace:=$(arg door11_namespace)
+                    hinge_x:=6.0
+                    hinge_y:=9.02
+                    init_door_orientation:=3.14159265
+                    door_width:=0.96
+                    door_height:=3.0"/>
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model"
+          args="-urdf -param /$(arg door11_namespace)/robot_description -model $(arg door11_name)"
+          respawn="false" output="screen" />
+    
+    <!-- Provide transform between the door robot frame and the real world frame -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="$(arg door11_name)_tf_broadcaster"
+          args="0  0   0   0   0   0   world  $(arg door11_namespace)/world" />
+  </group>
+  <include file="$(find unl_smart_robotic_home)/launch/controllers/pr2_door_controllers.launch">
+    <arg name="door_bot_namespace" value="$(arg door11_namespace)"/>
+  </include>
+
+  <!-- door12 -->
+  <arg name="door12_name" value="door12_bot"/>           <!-- The model name for this door robot -->
+  <arg name="door12_namespace" value="door12_bot_ns"/>   <!-- Namespace used for this door robot -->
+  <group ns="$(arg door12_namespace)">
+    <param name="robot_description"
+           command="$(find xacro)/xacro --inorder '$(find unl_smart_robotic_home)/urdf/doors/pr2_door_parameterized.urdf.xacro'
+                    robot_name:=$(arg door12_name)
+                    door_bot_namespace:=$(arg door12_namespace)
+                    hinge_x:=6.0
+                    hinge_y:=11.02
+                    init_door_orientation:=3.14159265
+                    door_width:=0.96
+                    door_height:=3.0"/>
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model"
+          args="-urdf -param /$(arg door12_namespace)/robot_description -model $(arg door12_name)"
+          respawn="false" output="screen" />
+    
+    <!-- Provide transform between the door robot frame and the real world frame -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="$(arg door12_name)_tf_broadcaster"
+          args="0  0   0   0   0   0   world  $(arg door12_namespace)/world" />
+  </group>
+  <include file="$(find unl_smart_robotic_home)/launch/controllers/pr2_door_controllers.launch">
+    <arg name="door_bot_namespace" value="$(arg door12_namespace)"/>
+  </include>
+
+  <!-- door13 -->
+  <arg name="door13_name" value="door13_bot"/>           <!-- The model name for this door robot -->
+  <arg name="door13_namespace" value="door13_bot_ns"/>   <!-- Namespace used for this door robot -->
+  <group ns="$(arg door13_namespace)">
+    <param name="robot_description"
+           command="$(find xacro)/xacro --inorder '$(find unl_smart_robotic_home)/urdf/doors/pr2_door_parameterized.urdf.xacro'
+                    robot_name:=$(arg door13_name)
+                    door_bot_namespace:=$(arg door13_namespace)
+                    hinge_x:=6.0
+                    hinge_y:=13.02
+                    init_door_orientation:=3.14159265
+                    door_width:=0.96
+                    door_height:=3.0"/>
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model"
+          args="-urdf -param /$(arg door13_namespace)/robot_description -model $(arg door13_name)"
+          respawn="false" output="screen" />
+    
+    <!-- Provide transform between the door robot frame and the real world frame -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="$(arg door13_name)_tf_broadcaster"
+          args="0  0   0   0   0   0   world  $(arg door13_namespace)/world" />
+  </group>
+  <include file="$(find unl_smart_robotic_home)/launch/controllers/pr2_door_controllers.launch">
+    <arg name="door_bot_namespace" value="$(arg door13_namespace)"/>
+  </include>
+
+
+
+
+  <!-- door21 -->
+  <arg name="door21_name" value="door21_bot"/>           <!-- The model name for this door robot -->
+  <arg name="door21_namespace" value="door21_bot_ns"/>   <!-- Namespace used for this door robot -->
+  <group ns="$(arg door21_namespace)">
+    <param name="robot_description"
+           command="$(find xacro)/xacro --inorder '$(find unl_smart_robotic_home)/urdf/doors/pr2_door_parameterized.urdf.xacro'
+                    robot_name:=$(arg door21_name)
+                    door_bot_namespace:=$(arg door21_namespace)
+                    hinge_x:=17.0
+                    hinge_y:=9.02
+                    init_door_orientation:=3.14159265
+                    door_width:=0.96
+                    door_height:=3.0"/>
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model"
+          args="-urdf -param /$(arg door21_namespace)/robot_description -model $(arg door21_name)"
+          respawn="false" output="screen" />
+    
+    <!-- Provide transform between the door robot frame and the real world frame -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="$(arg door21_name)_tf_broadcaster"
+          args="0  0   0   0   0   0   world  $(arg door21_namespace)/world" />
+  </group>
+  <include file="$(find unl_smart_robotic_home)/launch/controllers/pr2_door_controllers.launch">
+    <arg name="door_bot_namespace" value="$(arg door21_namespace)"/>
+  </include>
+
+  <!-- door22 -->
+  <arg name="door22_name" value="door22_bot"/>           <!-- The model name for this door robot -->
+  <arg name="door22_namespace" value="door22_bot_ns"/>   <!-- Namespace used for this door robot -->
+  <group ns="$(arg door22_namespace)">
+    <param name="robot_description"
+           command="$(find xacro)/xacro --inorder '$(find unl_smart_robotic_home)/urdf/doors/pr2_door_parameterized.urdf.xacro'
+                    robot_name:=$(arg door22_name)
+                    door_bot_namespace:=$(arg door22_namespace)
+                    hinge_x:=17.0
+                    hinge_y:=11.02
+                    init_door_orientation:=3.14159265
+                    door_width:=0.96
+                    door_height:=3.0"/>
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model"
+          args="-urdf -param /$(arg door22_namespace)/robot_description -model $(arg door22_name)"
+          respawn="false" output="screen" />
+    
+    <!-- Provide transform between the door robot frame and the real world frame -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="$(arg door22_name)_tf_broadcaster"
+          args="0  0   0   0   0   0   world  $(arg door22_namespace)/world" />
+  </group>
+  <include file="$(find unl_smart_robotic_home)/launch/controllers/pr2_door_controllers.launch">
+    <arg name="door_bot_namespace" value="$(arg door22_namespace)"/>
+  </include>
+
+  <!-- door23 -->
+  <arg name="door23_name" value="door23_bot"/>           <!-- The model name for this door robot -->
+  <arg name="door23_namespace" value="door23_bot_ns"/>   <!-- Namespace used for this door robot -->
+  <group ns="$(arg door23_namespace)">
+    <param name="robot_description"
+           command="$(find xacro)/xacro --inorder '$(find unl_smart_robotic_home)/urdf/doors/pr2_door_parameterized.urdf.xacro'
+                    robot_name:=$(arg door23_name)
+                    door_bot_namespace:=$(arg door23_namespace)
+                    hinge_x:=17.0
+                    hinge_y:=13.02
+                    init_door_orientation:=3.14159265
+                    door_width:=0.96
+                    door_height:=3.0"/>
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model"
+          args="-urdf -param /$(arg door23_namespace)/robot_description -model $(arg door23_name)"
+          respawn="false" output="screen" />
+    
+    <!-- Provide transform between the door robot frame and the real world frame -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="$(arg door23_name)_tf_broadcaster"
+          args="0  0   0   0   0   0   world  $(arg door23_namespace)/world" />
+  </group>
+  <include file="$(find unl_smart_robotic_home)/launch/controllers/pr2_door_controllers.launch">
+    <arg name="door_bot_namespace" value="$(arg door23_namespace)"/>
+  </include>
+  
+
+  
+  <!-- === Spawn the turtlebot robot === -->
+  <include file="$(find unl_smart_robotic_home)/launch/robots/turtlebot.launch">
+    <arg name="initial_pose_x" value="$(arg initial_pose_x)"/>
+    <arg name="initial_pose_y" value="$(arg initial_pose_y)"/>
+    <arg name="initial_pose_a" value="$(arg initial_pose_a)"/>
+  </include>
+
+  
+  <!-- === AMCL === -->
+  <include file="$(find unl_smart_robotic_home)/launch/services/amcl.launch">
+    <arg name="initial_pose_x" value="$(arg initial_pose_x)"/>
+    <arg name="initial_pose_y" value="$(arg initial_pose_y)"/>
+    <arg name="initial_pose_a" value="$(arg initial_pose_a)"/>
+  </include>
+  
+  
+  <!-- === RViz support ===-->
+  <group if="$(arg rviz)">
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find unl_smart_robotic_home)/rviz/$(arg hallway_name).rviz"/>
+  </group>
+
+  
+  <!-- === yolo support ===-->
+  <!-- optionally set the camera topic for yolo to process -->
+  <group if="$(arg yolo)">
+    <include file="$(find unl_smart_robotic_home)/launch/services/embedded_yolo.launch" />
+  </group>
+
+</launch>

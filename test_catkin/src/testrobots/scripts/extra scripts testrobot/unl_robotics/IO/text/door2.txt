@@ -1,0 +1,81 @@
+Number_of_text_lines: 8
+--
+frame_id: world
+x:        -5
+y:        -10
+z:        8.0
+size:     0.5
+r:        0.2
+g:        0.8
+b:        0.5
+text:     Door 1
+--
+frame_id: world
+x:        -5
+y:        -10
+z:        7.5
+size:     0.3
+r:        0.2
+g:        0.8
+b:        0.5
+text:     Hinge Coordinates: (-2.39, -8.95)
+--
+frame_id: world
+x:        -5
+y:        -10
+z:        7.0
+size:     0.3
+r:        0.2
+g:        0.8
+b:        0.5
+text:     Subcontractor ID: C
+--
+frame_id: world
+x:        -5
+y:        -10
+z:        6.5
+size:     0.32
+r:        0.2
+g:        0.8
+b:        0.5
+text:     Planned Completion Date: Mar 15, 2021
+--
+frame_id: world
+x:        -5
+y:        -10
+z:        6.0
+size:     0.32
+r:        0.2
+g:        0.8
+b:        0.5
+text:     Expected State: Hung
+--
+frame_id: world
+x:        -5
+y:        -10
+z:        5.5
+size:     0.32
+r:        0.2
+g:        0.8
+b:        0.5
+text:     Inspection Time / Date:  Mar 16, 2021, 4:07 PM
+--
+frame_id: world
+x:        -5
+y:        -10
+z:        5.0
+size:     0.31
+r:        0.2
+g:        0.8
+b:        0.5
+text:     Inspection Coordinates: (-0.82, -7.50, -1.5708)
+--
+frame_id: world
+x:        -5
+y:        -10
+z:        4.5
+size:     0.37
+r:        0.2
+g:        0.8
+b:        0.5
+text:     Actual State = Hung

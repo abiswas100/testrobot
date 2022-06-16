@@ -1,0 +1,1193 @@
+<?xml version="1.0"?>
+<robot name="$(arg robot_name)" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Peavy - This file was mostly auto-generated from an SDF to
+       URDF conversion. Some slight modifications made to get
+       it to load into Gazebo properly. -->
+
+  <!-- in the case of multiple floors, have each structure link to its own floor -->
+       
+  <link name="building_footprint_link" />
+
+  <!-- floor 1 -->
+  <joint name="floor1_joint" type="fixed">
+    <parent link="building_footprint_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <child link="floor1_link" />
+  </joint>
+  <link name="floor1_link">
+    <inertial>
+      <mass value="10000" />
+      <com xyz="0 0 0.0" />
+      <inertia ixx="10" ixy="0"  ixz="0"
+                        iyy="10" iyz="0"
+                                 izz="10" />
+    </inertial> 
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry name="floor1_visual_geom">
+        <box size="0.001 0.001 0.001" />
+      </geometry>
+    </visual> 
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry name="floor1_collision_geom">
+        <box size="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+  </link>
+  <gazebo reference="floor1_link">
+    <material>PR2/Grey</material>
+    <mu1>50.0</mu1>
+    <mu2>50.0</mu2>
+    <kp>1000000000.0</kp>
+    <kd>1.0</kd>
+  </gazebo>
+
+  <!-- building links and joints - these connect into the floor1_link -->
+
+  <joint name="three_walls__Wall_0_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_0" />
+  </joint>
+  <gazebo reference="three_walls__Wall_0">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_1_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_1" />
+  </joint>
+  <gazebo reference="three_walls__Wall_1">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_2_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_2" />
+  </joint>
+  <gazebo reference="three_walls__Wall_2">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_3_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_3" />
+  </joint>
+  <gazebo reference="three_walls__Wall_3">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_4_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_4" />
+  </joint>
+  <gazebo reference="three_walls__Wall_4">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_5_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_5" />
+  </joint>
+  <gazebo reference="three_walls__Wall_5">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_6_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_6" />
+  </joint>
+  <gazebo reference="three_walls__Wall_6">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_7_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_7" />
+  </joint>
+  <gazebo reference="three_walls__Wall_7">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_8_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_8" />
+  </joint>
+  <gazebo reference="three_walls__Wall_8">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_9_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_9" />
+  </joint>
+  <gazebo reference="three_walls__Wall_9">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_10_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_10" />
+  </joint>
+  <gazebo reference="three_walls__Wall_10">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_11_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_11" />
+  </joint>
+  <gazebo reference="three_walls__Wall_11">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_12_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_12" />
+  </joint>
+  <gazebo reference="three_walls__Wall_12">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_13_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_13" />
+  </joint>
+  <gazebo reference="three_walls__Wall_13">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_14_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_14" />
+  </joint>
+  <gazebo reference="three_walls__Wall_14">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_15_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_15" />
+  </joint>
+  <gazebo reference="three_walls__Wall_15">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_16_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_16" />
+  </joint>
+  <gazebo reference="three_walls__Wall_16">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_17_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_17" />
+  </joint>
+  <gazebo reference="three_walls__Wall_17">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_18_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_18" />
+  </joint>
+  <gazebo reference="three_walls__Wall_18">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_19_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_19" />
+  </joint>
+  <gazebo reference="three_walls__Wall_19">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_20_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_20" />
+  </joint>
+  <gazebo reference="three_walls__Wall_20">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_21_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_21" />
+  </joint>
+  <gazebo reference="three_walls__Wall_21">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_22_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_22" />
+  </joint>
+  <gazebo reference="three_walls__Wall_22">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_32_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_32" />
+  </joint>
+  <gazebo reference="three_walls__Wall_32">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_33_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_33" />
+  </joint>
+  <gazebo reference="three_walls__Wall_33">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_34_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_34" />
+  </joint>
+  <gazebo reference="three_walls__Wall_34">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_35_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_35" />
+  </joint>
+  <gazebo reference="three_walls__Wall_35">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_36_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_36" />
+  </joint>
+  <gazebo reference="three_walls__Wall_36">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_37_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_37" />
+  </joint>
+  <gazebo reference="three_walls__Wall_37">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_38_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_38" />
+  </joint>
+  <gazebo reference="three_walls__Wall_38">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_39_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_39" />
+  </joint>
+  <gazebo reference="three_walls__Wall_39">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_40_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_40" />
+  </joint>
+  <gazebo reference="three_walls__Wall_40">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_41_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_41" />
+  </joint>
+  <gazebo reference="three_walls__Wall_41">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_42_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_42" />
+  </joint>
+  <gazebo reference="three_walls__Wall_42">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_43_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_43" />
+  </joint>
+  <gazebo reference="three_walls__Wall_43">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_44_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_44" />
+  </joint>
+  <gazebo reference="three_walls__Wall_44">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+
+  </gazebo>
+  <joint name="three_walls__Wall_45_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_45" />
+  </joint>
+  <gazebo reference="three_walls__Wall_45">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+  </gazebo>
+  <joint name="three_walls__Wall_46_joint" type="fixed" >
+    <parent link="floor1_link" />
+    <origin xyz="-6.3315 0.41704 0" rpy="0 0 0" />
+    <child link="three_walls__Wall_46" />
+  </joint>
+  <gazebo reference="three_walls__Wall_46">
+    <material>PR2/Grey2</material>
+    <laserRetro>1000</laserRetro>
+    <selfCollide>false</selfCollide>
+  </gazebo>
+
+  <!-- generated links -->
+
+  <link name="three_walls__Wall_0">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_0_Collision">
+      <origin rpy="0       0       3.14159" xyz="2.70472 -7.05239  1.524"/>
+      <geometry>
+        <box size="3.8508 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_0_Visual">
+      <origin rpy="0       0       3.14159" xyz="2.70472 -7.05239  1.524"/>
+      <geometry>
+        <box size="3.8508 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>  
+  <link name="three_walls__Wall_1">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_1_Collision">
+      <origin rpy="0      0      1.5708" xyz="0.83012 -2.73121  1.524"/>
+      <geometry>
+        <box size="8.54075 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_1_Visual">
+      <origin rpy="0      0      1.5708" xyz="0.83012 -2.73121  1.524"/>
+      <geometry>
+        <box size="8.54075 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_2">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_2_Collision">
+      <origin rpy="0  0  0" xyz="7.6722   1.48836  1.524"/>
+      <geometry>
+        <box size="13.5826 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_2_Visual">
+      <origin rpy="0  0  0" xyz="7.6722   1.48836  1.524"/>
+      <geometry>
+        <box size="13.5826 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>  
+  <link name="three_walls__Wall_3">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_3_Collision">
+      <origin rpy="0      0      1.5708" xyz="13.4349   -5.34106   1.524"/>
+      <geometry>
+        <box size="3.52425 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_3_Visual">
+      <origin rpy="0      0      1.5708" xyz="13.4349   -5.34106   1.524"/>
+      <geometry>
+        <box size="3.52425 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_4">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_4_Collision">
+      <origin rpy="0       0       3.14159" xyz="12.4498   -3.52814   1.524"/>
+      <geometry>
+        <box size="4.2308 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_4_Visual">
+      <origin rpy="0       0       3.14159" xyz="12.4498   -3.52814   1.524"/>
+      <geometry>
+        <box size="4.2308 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_5">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_5_Collision">
+      <origin rpy="0      0      1.5708" xyz="14.5144   -0.96909   1.524"/>
+      <geometry>
+        <box size="5.0165 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_5_Visual">
+      <origin rpy="0      0      1.5708" xyz="14.5144   -0.96909   1.524"/>
+      <geometry>
+        <box size="5.0165 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_6">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_6_Collision">
+      <origin rpy="0      0      1.5708" xyz="5.9355  -4.26379  1.524"/>
+      <geometry>
+        <box size="2.5508 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_6_Visual">
+      <origin rpy="0      0      1.5708" xyz="5.9355  -4.26379  1.524"/>
+      <geometry>
+        <box size="2.5508 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_7">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_7_Collision">
+      <origin rpy="0      0      1.5708" xyz="9.3391  -3.36379  1.524"/>
+      <geometry>
+        <box size="0.7508 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_7_Visual">
+      <origin rpy="0      0      1.5708" xyz="9.3391  -3.36379  1.524"/>
+      <geometry>
+        <box size="0.7508 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_8">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_8_Collision">
+      <origin rpy="0       0       3.14159" xyz="7.6373  -3.03919  1.524"/>
+      <geometry>
+        <box size="3.302 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_8_Visual">
+      <origin rpy="0       0       3.14159" xyz="7.6373  -3.03919  1.524"/>
+      <geometry>
+        <box size="3.302 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_9">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_9_Collision">
+      <origin rpy="0       0      -0.78539" xyz="5.8891  -2.95358  1.524"/>
+      <geometry>
+        <box size="0.200057 0.1015 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_9_Visual">
+      <origin rpy="0       0      -0.78539" xyz="5.8891  -2.95358  1.524"/>
+      <geometry>
+        <box size="0.200057 0.1015 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_10">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_10_Collision">
+      <origin rpy="0  0  0" xyz="3.21704 -2.71534  1.524"/>
+      <geometry>
+        <box size="1.26264 0.1015 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_10_Visual">
+      <origin rpy="0  0  0" xyz="3.21704 -2.71534  1.524"/>
+      <geometry>
+        <box size="1.26264 0.1015 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_11">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_11_Collision">
+      <origin rpy="0       0      -0.78539" xyz="4.0834  -3.07301  1.524"/>
+      <geometry>
+        <box size="0.969558 0.1015 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_11_Visual">
+      <origin rpy="0       0      -0.78539" xyz="4.0834  -3.07301  1.524"/>
+      <geometry>
+        <box size="0.969558 0.1015 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_12">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_12_Collision">
+      <origin rpy="0      0     -1.5708" xyz="4.42619 -6.57699  1.524"/>
+      <geometry>
+        <box size="0.8492 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_12_Visual">
+      <origin rpy="0      0     -1.5708" xyz="4.42619 -6.57699  1.524"/>
+      <geometry>
+        <box size="0.8492 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_13">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_13_Collision">
+      <origin rpy="0      0     -1.5708" xyz="4.6147  -0.30015  1.524"/>
+      <geometry>
+        <box size="3.47544 0.1015 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_13_Visual">
+      <origin rpy="0      0     -1.5708" xyz="4.6147  -0.30015  1.524"/>
+      <geometry>
+        <box size="3.47544 0.1015 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_14">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_14_Collision">
+      <origin rpy="0       0      -0.78539" xyz="4.7571  -2.05761  1.524"/>
+      <geometry>
+        <box size="0.360596 0.1015 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_14_Visual">
+      <origin rpy="0       0      -0.78539" xyz="4.7571  -2.05761  1.524"/>
+      <geometry>
+        <box size="0.360596 0.1015 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_15">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_15_Collision">
+      <origin rpy="0       0       0.78539" xyz="5.0926  -2.04894  1.524"/>
+      <geometry>
+        <box size="0.722642 0.1015 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_15_Visual">
+      <origin rpy="0       0       0.78539" xyz="5.0926  -2.04894  1.524"/>
+      <geometry>
+        <box size="0.722642 0.1015 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_16">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_16_Collision">
+      <origin rpy="0       0       3.14159" xyz="4.95289 -1.88017  1.524"/>
+      <geometry>
+        <box size="0.574782 0.1015 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_16_Visual">
+      <origin rpy="0       0       3.14159" xyz="4.95289 -1.88017  1.524"/>
+      <geometry>
+        <box size="0.574782 0.1015 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_17">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_17_Collision">
+      <origin rpy="0       0       2.35618" xyz="5.1193  -2.18384  1.524"/>
+      <geometry>
+        <box size="0.127 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_17_Visual">
+      <origin rpy="0       0       2.35618" xyz="5.1193  -2.18384  1.524"/>
+      <geometry>
+        <box size="0.127 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_18">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_18_Collision">
+      <origin rpy="0      0      1.5708" xyz="3.30858 -5.73159  1.524"/>
+      <geometry>
+        <box size="2.54 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_18_Visual">
+      <origin rpy="0      0      1.5708" xyz="3.30858 -5.73159  1.524"/>
+      <geometry>
+        <box size="2.54 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_19">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_19_Collision">
+      <origin rpy="0       0       3.14159" xyz="3.52448 -4.35999  1.524"/>
+      <geometry>
+        <box size="1.7018 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_19_Visual">
+      <origin rpy="0       0       3.14159" xyz="3.52448 -4.35999  1.524"/>
+      <geometry>
+        <box size="1.7018 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_20">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_20_Collision">
+      <origin rpy="0      0     -1.5708" xyz="2.72438 -4.72829  1.524"/>
+      <geometry>
+        <box size="0.635 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_20_Visual">
+      <origin rpy="0      0     -1.5708" xyz="2.72438 -4.72829  1.524"/>
+      <geometry>
+        <box size="0.635 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_21">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_21_Collision">
+      <origin rpy="0       0       3.14159" xyz="2.93318 -5.09659  1.524"/>
+      <geometry>
+        <box size="0.6492 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_21_Visual">
+      <origin rpy="0       0       3.14159" xyz="2.93318 -5.09659  1.524"/>
+      <geometry>
+        <box size="0.6492 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_22">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_22_Collision">
+      <origin rpy="0      0     -1.5708" xyz="3.7257  -3.53766  1.524"/>
+      <geometry>
+        <box size="1.54305 0.1015 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_22_Visual">
+      <origin rpy="0      0     -1.5708" xyz="3.7257  -3.53766  1.524"/>
+      <geometry>
+        <box size="1.54305 0.1015 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_32">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_32_Collision">
+      <origin rpy="0       0       3.14159" xyz="8.2469  -5.14738  1.524"/>
+      <geometry>
+        <box size="2.0828 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_32_Visual">
+      <origin rpy="0       0       3.14159" xyz="8.2469  -5.14738  1.524"/>
+      <geometry>
+        <box size="2.0828 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_33">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_33_Collision">
+      <origin rpy="0  0  0" xyz="6.5959  -4.43619  1.524"/>
+      <geometry>
+        <box size="1.2192 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_33_Visual">
+      <origin rpy="0  0  0" xyz="6.5959  -4.43619  1.524"/>
+      <geometry>
+        <box size="1.2192 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_34">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_34_Collision">
+      <origin rpy="0      0     -1.5708" xyz="7.1547  -4.95688  1.524"/>
+      <geometry>
+        <box size="0.9398 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_34_Visual">
+      <origin rpy="0      0     -1.5708" xyz="7.1547  -4.95688  1.524"/>
+      <geometry>
+        <box size="0.9398 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_35">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_35_Collision">
+      <origin rpy="0      0      1.5708" xyz="6.9769  -3.73769  1.524"/>
+      <geometry>
+        <box size="1.2954 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_35_Visual">
+      <origin rpy="0      0      1.5708" xyz="6.9769  -3.73769  1.524"/>
+      <geometry>
+        <box size="1.2954 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_36">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_36_Collision">
+      <origin rpy="0      0      1.5708" xyz="6.8245  -6.76029  1.524"/>
+      <geometry>
+        <box size="0.4826 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_36_Visual">
+      <origin rpy="0      0      1.5708" xyz="6.8245  -6.76029  1.524"/>
+      <geometry>
+        <box size="0.4826 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_37">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_37_Collision">
+      <origin rpy="0      0      1.5708" xyz="7.8405  -6.69679  1.524"/>
+      <geometry>
+        <box size="0.6096 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_37_Visual">
+      <origin rpy="0      0      1.5708" xyz="7.8405  -6.69679  1.524"/>
+      <geometry>
+        <box size="0.6096 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_38">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_38_Collision">
+      <origin rpy="0  0  0" xyz="9.4545  -3.48814  1.524"/>
+      <geometry>
+        <box size="0.1292 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_38_Visual">
+      <origin rpy="0  0  0" xyz="9.4545  -3.48814  1.524"/>
+      <geometry>
+        <box size="0.1292 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_39">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_39_Collision">
+      <origin rpy="0      0     -1.5708" xyz="9.3391  -4.93619  1.524"/>
+      <geometry>
+        <box size="0.8 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_39_Visual">
+      <origin rpy="0      0     -1.5708" xyz="9.3391  -4.93619  1.524"/>
+      <geometry>
+        <box size="0.8 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_40">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_40_Collision">
+      <origin rpy="0      0     -1.5708" xyz="9.3391  -6.57699  1.524"/>
+      <geometry>
+        <box size="0.8492 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_40_Visual">
+      <origin rpy="0      0     -1.5708" xyz="9.3391  -6.57699  1.524"/>
+      <geometry>
+        <box size="0.8492 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_41">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_41_Collision">
+      <origin rpy="0  0  0" xyz="9.4598  -7.05239  1.524"/>
+      <geometry>
+        <box size="7.84855 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_41_Visual">
+      <origin rpy="0  0  0" xyz="9.4598  -7.05239  1.524"/>
+      <geometry>
+        <box size="7.84855 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_42">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_42_Collision">
+      <origin rpy="0       0       3.14159" xyz="1.30552 -5.09659  1.524"/>
+      <geometry>
+        <box size="0.8492 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_42_Visual">
+      <origin rpy="0       0       3.14159" xyz="1.30552 -5.09659  1.524"/>
+      <geometry>
+        <box size="0.8492 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_43">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_43_Collision">
+      <origin rpy="0      0     -1.5708" xyz="4.42619 -4.78619  1.524"/>
+      <geometry>
+        <box size="1.1 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_43_Visual">
+      <origin rpy="0      0     -1.5708" xyz="4.42619 -4.78619  1.524"/>
+      <geometry>
+        <box size="1.1 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_44">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_44_Collision">
+      <origin rpy="0       0       3.14159" xyz="1.30552 -2.71534  1.524"/>
+      <geometry>
+        <box size="0.8492 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_44_Visual">
+      <origin rpy="0       0       3.14159" xyz="1.30552 -2.71534  1.524"/>
+      <geometry>
+        <box size="0.8492 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_45">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_45_Collision">
+      <origin rpy="0      0     -1.5708" xyz="5.9355  -6.69679  1.524"/>
+      <geometry>
+        <box size="0.6096 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_45_Visual">
+      <origin rpy="0      0     -1.5708" xyz="5.9355  -6.69679  1.524"/>
+      <geometry>
+        <box size="0.6096 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="three_walls__Wall_46">
+    <inertial>
+      <mass value="0"/>
+      <origin rpy="0  0  0" xyz="0  0  0"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+    <collision name="three_walls__Wall_46_Collision">
+      <origin rpy="0       0       0.78539" xyz="4.1646 -2.9769  1.524"/>
+      <geometry>
+        <box size="0.1492 0.1016 3.048"/>
+      </geometry>
+    </collision>
+    <visual name="three_walls__Wall_46_Visual">
+      <origin rpy="0       0       0.78539" xyz="4.1646 -2.9769  1.524"/>
+      <geometry>
+        <box size="0.1492 0.1016 3.048"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <!-- end generated -->
+  
+</robot>
