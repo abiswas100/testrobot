@@ -85,7 +85,7 @@ using namespace Eigen;
 pcl::PCDWriter m_writer;
 ros::Publisher cropbox_filtered;
 using namespace std::chrono;
-static const std::string PCL_TOPIC = "/camera/depth/points";
+static const std::string PCL_TOPIC = "/camera/depth/points"; // cropped_PCL
 #define YELLOW  "\033[33m"      /* Yellow */
 #define GREEN   "\033[32m"      /* Green */
 #define MAGENTA "\033[35m"      /* Magenta */
