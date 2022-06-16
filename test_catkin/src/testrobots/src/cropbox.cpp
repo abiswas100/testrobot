@@ -218,7 +218,7 @@ void crop_box(const sensor_msgs::PointCloud2ConstPtr& cloud_msg){
     CropBox<PointXYZ> cropBoxFilter (true);
     cropBoxFilter.setInputCloud (cloud);
     Eigen::Vector4f min_pt (xmin,ymin,zmin,  1.0f);
-    Eigen::Vector4f max_pt (xmax,ymax,zmax, 0.0f); //ymax -0.05
+    Eigen::Vector4f max_pt (xmax,ymax,zmax, 1.0f); //ymax -0.05
     std::cout<<"min pt vector"<<min_pt<<std::endl;
     std::cout<<"max pt vector"<<max_pt<<std::endl;
 
