@@ -47,9 +47,10 @@ class Detection(object):
 
         self.croppedpcl = rospy.Publisher("cropedPCL", pc2, queue_size=1)
 
-        self.boundingbox = rospy.Publisher("Box_values", newBoundingbox, queue_size=100, latch=True)
+        self.boundingbox = rospy.Publisher("Box_values", newBoundingbox, queue_size=1, latch=False)
 
     def pointcallback(self,data):
+        
         print("Here in Pointcloud bounding Box extraction ---- ")
         print("")
         #use the same header and data as input message
