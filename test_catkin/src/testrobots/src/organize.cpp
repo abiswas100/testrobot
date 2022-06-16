@@ -471,7 +471,7 @@ int main(int argc, char **argv)
 
 
    //subscribe
-   ros::Subscriber BBsub = nh.subscribe("/Box_values", 10, BBoxCallback);
+   ros::Subscriber BBsub = nh.subscribe("/Box_values", 1, BBoxCallback); //Avhishek - changed from 10 to 1
    ros::Subscriber PCLsub = nh.subscribe(PCL_TOPIC, 10, blah);
 
    //set frame
