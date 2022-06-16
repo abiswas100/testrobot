@@ -350,6 +350,41 @@ void extractObject(pcl::PointCloud<pcl::PointXYZ>::Ptr crop_cloud_ptr)
     planar_inliers_extraction.filter (*no_plane_cloud);
     std::vector<int> no_Nan_vector;
     pcl::removeNaNFromPointCloud(*no_plane_cloud,*no_plane_cloud,no_Nan_vector);
+
+    //euclidian cluster extraction
+    // Creating the KdTree object for the search method of the extraction
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+    tree->setInputCloud (no_plane_cloud);
+ 
+    std::vector<pcl::PointIndices> cluster_indices;
+    pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+    ec.setClusterTolerance (0.02); // 2cm
+    ec.setMinClusterSize (100);
+    ec.setMaxClusterSize (25000);
+    ec.setSearchMethod (tree);
+    ec.setInputCloud (no_plane_cloud);
+    ec.extract (cluster_indices);
+    std::cout<<"blahhhh"<<std::endl;
+ 
+    int j = 0;
+    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
+   {
+      std::cout<<"blahhhh 2 "<<std::endl;
+      pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
+      for (const auto& idx : it->indices)
+        cloud_cluster->push_back ((*no_plane_cloud)[idx]);
+        std::cout<<"blahhhh 3 "<<std::endl; //*
+        cloud_cluster->width = cloud_cluster->size ();
+        cloud_cluster->height = 1;
+        cloud_cluster->is_dense = true;
+ 
+     std::cout << "PointCloud representing the Cluster: " << cloud_cluster->size () << " data points." << std::endl;
+     std::stringstream ss;
+     ss << "cloud_cluster_" << j << ".pcd";
+     writer.write<pcl::PointXYZ> (ss.str (), *cloud_cluster, false); //*
+     j++;
+   }
+
    
 }
 
