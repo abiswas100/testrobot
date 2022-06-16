@@ -62,7 +62,7 @@ class Detection(object):
             ]
         
         # convert ROS_pointcloud into numpy array
-        pcl_np = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data, remove_nans=True)  # remove_nans=True
+        pcl_np = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data, remove_nans=False)  # remove_nans=True
         
     
         if len(self.center_pixel) == 0:
