@@ -319,26 +319,20 @@ void blah(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
 
 void extractObject(pcl::PointCloud<pcl::PointXYZ>::Ptr crop_cloud_ptr)
 {
-    no_plane_cloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
-    // Cloud indices representing planar components inliers
-    pcl::PointIndices::Ptr planar_inliers (new pcl::PointIndices);
-    // Cloud coefficients for planar components inliers
-    pcl::ModelCoefficients::Ptr planar_coefficients (new pcl::ModelCoefficients);
-    // Segmentation object
-    pcl::SACSegmentation<pcl::PointXYZ> SAC_filter;
-    pcl::ExtractIndices<pcl::PointXYZ> planar_inliers_extraction;
-    // Euclidean Cluster Extraction object
-
-
+    no_plane_cloud.reset(new pcl::PointCloud<pcl::PointXYZ>);    
+    pcl::PointIndices::Ptr planar_inliers (new pcl::PointIndices);// Cloud indices representing planar components inliers   
+    pcl::ModelCoefficients::Ptr planar_coefficients (new pcl::ModelCoefficients); // Cloud coefficients for planar components inliers
+    pcl::SACSegmentation<pcl::PointXYZ> SAC_filter;// Segmentation object
+    pcl::ExtractIndices<pcl::PointXYZ> planar_inliers_extraction;// Euclidean Cluster Extraction object
 
 
     // Segmentation object initialization
     SAC_filter.setOptimizeCoefficients (true);
     SAC_filter.setModelType(pcl::SACMODEL_PLANE);
     SAC_filter.setMethodType (pcl::SAC_RANSAC);
-    SAC_filter.setMaxIterations (100);
-    SAC_filter.setDistanceThreshold (0.02);
-   //if(crop_cloud_ptr->size() > 0){
+    SAC_filter.setMaxIterations (200);
+    SAC_filter.setDistanceThreshold (0.001);
+   
 
     // Segment the dominant plane cluster
     SAC_filter.setInputCloud (crop_cloud_ptr);
