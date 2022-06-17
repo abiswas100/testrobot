@@ -252,7 +252,7 @@ void blah(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
 
 
    
-   // pcl_conversions::toPCL(*cloud_msg, *inputCloud);
+   pcl_conversions::toPCL(*cloud_msg, *inputCloud);
    pcl::PointCloud<pcl::PointXYZ> save_cloud;
    // save_cloud = *cloud_msg;
    pcl::fromROSMsg(cloud_msg,save_cloud);
