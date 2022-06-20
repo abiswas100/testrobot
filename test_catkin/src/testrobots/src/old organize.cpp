@@ -7,15 +7,12 @@
 #include <pclUtils.h>
 #include <convexHull.h>
 #include <map_writer.h>
+// #include <buffer.h>
 #include <string>
 #include <vector>
-#include <iostream>
-#include <algorithm>
-#include <stack>
-#include <boost/lexical_cast.hpp>
-#include <chrono>
-#include <cv_bridge/cv_bridge.h>
-#include <opencv2/imgcodecs.hpp>
+#include<iostream>
+#include<algorithm>
+#include<stack>
 
 // ROS Topics
 #include <sensor_msgs/Image.h>
@@ -24,11 +21,13 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 
 
+// OpenCV
+#include <cv_bridge/cv_bridge.h>
+#include <opencv2/imgcodecs.hpp>
 // pcl
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/visualization/pcl_painter2D.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/features/normal_3d.h>
@@ -37,15 +36,28 @@
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/filters/crop_box.h>
 #include <pcl/io/pcd_io.h>
-#include <pcl/common/impl/centroid.hpp>
+#include <pcl/common/common.h>
+// PCL - PCA
 #include <pcl/common/pca.h>
 #include <pcl/features/moment_of_inertia_estimation.h>
-#include <pcl/common/common.h>
+// PCL - visualization
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/visualization/pcl_visualizer.h>
-#include <pcl/visualization/pcl_visualizer.h>
+// #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/visualization/point_cloud_color_handlers.h>
+// std
+#include <sstream>
+#include <fstream>
+#include <vector>
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
+#include <vector>
+
+//for sampling from example.cpp
+#include <ros/ros.h>
+#include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -66,48 +78,82 @@
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/filters/statistical_outlier_removal.h>
+#include <boost/lexical_cast.hpp>
+
+//calculate time
+#include <chrono>
 #include <pcl/filters/crop_hull.h>
 #include <pcl/surface/concave_hull.h>
 #include <pcl/point_types.h>
 
-// std
-#include <sstream>
-#include <fstream>
-#include <vector>
-#include <cstdio>
-#include <cstdlib>
-#include <iostream>
-#include <vector>
-
-using namespace std;
 using namespace std::chrono;
+using namespace std;
 
-//declarations
+//variable declarations:
+double xmin = 0;
+double xmax = 0;
+double ymin = 0;
+double ymax = 0;
+double zmin = 0;
+double zmax = 0;
+
+double A_x = 0;
+double A_y = 0;
+double A_z = 0;
+double B_x = 0;
+double B_y = 0;
+double B_z = 0;
+double C_x = 0;
+double C_y = 0;
+double C_z;
+double D_x;
+double D_y;
+double D_z;
+
+double xmin_left = 0;
+double xmin_right = 0;
+
+double xmax_left = 0;
+double xmax_right = 0;
+
+double ymin_left = 0;
+double ymin_right = 0;
+
+double ymax_left = 0;
+double ymax_right = 0;
+
+double zmin_left = 0;
+double zmin_right = 0;
+
+double zmax_left = 0;
+double zmax_right = 0;
 
 int wait = 0;
 int counter = 0;
 
 pcl::PCDReader reader; 
 pcl::PCDWriter writer;
-pcl::PCDWriter m_writer;
-
 ros::Publisher tf_pub;
+pcl::PCDWriter m_writer;
 ros::Publisher organizer;
-ros::Publisher rad_ros_pub;
+sensor_msgs::PointCloud2 obj_msg;
+sensor_msgs::PointCloud2 proj_msg;
 ros::Publisher pub_cropped_cloud;
 ros::Publisher pub_extracted_cloud;
 ros::Publisher pub_projected_cloud;
+tf::TransformListener *tf_listener; 
+ros::Publisher rad_ros_pub;
 ros::Publisher passthrough_filtered;
 ros::Publisher passthrough_filtered_again;
+pcl::PCLPointCloud2 passfiltered_pcl2;
 
 sensor_msgs::PointCloud2 rad_ros;
-sensor_msgs::PointCloud2 obj_msg;
-sensor_msgs::PointCloud2 proj_msg;
 sensor_msgs::PointCloud2 crop_cloud_msg;
 sensor_msgs::PointCloud2 passfiltered_ros;
 sensor_msgs::PointCloud2 passfiltered_ros_again;
 
-pcl::PCLPointCloud2 passfiltered_pcl2;
+
+
 pcl::PointCloud<pcl::PointXYZ> extract;
 pcl::PointCloud<pcl::PointXYZ> project;
 pcl::PointCloud<pcl::PointXYZ> org_cloud;
@@ -123,12 +169,13 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr no_plane_cloud(new pcl::PointCloud<pcl::Poin
 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected (new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZ>::Ptr passfiltered_pclXYZ (new pcl::PointCloud<pcl::PointXYZ>);
-
+boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > bb_ptr (new pcl::PointCloud<pcl::PointXYZ>);
 
 
 //function declarations:
 
-
+void crop_bb(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> >  input_cloud_ptr, boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > output_cloud_ptr,
+double x_min, double x_max,double  y_min,double  y_max,double  z_min,double z_max);
 void extractObject(pcl::PointCloud<pcl::PointXYZ>::Ptr crop_cloud_ptr);
 
 
@@ -143,9 +190,64 @@ void save_pcd(sensor_msgs::PointCloud2 ros_msg, int counter,string file_name ){
 
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void BBoxCallback (const testrobots::newBoundingbox::ConstPtr &msg){
+
+   if (wait=1){
+
+   
+   //getting coordinated from msg
+   A_x = msg->A_x;
+   A_y = msg->A_y;
+   A_z = msg->A_z;
+
+   B_x = msg->B_x;
+   B_y = msg->B_y;
+   B_z = msg->B_z;
+
+   C_x = msg->C_x;
+   C_y = msg->C_y;
+   C_z = msg->C_z;
+
+   D_x = msg->D_x;
+   D_y = msg->D_y;
+   D_z = msg->D_z;
+   
+  
+   //calculating max and min for each axis
+   xmin_left = std::min(A_x, B_x);
+   xmin_right = std::min(C_x, D_x);
+   xmin = std::min(xmin_left,xmin_right);
+
+   xmax_left = std::max(A_x, B_x);
+   xmax_right= std::max(C_x, D_x);
+   xmax = std::max(xmax_left,xmax_right);
+
+   ymin_left = std::min(A_y, B_y);
+   ymin_right = std::min(C_y,D_y);
+   ymin = std::min(ymin_left,ymin_right);
+
+   ymax_left = std::max(A_y, B_y);
+   ymax_right = std::max(C_y,D_y);
+   ymax = std::max(ymax_left,ymax_right);
+
+   zmin_left = std::min(A_z, B_z);
+   zmin_right = std::min(C_z, D_z);
+   zmin = std::min(zmin_left, zmin_right);
+
+   zmax_left = std::max(A_z, B_z);
+   zmax_right = std::max(C_z, D_z);
+   zmax = std::max(zmax_left, zmax_right);
+
+   }
+
+  
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) { 
+void blah(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) { 
    
    //start timer
    auto start1 = high_resolution_clock::now();
@@ -164,6 +266,16 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
    pcl::fromPCLPointCloud2(*outputCloud, *output_ptr);
    
 
+
+   // // //call crop bounding boxfunction and convert to ros msg  
+   // std::cout<<"cropping bounding box...\n"<< std::endl; 
+   // crop_bb(no_plane_cloud,cropped_cloud_ptr,xmin,xmax,ymin,ymax,zmin,zmax);   
+   // pcl::toROSMsg(*cropped_cloud_ptr.get(),crop_cloud_msg );
+
+
+   // // //save cropped cloud to pcd and publish   
+   // // //save_pcd(crop_cloud_msg,counter, "cropped");
+   // pub_cropped_cloud.publish (crop_cloud_msg);
 
    //passthrough filtering z axis
    pcl::PointCloud<pcl::PointXYZ>::Ptr passfiltered_pclXYZ (new pcl::PointCloud<pcl::PointXYZ>);
@@ -229,26 +341,42 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
    pcl::toROSMsg(*cloud_projected.get(),proj_msg);
    pub_projected_cloud.publish(proj_msg);
 
-  
+   // save in pcd
+   // save_pcd(proj_msg,counter, "projected");
+
+   //  //radius outlier removal
+   // pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
+   // pcl::PointCloud<pcl::PointXYZ>::Ptr rad_filtered (new pcl::PointCloud<pcl::PointXYZ>);
+   // sor.setInputCloud (cloud_projected);
+   // sor.setMeanK (05);
+   // sor.setStddevMulThresh (0.025);
+   // sor.filter (*rad_filtered);
+
+   // //publish rad filtered
+   // pcl::PCLPointCloud2 rad_filter;   
+   // pcl::toPCLPointCloud2(*rad_filtered, rad_filter);
+   // pcl_conversions::fromPCL(rad_filter, rad_ros);
+   // rad_ros_pub.publish(rad_ros);
+
 
 
    //calculate center and covariance matrix
    // Placeholder for the 3x3 covariance matrix at each surface patch
-   Eigen::Matrix3f covariance_matrix;
-   // 16-bytes aligned placeholder for the XYZ centroid of a surface patch
-   Eigen::Vector4f xyz_centroid;
+//    Eigen::Matrix3f covariance_matrix;
+//    // 16-bytes aligned placeholder for the XYZ centroid of a surface patch
+//    Eigen::Vector4f xyz_centroid;
 
-   // Estimate the XYZ centroid
-   pcl::compute3DCentroid(*cloud_projected, xyz_centroid);
+//    // Estimate the XYZ centroid
+//    pcl::compute3DCentroid(cloud_projected, xyz_centroid);
 
-   // Compute the 3x3 covariance matrix
-   pcl::computeCovarianceMatrix (*cloud_projected, xyz_centroid, covariance_matrix);
+//    // Compute the 3x3 covariance matrix
+//    pcl::computeCovarianceMatrix (cloud_projected, xyz_centroid, covariance_matrix);
 
-   //compute mean
-   pcl::computeMeanAndCovarianceMatrix(*cloud_projected, xyz_centroid, covariance_matrix);
+//    //compute mean
+//    pcl::computeMeanAndCovarianceMatrix(cloud_projected, xyz_centroid, covariance_matrix);
 
-   //visualization marker - circle
-   pcl::visualization::PCLPainter2D::addCircle(xyz_centroid(0,0),xyz_centroid(2,0),0.25);
+//    //visualization marker - circle
+//    pcl::visualization::PCLPainter2D::addCircle(xyz_centroid(0,0),xyz_centroid(2,0),0.25);
   
    wait = 1;
 
@@ -303,6 +431,107 @@ void extractObject(pcl::PointCloud<pcl::PointXYZ>::Ptr crop_cloud_ptr)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void crop_bb(boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > input_cloud_ptr, boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > output_cloud_ptr,
+double x_min, double x_max,double  y_min,double  y_max,double  z_min,double z_max){
+ 
+   
+
+   pcl::PointXYZ point;
+
+   point.x = xmin;
+   point.y = y_min;
+   point.z = z_min;
+
+   bb_ptr->push_back(point);
+
+   point.x = x_min;
+   point.y = y_min;
+   point.z = z_max;
+
+   bb_ptr->push_back(point);
+
+   //x_min,y_max,z_min
+   point.x = x_min;
+   point.y = y_max;
+   point.z = z_min;
+
+   bb_ptr->push_back(point);
+
+   //x_min,y_max,z_max
+   point.x = x_min;
+   point.y = y_min;
+   point.z = z_min;
+
+   bb_ptr->push_back(point);
+
+   //x_max,y_min,z_min
+   point.x = x_max;
+   point.y = y_min;
+   point.z = z_min;
+
+   bb_ptr->push_back(point);
+
+   //x_max,y_min,z_max
+   point.x = x_max;
+   point.y = y_min;
+   point.z = z_max;
+
+   bb_ptr->push_back(point);
+
+    //x_max,y_max,z_min
+   point.x = x_max;
+   point.y = y_max;
+   point.z = z_min;
+
+   bb_ptr->push_back(point);
+
+   //x_max,y_max,z_max
+   point.x = x_max;
+   point.y = y_max;
+   point.z = z_max;
+
+   bb_ptr->push_back(point);
+
+   
+
+   pcl::ConvexHull<pcl::PointXYZ> hull;
+   std::vector<pcl::Vertices> polygons;
+
+    
+
+   hull.setInputCloud(bb_ptr);
+   hull.setDimension(3);
+
+   
+
+   surface_hull.reset(new pcl::PointCloud<pcl::PointXYZ>);
+   hull.reconstruct(*surface_hull, polygons);
+    
+   pcl::CropHull<pcl::PointXYZ> bb_filter;
+
+   
+
+   bb_filter.setDim(3);
+   
+   bb_filter.setNegative(false);
+   
+   bb_filter.setInputCloud(input_cloud_ptr);
+   
+   bb_filter.setHullIndices(polygons);
+   
+   bb_filter.setHullCloud(surface_hull);
+   
+   bb_filter.filter(*output_cloud_ptr.get());
+   
+   
+
+
+
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 //main function
 
 int main(int argc, char **argv)
@@ -313,7 +542,7 @@ int main(int argc, char **argv)
 
    //subscribe
    ros::Subscriber BBsub = nh.subscribe("/Box_values", 1, BBoxCallback); //Avhishek - changed from 10 to 1
-   ros::Subscriber PCLsub = nh.subscribe(PCL_TOPIC, 10, callback);
+   ros::Subscriber PCLsub = nh.subscribe(PCL_TOPIC, 10, blah);
 
    //set frame
    std::string frame_id="camera_rgb_optical_frame";
@@ -330,7 +559,7 @@ int main(int argc, char **argv)
    pub_projected_cloud=nh.advertise<sensor_msgs::PointCloud2>("projected",1);
    passthrough_filtered=nh.advertise<sensor_msgs::PointCloud2>("passfiltered",1);
    passthrough_filtered_again=nh.advertise<sensor_msgs::PointCloud2>("passfiltered_again",1);
-   
+   // rad_ros_pub=nh.advertise<sensor_msgs::PointCloud2>("rad_filtered",1);
    
 
    ros::spin();
