@@ -108,13 +108,10 @@ sensor_msgs::PointCloud2 passfiltered_ros;
 sensor_msgs::PointCloud2 passfiltered_ros_again;
 
 pcl::PCLPointCloud2 passfiltered_pcl2;
-pcl::PointCloud<pcl::PointXYZ> extract;
+pcl::PointCloud<pcl::PointXYZ> final_cloud;
 pcl::PointCloud<pcl::PointXYZ> project;
-pcl::PointCloud<pcl::PointXYZ> org_cloud;
-pcl::PointCloud<pcl::PointXYZ> transformed;
 pcl::PointCloud<pcl::PointXYZ> pass_filtered_cloud;
 static const std::string PCL_TOPIC = "/camera/depth/points";
-boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> > surface_hull;
 pcl::PCLPointCloud2::Ptr inputCloud (new pcl::PCLPointCloud2());
 pcl::PCLPointCloud2::Ptr outputCloud (new pcl::PCLPointCloud2());
 pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ());
@@ -209,7 +206,7 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
 
 
    //save extracted cloud to pcd   
-   // save_pcd(obj_msg,counter, "extracted");
+   //save_pcd(obj_msg,counter, "extracted");
 
 
    // //project points on XZ plane:
@@ -227,28 +224,34 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
   
 
    pcl::toROSMsg(*cloud_projected.get(),proj_msg);
-   pub_projected_cloud.publish(proj_msg);
-
-  
+   pub_projected_cloud.publish(proj_msg);  
+   pcl::fromROSMsg(proj_msg,final_cloud );
 
 
    //calculate center and covariance matrix
-   // Placeholder for the 3x3 covariance matrix at each surface patch
+   //******convert pointxyz:ptr to point xyz********in below functions
+
+   //Placeholder for the 3x3 covariance matrix at each surface patch
    Eigen::Matrix3f covariance_matrix;
-   // 16-bytes aligned placeholder for the XYZ centroid of a surface patch
+   Eigen::Matrix3f<float, 3,3> cov_matrix;
+
+   //16-bytes aligned placeholder for the XYZ centroid of a surface patch
    Eigen::Vector4f xyz_centroid;
+   Eigen::Vector4f<float,4,1> mean;
 
-   // Estimate the XYZ centroid
-   pcl::compute3DCentroid(*cloud_projected, xyz_centroid);
+   float radius = 0.25;
 
-   // Compute the 3x3 covariance matrix
-   pcl::computeCovarianceMatrix (*cloud_projected, xyz_centroid, covariance_matrix);
+   //Estimate the XYZ centroid
+   pcl::compute3DCentroid(final_cloud, mean);
+
+   //Compute the 3x3 covariance matrix
+   pcl::computeCovarianceMatrix (final_cloud, mean, cov_matrix);
 
    //compute mean
-   pcl::computeMeanAndCovarianceMatrix(*cloud_projected, xyz_centroid, covariance_matrix);
+   pcl::computeMeanAndCovarianceMatrix(final_cloud, mean, cov_matrix);
 
    //visualization marker - circle
-   pcl::visualization::PCLPainter2D::addCircle(xyz_centroid(0,0),xyz_centroid(2,0),0.25);
+   pcl::visualization::PCLPainter2D::addCircle(mean(0,0),mean(2,0),radius);
   
    wait = 1;
 
@@ -312,7 +315,7 @@ int main(int argc, char **argv)
 
 
    //subscribe
-   ros::Subscriber BBsub = nh.subscribe("/Box_values", 1, BBoxCallback); //Avhishek - changed from 10 to 1
+   // ros::Subscriber BBsub = nh.subscribe("/Box_values", 1, BBoxCallback); //Avhishek - changed from 10 to 1
    ros::Subscriber PCLsub = nh.subscribe(PCL_TOPIC, 10, callback);
 
    //set frame
