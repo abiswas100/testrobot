@@ -236,11 +236,23 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
  
    pcl::fromROSMsg(proj_msg,final_cloud );
 
-   
+
    //final point cloud to vector:
-   std::vector<pcl::PointXYZ> data;// = *cloud_projected.get();
-   data.push_back();
-   cloud_for_poly.publish(data);
+   // std::vector<pcl::PointXYZ> data;// = *cloud_projected.get();
+   // data.push_back();
+   // vector < PointCloud<PointXYZ>::Ptr, Eigen::aligned_allocator <PointCloud <PointXYZ>::Ptr >> data;
+
+   // for(int i =0; i < cloud_projected->size();i++){
+   //    if (io::loadPCDFile<PointXYZ>(data[i], *cloud_projected) != 0)
+   //      {
+   //          return -1;
+   //      }
+   //      std::cout << "Loaded file " << data[i] << " (" << cloud_projected->size() << " points)" << std::endl;
+   //      data.push_back(cloud_projected);
+   //      std::cout << "Point Cloud " << i-1 << "has got " << data[i-1]->size() << " Points" << std::endl;
+
+   // }
+   // cloud_for_poly.publish(data);
 
 
 
