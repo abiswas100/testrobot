@@ -22,6 +22,7 @@
 #include <sensor_msgs/PointCloud2.h> 
 #include <pcl_ros/point_cloud.h>  
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <visualization_msgs/Marker.h>
 
 
 // pcl
@@ -86,6 +87,8 @@ using namespace std::chrono_literals;
 //publisher declarations
 ros::Publisher tf_pub;
 ros::Publisher organizer;
+ros::Publisher marker_pub;
+ros::Publisher cloud_for_poly;
 ros::Publisher rad_ros_pub;
 ros::Publisher pub_cropped_cloud;
 ros::Publisher pub_extracted_cloud;
@@ -99,7 +102,7 @@ pcl::PCDWriter writer;
 pcl::PCDWriter m_writer;
 pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
 
-pcl::visualization::PCLVisualizer::Ptr viz_obj(new pcl::visualization::PCLVisualizer ("3D Viewer"));;
+// pcl::visualization::PCLPainter2D::Ptr viz_obj(new pcl::visualization::PCLPainter2D ());;
 pcl::PassThrough<pcl::PointXYZ> pass_filter;
 pcl::PassThrough<pcl::PointXYZ> pass_filter2;
 
@@ -110,11 +113,14 @@ sensor_msgs::PointCloud2 proj_msg;
 sensor_msgs::PointCloud2 crop_cloud_msg;
 sensor_msgs::PointCloud2 passfiltered_ros;
 sensor_msgs::PointCloud2 passfiltered_ros_again;
+geometry_msgs::PolygonStamped poly;
 
 // variables and pointers
 int wait = 0;
 int counter = 0;
 float radius = 0.25;
+uint32_t shape = visualization_msgs::Marker::CYLINDER;
+visualization_msgs::Marker marker;
 Eigen::Matrix<float,4,1> mean;
 Eigen::Matrix<float, 3,3> cov_matrix;
 pcl::PCLPointCloud2 passfiltered_pcl2;
@@ -186,17 +192,14 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
 
    pass_filter2.setInputCloud (passfiltered_pclXYZ);
    pass_filter2.setFilterFieldName ("x");
-   pass_filter2.setFilterLimits (-2.5, 0.8);
+   pass_filter2.setFilterLimits (-1.58, 0.8);
    pass_filter2.setFilterLimitsNegative (false); 
    pass_filter2.filter (*passfiltered_again);
-
    
    
    pcl::toPCLPointCloud2(*passfiltered_again, passfiltered_pcl2_again);
    pcl_conversions::fromPCL(passfiltered_pcl2_again, passfiltered_ros_again);
    passthrough_filtered_again.publish(passfiltered_ros_again);
-
-
   
 
    //call extract function and convert to ros msg and publish 
@@ -223,27 +226,54 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
    proj.setInputCloud (no_plane_cloud);
    proj.setModelCoefficients (coefficients);
    proj.filter (*cloud_projected);
-
   
 
    pcl::toROSMsg(*cloud_projected.get(),proj_msg);
-   pub_projected_cloud.publish(proj_msg);  
+   pub_projected_cloud.publish(proj_msg); 
+   
+
+
+ 
    pcl::fromROSMsg(proj_msg,final_cloud );
 
-
-   //calculate center and covariance matrix
    
+   //final point cloud to vector:
+   std::vector<pcl::PointXYZ> data;// = *cloud_projected.get();
+   data.push_back();
+   cloud_for_poly.publish(data);
+
+
+
+   //calculate center and covariance matrix  
 
    pcl::computeMeanAndCovarianceMatrix(final_cloud,cov_matrix, mean);
 
-   //visualization marker - circle
-   pcl::ModelCoefficients coeffs;
-   coeffs.values.push_back(mean(0,0));
-   coeffs.values.push_back(mean(2,0));
-   coeffs.values.push_back(0.25);//radius
-   viz_obj->addCircle(coeffs,"circle");
-
+   //for visualization:
    
+   marker.ns = "basic_shapes";
+   marker.id = 0;
+   marker.action = visualization_msgs::Marker::ADD;
+
+   marker.pose.position.x = mean(0,0);
+   marker.pose.position.y = mean(1,0);
+   marker.pose.position.z = mean(2,0);
+
+   marker.pose.orientation.x = 0.0;
+   marker.pose.orientation.y = 0.0;
+   marker.pose.orientation.z = 0.0;
+   marker.pose.orientation.w = 1.0;
+
+   marker.scale.x = 0.4;
+   marker.scale.y = 0.4;
+   marker.scale.z = 0.4;
+
+   marker.color.r = 0.0f;
+   marker.color.g = 1.0f;
+   marker.color.b = 0.0f;
+   marker.color.a = 1.0;
+
+   // marker.lifetime = ros::Duration();
+   marker_pub.publish(marker);
   
 
    //calculate computation time
@@ -301,6 +331,8 @@ int main(int argc, char **argv)
 {
    ros::init (argc, argv, "plotting_human");
    ros::NodeHandle nh;
+   
+
 
 
    //subscribe
@@ -313,6 +345,9 @@ int main(int argc, char **argv)
    proj_msg.header.frame_id = frame_id;
    passfiltered_ros.header.frame_id = frame_id;
    passfiltered_ros_again.header.frame_id = frame_id;
+   marker.header.frame_id = frame_id;
+
+   
    
    
    //publish
@@ -321,6 +356,8 @@ int main(int argc, char **argv)
    pub_projected_cloud=nh.advertise<sensor_msgs::PointCloud2>("projected",1);
    passthrough_filtered=nh.advertise<sensor_msgs::PointCloud2>("passfiltered",1);
    passthrough_filtered_again=nh.advertise<sensor_msgs::PointCloud2>("passfiltered_again",1);
+   cloud_for_poly=nh.advertise<geometry_mgs::PolygonStamped>("polygon",1);
+   marker_pub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 1);
    
    
 
