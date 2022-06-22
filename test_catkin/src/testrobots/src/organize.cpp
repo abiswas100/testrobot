@@ -101,31 +101,26 @@ pcl::PCDReader reader;
 pcl::PCDWriter writer;
 pcl::PCDWriter m_writer;
 pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
-
-// pcl::visualization::PCLPainter2D::Ptr viz_obj(new pcl::visualization::PCLPainter2D ());;
 pcl::PassThrough<pcl::PointXYZ> pass_filter;
 pcl::PassThrough<pcl::PointXYZ> pass_filter2;
 
-//sensor msg declarations
+//msg declarations
 sensor_msgs::PointCloud2 rad_ros;
 sensor_msgs::PointCloud2 obj_msg;
 sensor_msgs::PointCloud2 proj_msg;
+visualization_msgs::Marker marker;
 sensor_msgs::PointCloud2 crop_cloud_msg;
 sensor_msgs::PointCloud2 passfiltered_ros;
 sensor_msgs::PointCloud2 passfiltered_ros_again;
-geometry_msgs::PolygonStamped poly;
+
 
 // variables and pointers
-int wait = 0;
-int counter = 0;
-float radius = 0.25;
-uint32_t shape = visualization_msgs::Marker::CYLINDER;
-visualization_msgs::Marker marker;
 Eigen::Matrix<float,4,1> mean;
 Eigen::Matrix<float, 3,3> cov_matrix;
 pcl::PCLPointCloud2 passfiltered_pcl2;
 pcl::PointCloud<pcl::PointXYZ> final_cloud;
 pcl::PCLPointCloud2 passfiltered_pcl2_again;
+std::string frame_id="camera_rgb_optical_frame";
 pcl::PointCloud<pcl::PointXYZ> pass_filtered_cloud;
 static const std::string PCL_TOPIC = "/camera/depth/points";
 pcl::PCLPointCloud2::Ptr inputCloud (new pcl::PCLPointCloud2());
@@ -158,8 +153,8 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
    
    //start timer
    auto start1 = high_resolution_clock::now();
-   counter++;
-   wait = 0;
+  
+   
 
    
    pcl_conversions::toPCL(*cloud_msg, *inputCloud);
@@ -177,7 +172,7 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
    
    pass_filter.setInputCloud (output_ptr);
    pass_filter.setFilterFieldName ("z");
-   pass_filter.setFilterLimits (0.3, 3.4);
+   pass_filter.setFilterLimits (0.3, 3.35);
    pass_filter.setFilterLimitsNegative (false);  
    pass_filter.filter (*passfiltered_pclXYZ);
 
@@ -230,29 +225,7 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
 
    pcl::toROSMsg(*cloud_projected.get(),proj_msg);
    pub_projected_cloud.publish(proj_msg); 
-   
-
-
- 
    pcl::fromROSMsg(proj_msg,final_cloud );
-
-
-   //final point cloud to vector:
-   // std::vector<pcl::PointXYZ> data;// = *cloud_projected.get();
-   // data.push_back();
-   // vector < PointCloud<PointXYZ>::Ptr, Eigen::aligned_allocator <PointCloud <PointXYZ>::Ptr >> data;
-
-   // for(int i =0; i < cloud_projected->size();i++){
-   //    if (io::loadPCDFile<PointXYZ>(data[i], *cloud_projected) != 0)
-   //      {
-   //          return -1;
-   //      }
-   //      std::cout << "Loaded file " << data[i] << " (" << cloud_projected->size() << " points)" << std::endl;
-   //      data.push_back(cloud_projected);
-   //      std::cout << "Point Cloud " << i-1 << "has got " << data[i-1]->size() << " Points" << std::endl;
-
-   // }
-   // cloud_for_poly.publish(data);
 
 
 
@@ -261,32 +234,28 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
    pcl::computeMeanAndCovarianceMatrix(final_cloud,cov_matrix, mean);
 
    //for visualization:
-   
+   //visual
+   uint32_t shape = visualization_msgs::Marker::SPHERE;
+   marker.header.frame_id = frame_id;
+   marker.header.stamp = ros::Time::now();
    marker.ns = "basic_shapes";
    marker.id = 0;
-   marker.action = visualization_msgs::Marker::ADD;
-
-   marker.pose.position.x = mean(0,0);
-   marker.pose.position.y = mean(1,0);
-   marker.pose.position.z = mean(2,0);
-
+   marker.type = shape;
+   marker.pose.position.x = mean.coeff(0,0);
+   marker.pose.position.y = mean.coeff(1,0);
+   marker.pose.position.z = mean.coeff(2,0);
    marker.pose.orientation.x = 0.0;
    marker.pose.orientation.y = 0.0;
    marker.pose.orientation.z = 0.0;
    marker.pose.orientation.w = 1.0;
-
-   marker.scale.x = 0.4;
-   marker.scale.y = 0.4;
-   marker.scale.z = 0.4;
-
+   marker.scale.x = 0.8;
+   marker.scale.y = 0.8;
+   marker.scale.z = 0.8;
    marker.color.r = 0.0f;
    marker.color.g = 1.0f;
    marker.color.b = 0.0f;
    marker.color.a = 1.0;
-
-   // marker.lifetime = ros::Duration();
    marker_pub.publish(marker);
-  
 
    //calculate computation time
    auto stop1 = high_resolution_clock::now();
@@ -351,7 +320,7 @@ int main(int argc, char **argv)
    ros::Subscriber PCLsub = nh.subscribe(PCL_TOPIC, 10, callback);
 
    //set frame_id
-   std::string frame_id="camera_rgb_optical_frame";
+   
    crop_cloud_msg.header.frame_id=frame_id;
    obj_msg.header.frame_id = frame_id;
    proj_msg.header.frame_id = frame_id;
@@ -361,14 +330,12 @@ int main(int argc, char **argv)
 
    
    
-   
    //publish
    pub_cropped_cloud=nh.advertise<sensor_msgs::PointCloud2>("cropped_cloud",1);
    pub_extracted_cloud=nh.advertise<sensor_msgs::PointCloud2>("extracted_cloud",1);
    pub_projected_cloud=nh.advertise<sensor_msgs::PointCloud2>("projected",1);
    passthrough_filtered=nh.advertise<sensor_msgs::PointCloud2>("passfiltered",1);
    passthrough_filtered_again=nh.advertise<sensor_msgs::PointCloud2>("passfiltered_again",1);
-   cloud_for_poly=nh.advertise<geometry_mgs::PolygonStamped>("polygon",1);
    marker_pub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 1);
    
    
