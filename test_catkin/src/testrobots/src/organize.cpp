@@ -86,6 +86,8 @@ using namespace std::chrono_literals;
 
 //publisher declarations
 ros::Publisher tf_pub;
+// ros::Publisher mean_pub;
+// ros ::Publisher var_pub;
 ros::Publisher organizer;
 ros::Publisher marker_pub;
 ros::Publisher cloud_for_poly;
@@ -152,14 +154,12 @@ void save_pcd(sensor_msgs::PointCloud2 ros_msg, int counter,string file_name ){
 void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) { 
    
    //start timer
-   auto start1 = high_resolution_clock::now();
-  
-   
-
-   
+   auto start1 = high_resolution_clock::now(); 
    pcl_conversions::toPCL(*cloud_msg, *inputCloud);
 
+
    //do voxel filtering and save to pcd   
+
    vg.setInputCloud(inputCloud);
    vg.setLeafSize(0.07,0.0,0.07);
    vg.filter(*outputCloud);
@@ -200,7 +200,7 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
    //call extract function and convert to ros msg and publish 
 
    std::cout<<"extracting object...\n"<< std::endl; 
-   extractObject(passfiltered_again);//output_ptr//cropped_cloud_ptr//passfiltered_again
+   extractObject(passfiltered_again);
    pcl::toROSMsg(*no_plane_cloud.get(),obj_msg );
    pub_extracted_cloud.publish(obj_msg);
 
@@ -232,9 +232,12 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
    //calculate center and covariance matrix  
 
    pcl::computeMeanAndCovarianceMatrix(final_cloud,cov_matrix, mean);
+   // mean_pub.publish(mean);//msg type??
+   // var_pub.publish(cov_matrix);//msg type??
+
 
    //for visualization:
-   //visual
+
    uint32_t shape = visualization_msgs::Marker::SPHERE;
    marker.header.frame_id = frame_id;
    marker.header.stamp = ros::Time::now();
@@ -258,12 +261,13 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
    marker_pub.publish(marker);
 
    //calculate computation time
+
    auto stop1 = high_resolution_clock::now();
    auto duration1 = duration_cast<microseconds>(stop1 - start1);
    std::cout << "total time: "<< duration1.count()/1000000.0 << " s\n" << std::endl;
    std::cout << "**************************\n"<<std::endl;
     
-   // return(viz_obj);
+
 
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -336,7 +340,10 @@ int main(int argc, char **argv)
    pub_projected_cloud=nh.advertise<sensor_msgs::PointCloud2>("projected",1);
    passthrough_filtered=nh.advertise<sensor_msgs::PointCloud2>("passfiltered",1);
    passthrough_filtered_again=nh.advertise<sensor_msgs::PointCloud2>("passfiltered_again",1);
+   // mean_pub=
+   // var_pub=
    marker_pub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+
    
    
 
