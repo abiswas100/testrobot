@@ -26,8 +26,6 @@ import yolo as Yolo
 import numpy as np
 import time
 
-from testrobots.msg import newBoundingbox
-
 
 bridge = CvBridge() 
 class Detection(object):
@@ -49,10 +47,14 @@ class Detection(object):
         header = data.header
         fields = [PointField('x',0, PointField.FLOAT32, 1),
                   PointField('y',4, PointField.FLOAT32, 1),
-                  PointField('z',8, PointField.FLOAT32, 1)]
+                  PointField('z',8, PointField.FLOAT32, 1),
+                  PointField('rgba', 12, PointField.UINT32, 1)]
         pcl_np = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data, remove_nans=True) 
-        mean = np.mean(pcl_np)
-        cov_mat = np.cov(pcl_np)
+        arr = np.array(pcl_np)
+        mean = np.mean(arr)
+        cov_mat=np.cov(arr)
+        # mean = np.mean(pcl_np)
+        # cov_mat = np.cov(pcl_np)
         self.publish_mean.publish(mean)
         self.publish_covar.publish(cov_mat)   
         x = random.normal(loc=mean, scale=sqrt(cov_mat), size=(3, 3))
