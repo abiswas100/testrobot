@@ -26,6 +26,7 @@ import yolo as Yolo
 import numpy as np
 import time
 
+from testrobots.msg import Mean
 
 bridge = CvBridge() 
 class Detection(object):
@@ -37,35 +38,37 @@ class Detection(object):
        
         rospy.Subscriber("projected",pc2,self.cloud_callback,queue_size=1)
        
-        
+                
         # publishing topics
-        self.publish_mean = rospy.Publisher("mean", pc2, queue_size=1)   
-        self.publish_covar = rospy.Publisher("covar", pc2, queue_size=1)
+        self.publish_mean = rospy.Publisher("mean", Mean, queue_size=1)   
+        # self.publish_covar = rospy.Publisher("covar", pc2, queue_size=1) # Covariance matrix needs to be published as a covariance array
 
     def cloud_callback(self,data):
         print("Here in Pointcloud callback")
-        header = data.header
-        fields = [PointField('x',0, PointField.FLOAT32, 1),
-                  PointField('y',4, PointField.FLOAT32, 1),
-                  PointField('z',8, PointField.FLOAT32, 1),
-                  PointField('rgba', 12, PointField.UINT32, 1)]
-        pcl_np = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data, remove_nans=True) 
+        
+        
+        # creating the mean and covariance messages to publish
+        mean = Mean()
+        
+        pcl_np = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data, remove_nans=False) 
         arr = np.array(pcl_np)
-        mean = np.mean(arr)
+        mean.mean_value = np.mean(arr)
         cov_mat=np.cov(arr)
-        # mean = np.mean(pcl_np)
-        # cov_mat = np.cov(pcl_np)
+        # print(mean.mean_value) ## prints the mean value
+        # print(cov_mat[0])
+        print(cov_mat[1])
+        # x = random.normal(loc=mean, scale=sqrt(cov_mat), size=(3, 3))
+        # sns.distplot(random.normal(size=1000), hist=False)
+        # plt.show()
+
         self.publish_mean.publish(mean)
-        self.publish_covar.publish(cov_mat)   
-        x = random.normal(loc=mean, scale=sqrt(cov_mat), size=(3, 3))
-        sns.distplot(random.normal(size=1000), hist=False)
-        plt.show()
+        # self.publish_covar.publish(cov_mat)   
 
 
 
 
 def main():
-    rospy.init_node('Depth_Image_Extract', anonymous=False)
+    rospy.init_node('Compute_Gaussian', anonymous=False)
     sn = Detection()
     while not rospy.is_shutdown():
         rospy.spin()
