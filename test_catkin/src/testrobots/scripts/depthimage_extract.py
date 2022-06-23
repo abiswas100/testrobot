@@ -41,13 +41,15 @@ class Detection(object):
         
         rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback,queue_size=5)        
         rospy.Subscriber("camera/depth/points", pc2, self.pointcallback, queue_size=1)
-        
+        rospy.Subscriber("/camera/depth/image_raw", Image, self.DepthCamSub, queue_size=1)
         # publishing topics
         self.pub = rospy.Publisher("H_Detection_image", Image, queue_size=1)    
 
         self.croppedpcl = rospy.Publisher("cropedPCL", pc2, queue_size=1)
 
         self.boundingbox = rospy.Publisher("Box_values", newBoundingbox, queue_size=1, latch=False)
+        
+        self.depth_with_BB = rospy.Publisher("DepthBB", Image, queue_size=1)
 
     def pointcallback(self,data):
         
@@ -247,76 +249,70 @@ class Detection(object):
             self.queue_center.append(self.center_pixel)
             
 
-    # def DepthCamSub(self,depth_data):
+    def DepthCamSub(self,depth_data):
         
        
-    #     # depth_cv_img =  bridge.imgmsg_to_cv2(depth_data, '32FC1')
+        # depth_cv_img =  bridge.imgmsg_to_cv2(depth_data, '32FC1')
         
-    #     depth_image = bridge.imgmsg_to_cv2(depth_data,desired_encoding='passthrough' )
+        depth_image = bridge.imgmsg_to_cv2(depth_data,desired_encoding='passthrough' )
         
     
-    #     depth_array = np.array(depth_image, dtype=np.float32)
+        depth_array = np.array(depth_image, dtype=np.float32)
         
-    #     # rospy.loginfo(depth_array)
+        # rospy.loginfo(depth_array)
         
-    #     # depth_array = depth_array.astype(np.uint8)
-    #     cv2.imwrite("depth_img.png", depth_array)
+        # depth_array = depth_array.astype(np.uint8)
+        # cv2.imwrite("depth_img.png", depth_array)
         
-    #     if len(self.center_pixel) == 0:
-    #          pass
+        if len(self.center_pixel) == 0:
+             pass
             
-    #     else:    
+        else:    
             
-    #         print("Corners in Depth Camera Bounding Box",self.corners[0])
-    #         # get all the corners of the box here 
-    #         corner = self.corners[0]
-    #         leftbottom_corner = corner[0]
-    #         rightbottom_corner = corner[1]
-    #         lefttop_corner = corner[2]
-    #         righttop_corner = corner[3]  
+            print("Corners in Depth Camera Bounding Box",self.corners[0])
+            # get all the corners of the box here 
+            corner = self.corners[0]
+            leftbottom_corner = corner[0]
+            rightbottom_corner = corner[1]
+            lefttop_corner = corner[2]
+            righttop_corner = corner[3]  
             
             
-    #         # from the corners cut out the xmin, xmax, ymin,max values
-    #         xmin = leftbottom_corner[0]
-    #         xmax = righttop_corner[0]
-    #         ymin = leftbottom_corner[1]
-    #         ymax = righttop_corner[1]
+            # from the corners cut out the xmin, xmax, ymin,max values
+            xmin = leftbottom_corner[0]
+            xmax = righttop_corner[0]
+            ymin = leftbottom_corner[1]
+            ymax = righttop_corner[1]
 
-    #         # get the width and height of the box
-    #         w = xmax - xmin
-    #         h = ymax - ymin
+            # get the width and height of the box
+            w = xmax - xmin
+            h = ymax - ymin
         
-    #         i = 0
-    #         print(depth_array.shape) 
-    #         # print(depth_img_cpy)
-    #         totalrows, totalcols = depth_array.shape   ## 1080*1920
+            i = 0
+            # print(depth_array.shape) 
+            # print(depth_img_cpy)
+            totalrows, totalcols = depth_array.shape   ## 1080*1920
             
-    #         for row_no in range(0,1079):
-    #             for col_no in range(0,1919):
-    #                 row = depth_array[row_no]
-    #                 value = row[col_no]
+            for row_no in range(0,1079):
+                for col_no in range(0,1919):
+                    row = depth_array[row_no]
+                    value = row[col_no]
                     
                     
-    #                 if (row_no >= ymin and row_no <= ymax) and (col_no >= xmin and col_no <= xmax):
-    #                     i += 1
-    #                     # print("row, col, value",row_no, col_no, value)        
-    #                     # depth_array[row_no][col_no] = 2.00  
-    #                     pass
-    #                 else:
-    #                     depth_array[row_no][col_no] = NaN
-    #         print("no of points in the bbox in depth_image",i)
+                    if (row_no >= ymin and row_no <= ymax) and (col_no >= xmin and col_no <= xmax):
+                        i += 1
+                        # print("row, col, value",row_no, col_no, value)        
+                        # depth_array[row_no][col_no] = 2.00  
+                        pass
+                    else:
+                        depth_array[row_no][col_no] = NaN
+            print("no of points in the bbox in depth_image",i)
             
-    #         print(depth_array) 
-    #         cv2.imwrite('depth_with_BBox.jpeg', depth_array)
-    #         depth_bbox = bridge.cv2_to_imgmsg(depth_array)
-    #         self.depth_with_BB.publish(depth_bbox)
+            # print(depth_array) 
+            cv2.imwrite('depth_with_BBox.jpeg', depth_array)
+            depth_bbox = bridge.cv2_to_imgmsg(depth_array)
+            self.depth_with_BB.publish(depth_bbox)
             
-    #         #creating PCL value using open3d
-                    
-    #         # pcl = o3d.geometry.PointCloud()
-    #         # pcl.points = o3d.utility.Vector3dVector(np.random.randn(500,3))
-    #         # o3d.visualization.draw_geometries([pcl])
-    
  
    
 

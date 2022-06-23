@@ -84,9 +84,13 @@
 #include <pcl/filters/crop_hull.h>
 #include <pcl/surface/concave_hull.h>
 #include <pcl/point_types.h>
-
+#include <sstream>
+#include <fstream>
 using namespace std::chrono;
 using namespace std;
+
+
+std::ofstream m_out;
 
 //variable declarations:
 double xmin = 0;
@@ -244,31 +248,33 @@ void BBoxCallback (const testrobots::newBoundingbox::ConstPtr &msg){
 void blah(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) { 
    
    //start timer
+   std::stringstream ss;
    auto start1 = high_resolution_clock::now();
    counter++;
    wait = 0;
+   pcl::PointCloud<pcl::PointXYZ>::Ptr m_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
+   pcl::PCLPointCloud2 pcl_pc2;
+   pcl_conversions::toPCL(*cloud_msg,pcl_pc2);
+   pcl::fromPCLPointCloud2(pcl_pc2,*m_cloud);
    
-
-
    
-   // pcl_conversions::toPCL(*cloud_msg, *inputCloud);
-   pcl::PointCloud<pcl::PointXYZ> save_cloud;
-   // save_cloud = *cloud_msg;
-   pcl::fromROSMsg(cloud_msg,save_cloud);
-   pcl::io::savePCDFileASCII ("original.pcd", save_cloud);
-   // pcl::io::savePCDFileASCII ("crpped" + std::to_string(counter)+".pcd", save_cloud);
+   ss << "CroppedPCL"<< counter <<".pcd";
+   writer.write<pcl::PointXYZ>(ss.str(), *m_cloud, false);
 
-   // save_pcd(crop_cloud_msg,counter, "output_ptr");
+   pcl_conversions::toPCL(*cloud_msg, *inputCloud);
+
    //do voxel filtering and save to pcd
-   // pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
-   // vg.setInputCloud(inputCloud);
-   // vg.setLeafSize(0.07,0.0,0.07);
-   // vg.filter(*outputCloud);
-   // std::cerr << "PointCloud after filtering: " << outputCloud->width * outputCloud->height << " data points (" << pcl::getFieldsList (*outputCloud) << ").\n" << std::endl;    
-   // pcl::fromPCLPointCloud2(*outputCloud, *output_ptr);
    
+   pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
+   vg.setInputCloud(inputCloud);
+   vg.setLeafSize(0.05,0.05,0.05);
+   vg.filter(*outputCloud);
+   std::cerr << "PointCloud after filtering: " << outputCloud->width * outputCloud->height << " data points (" << pcl::getFieldsList (*outputCloud) << ").\n" << std::endl;    
+   pcl::fromPCLPointCloud2(*outputCloud, *output_ptr);
    
+   ss << "Voxelled_PCL"<< counter <<".pcd";
+   writer.write<pcl::PointXYZ>(ss.str(), *output_ptr, false);
 
    // // //call crop bounding boxfunction and convert to ros msg  
    // std::cout<<"cropping bounding box...\n"<< std::endl; 
@@ -295,18 +301,21 @@ void blah(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
 
  
 
-   // // //project points on XZ plane:
-   // coefficients->values.resize (4);
-   // coefficients->values[0] = 0;
-   // coefficients->values[1] = 1;
-   // coefficients->values[2] = 0.0;
-   // coefficients->values[3] = 0;
-   // pcl::ProjectInliers<pcl::PointXYZ> proj;
-   // proj.setModelType (pcl::SACMODEL_PLANE);
-   // proj.setInputCloud (no_plane_cloud);
-   // proj.setModelCoefficients (coefficients);
-   // proj.filter (*cloud_projected);
+   // //project points on XZ plane:
+   coefficients->values.resize (4);
+   coefficients->values[0] = 0;
+   coefficients->values[1] = 1;
+   coefficients->values[2] = 0.0;
+   coefficients->values[3] = 0;
+   pcl::ProjectInliers<pcl::PointXYZ> proj;
+   proj.setModelType (pcl::SACMODEL_PLANE);
+   proj.setInputCloud (output_ptr);
+   proj.setModelCoefficients (coefficients);
+   proj.filter (*cloud_projected);
 
+   ss << "Voxelled_PCL"<< counter <<".pcd";
+   writer.write<pcl::PointXYZ>(ss.str(), *cloud_projected, false);
+   
    // //print projected cloud:
    // // std::cerr << "Cloud after projection: " << std::endl;
    // // for (const auto& point: *cloud_projected)
@@ -314,12 +323,9 @@ void blah(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
    // //                      << point.y << " "
    // //                      << point.z << std::endl;
 
-   // pcl::toROSMsg(*cloud_projected.get(),proj_msg);
-   // pub_projected_cloud.publish(proj_msg);
+   pcl::toROSMsg(*cloud_projected.get(),proj_msg);
+   pub_projected_cloud.publish(proj_msg);
 
-   // // save in pcd
-   // // save_pcd(proj_msg,counter, "projected");
-  
    wait = 1;
 
    //calculate computation time
@@ -327,9 +333,7 @@ void blah(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
    auto duration1 = duration_cast<microseconds>(stop1 - start1);
    std::cout << "total time: "<< duration1.count()/1000000.0 << " s\n" << std::endl;
    std::cout << "**************************\n"<<std::endl;
-    
-
-
+   
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
