@@ -40,7 +40,7 @@ class Detection(object):
         self.std_dev = Point()
        
         rospy.Subscriber("projected",pc2,self.cloud_callback,queue_size=1)
-       
+        
                 
         # publishing topics
         self.publish_mean = rospy.Publisher("mean", Meannn, queue_size=1)   
@@ -58,25 +58,24 @@ class Detection(object):
         pcl_np = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data, remove_nans=False) 
         arr = np.array(pcl_np)
         # print(arr)
-        print("size of original array:" , len(arr),"X",len(arr[0]))
+        print("size of original array is: " , len(arr),"X",len(arr[0]))
         mean.mean_value = np.mean(arr)
         cov_mat = np.cov(arr)
         std_dev.std_dev_value = np.std(arr)
 
         # print("covariance matrix is ::", cov_mat)
        
-        print("size of cov_mat is: ", len(cov_mat),"X",len(cov_mat[0]))
-        
-        
-        print("std deviation is: ", std_dev.std_dev_value)
+        print("size of cov_mat is: ", len(cov_mat),"X",len(cov_mat[0])) 
+        print("std deviation is: ", std_dev.std_dev_value)          
+        print("mean is: ", mean.mean_value)
         print()
         
-        print("mean is: ", mean.mean_value)
         
+        s = np.random.normal(mean.mean_value,std_dev.std_dev_value,1000)
+        sns.distplot(random.normal(size=1000), hist=False)
+        plt.show()
+        # plt.close()
         
-        # s = np.random.normal(mean.mean_value,std_dev,1000)
-        # sns.distplot(random.normal(size=1000), hist=False)
-        # plt.show()
         
         
         
