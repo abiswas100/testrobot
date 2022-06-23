@@ -56,7 +56,7 @@ class Detection(object):
         cov_mat=np.cov(arr)
         # print(mean.mean_value) ## prints the mean value
         # print(cov_mat[0])
-        print(cov_mat[1])
+        # print(cov_mat[1])
         # x = random.normal(loc=mean, scale=sqrt(cov_mat), size=(3, 3))
         # sns.distplot(random.normal(size=1000), hist=False)
         # plt.show()
