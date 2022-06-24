@@ -68,12 +68,13 @@ class Detection(object):
         
         arr = np.array(pcl_np)
         mean.mean_value = np.mean(arr)
-        blahh = arr.mean(axis=0)
-        mean_x.mean_value = blahh[0]
-        mean_y.mean_value = blahh[1]
-        mean_z.mean_value = blahh[2]
+        blahh = arr.mean(axis=1)
+        # mean_x.mean_value = blahh[0]
+        # mean_y.mean_value = blahh[1]
+        # mean_z.mean_value = blahh[2]
         
-        print(blahh)
+        # print(blahh)
+        print("mean size:", len(blahh))
         
         # print("mean_x: ", mean_x.mean_value, "mean_y: " , mean_y.mean_value, "mean_z: ", mean_z.mean_value)
         
@@ -99,6 +100,11 @@ class Detection(object):
         print("std deviation is: ", std_dev.std_dev_value)          
         print("mean is: ", mean.mean_value)
         # print()
+        
+        x,y = np.random.multivariate_normal(blahh,cov_mat,3)
+        plt.plot(x,y,'x')
+        plt.axis('equal')
+        plt.show()
         
         
         # s = np.random.normal(mean.mean_value,std_dev.std_dev_value,1000)
