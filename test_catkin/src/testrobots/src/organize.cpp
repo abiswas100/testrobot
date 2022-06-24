@@ -238,7 +238,7 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
 
    //for visualization:
 
-   uint32_t shape = visualization_msgs::Marker::SPHERE;
+   uint32_t shape = visualization_msgs::Marker::CUBE; //SPHERE
    marker.header.frame_id = frame_id;
    marker.header.stamp = ros::Time::now();
    marker.ns = "basic_shapes";
@@ -250,7 +250,7 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
    marker.pose.orientation.x = 0.0;
    marker.pose.orientation.y = 0.0;
    marker.pose.orientation.z = 0.0;
-   marker.pose.orientation.w = 1.0;
+   marker.pose.orientation.w = 0.0;
    marker.scale.x = 0.8;
    marker.scale.y = 0.8;
    marker.scale.z = 0.8;
