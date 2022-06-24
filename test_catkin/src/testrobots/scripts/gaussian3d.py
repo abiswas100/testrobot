@@ -101,7 +101,7 @@ class Detection(object):
         print("mean is: ", mean.mean_value)
         # print()
         
-        x,y = np.random.multivariate_normal(blahh,cov_mat,3)
+        x,y = np.random.multivariate_normal(blahh,cov_mat,3)#not taking more than 2 , but example showed 5000
         plt.plot(x,y,'x')
         plt.axis('equal')
         plt.show()
