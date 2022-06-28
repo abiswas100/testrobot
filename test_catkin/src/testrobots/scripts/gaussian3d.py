@@ -130,15 +130,19 @@ class Detection(object):
         
         
         useful_cluster = []
+        x = []
+        y = []
         for i in range(len(components)):
             # print(components[i])
             # print(labels[i])
             
             if labels[i] == 0 :
                 useful_cluster.append(components[i])
-        
-        plt.scatter(useful_cluster[0:], useful_cluster[:1])
-        plt.show()
+                point = components[i]
+                x.append(point[0])
+                y.append(point[1])
+        plt.scatter(x,y)
+        plt.draw()
         plt.pause(0.00001)
         
 def main():
