@@ -9,7 +9,7 @@ import rospy
 import ros_numpy
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+from sklearn.cluster import DBSCAN
 from numpy import random
 
 from sensor_msgs.msg import Image
@@ -112,18 +112,35 @@ class Detection(object):
         print(cov_xz.shape)
         # print("Mean of 2D array",mean2D, "" , "Covariance ", cov_xz)
         
-        Y= np.random.multivariate_normal(mean2D,cov_xz, 3)
-        # print(X)
-        # print(Y)
-        # print(Z)
-        plt.plot(Y)
-        plt.draw()
-        plt.pause(10)
+        # Y= np.random.multivariate_normal(mean2D,cov_xz, 3)
+        # # print(X)
+        # # print(Y)
+        # # print(Z)
+        # plt.plot(Y)
+        # plt.draw()
+        # plt.pause(10)
         
-
-
-
-
+        
+        DBSCAN_cluster = DBSCAN(eps=0.5, min_samples=30).fit(xz_np_array)
+        print(DBSCAN_cluster.labels_)
+        # print(DBSCAN_cluster.components_)
+        labels = DBSCAN_cluster.labels_
+        components = DBSCAN_cluster.components_ #copy of each core sample found by training
+        feature = DBSCAN_cluster.n_features_in_ #number of features seen during fit
+        
+        
+        useful_cluster = []
+        for i in range(len(components)):
+            # print(components[i])
+            # print(labels[i])
+            
+            if labels[i] == 0 :
+                useful_cluster.append(components[i])
+        
+        plt.scatter(useful_cluster[0:], useful_cluster[:1])
+        plt.show()
+        plt.pause(0.00001)
+        
 def main():
     rospy.init_node('Compute_Gaussian', anonymous=False)
     sn = Detection()
