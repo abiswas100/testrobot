@@ -200,7 +200,7 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
    //call extract function and convert to ros msg and publish 
 
    std::cout<<"extracting object...\n"<< std::endl; 
-   extractObject(passfiltered_again);
+   extractObject(output_ptr);//passfiltered_again
    pcl::toROSMsg(*no_plane_cloud.get(),obj_msg );
    pub_extracted_cloud.publish(obj_msg);
 
