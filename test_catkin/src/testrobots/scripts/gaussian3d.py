@@ -8,6 +8,8 @@ from numpy import NaN, cov
 import rospy
 import ros_numpy
 import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
+from matplotlib.collections import PatchCollection
 import seaborn as sns
 from sklearn.cluster import DBSCAN
 from numpy import random
@@ -67,7 +69,7 @@ class Detection(object):
         pcl_np = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data, remove_nans=False) 
         
     
-        #create a 2D array out of this pcl_np
+        #create a 2D array out of this pcl_np without the y values which are 0 after projection
         xzarray = []
         height, width = pcl_np.shape
         x_values = []
@@ -108,9 +110,6 @@ class Detection(object):
         mean2D = abs(xz_np_array.mean(axis=1))   # axis  = 0 is for column, axis 1 for row and abs is to keep everything positive
         cov_xz = np.cov(xz_np_array)
         # cov_xz = np.cov(x_np_array,z_np_array)
-        print("mean", mean2D.shape)
-        print(cov_xz.shape)
-        # print("Mean of 2D array",mean2D, "" , "Covariance ", cov_xz)
         
         # Y= np.random.multivariate_normal(mean2D,cov_xz, 3)
         # # print(X)
@@ -121,32 +120,33 @@ class Detection(object):
         # plt.pause(10)
         
         
+        # compute DBSCAN - change eps and min_samples as required, eps- min distance between points
+        # learn more from - https://scikit-learn.org/stable/modules/generated/sklearn.cluster.DBSCAN.html
         DBSCAN_cluster = DBSCAN(eps=0.5, min_samples=30).fit(xz_np_array)
-        print(DBSCAN_cluster.labels_)
-        # print(DBSCAN_cluster.components_)
         labels = DBSCAN_cluster.labels_
         components = DBSCAN_cluster.components_ #copy of each core sample found by training
         feature = DBSCAN_cluster.n_features_in_ #number of features seen during fit
         
-        
+        # useful cluster has human with label 0, might change if more humans are added, x and y are points needed for plotting        useful_cluster = []
         useful_cluster = []
         x = []
         y = []
         for i in range(len(components)):
-            # print(components[i])
-            # print(labels[i])
-            
             if labels[i] == 0 :
                 useful_cluster.append(components[i])
                 point = components[i]
                 x.append(point[0])
                 y.append(point[1])
+                
+        #plot the human's movement
         plt.scatter(x,y)
         plt.draw()
         plt.pause(0.00001)
         
+        
+        
 def main():
-    rospy.init_node('Compute_Gaussian', anonymous=False)
+    rospy.init_node('Gaussian_DBSCAN', anonymous=False)
     sn = Detection()
     while not rospy.is_shutdown():
         rospy.spin()
