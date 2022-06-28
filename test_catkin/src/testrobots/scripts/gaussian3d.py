@@ -112,11 +112,11 @@ class Detection(object):
         print(cov_xz.shape)
         # print("Mean of 2D array",mean2D, "" , "Covariance ", cov_xz)
         
-        X= np.random.multivariate_normal(mean2D,cov_xz, 3)
+        Y= np.random.multivariate_normal(mean2D,cov_xz, 3)
         # print(X)
         # print(Y)
         # print(Z)
-        plt.plot(X)
+        plt.plot(Y)
         plt.draw()
         plt.pause(10)
         

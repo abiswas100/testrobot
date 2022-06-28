@@ -232,8 +232,7 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
    //calculate center and covariance matrix  
 
    pcl::computeMeanAndCovarianceMatrix(final_cloud,cov_matrix, mean);
-   // mean_pub.publish(mean);//msg type??
-   // var_pub.publish(cov_matrix);//msg type??
+  
 
 
    //for visualization:
@@ -255,8 +254,8 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
    marker.scale.y = 0.8;
    marker.scale.z = 0.8;
    marker.color.r = 0.0f;
-   marker.color.g = 1.0f;
-   marker.color.b = 0.0f;
+   marker.color.g = 0.0f;
+   marker.color.b = 1.0f;
    marker.color.a = 1.0;
    marker_pub.publish(marker);
 
