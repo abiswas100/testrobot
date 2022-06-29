@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #!/usr/bin/env python3
 
+#imports 
 from array import array
 from cmath import sqrt
 from os import device_encoding
@@ -108,8 +109,10 @@ class Detection(object):
         # find mean for the XZ array
         xz_np_array = np.array(xzarray)
         mean2D = abs(xz_np_array.mean(axis=1))   # axis  = 0 is for column, axis 1 for row and abs is to keep everything positive
-        cov_xz = np.cov(xz_np_array)
-        # cov_xz = np.cov(x_np_array,z_np_array)
+        # cov_xz = np.cov(xz_np_array)
+        cov_xz = np.cov(x_np_array,z_np_array)
+        
+        # Plot Gaussian 
         
         # Y= np.random.multivariate_normal(mean2D,cov_xz, 3)
         # # print(X)
@@ -117,7 +120,7 @@ class Detection(object):
         # # print(Z)
         # plt.plot(Y)
         # plt.draw()
-        # plt.pause(10)
+        # plt.pause(5)
         
         
         # compute DBSCAN - change eps and min_samples as required, eps- min distance between points
