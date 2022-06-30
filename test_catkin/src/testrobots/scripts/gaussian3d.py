@@ -21,12 +21,16 @@ from sensor_msgs.msg import PointField
 import sensor_msgs.msg as sensor_msgs
 from std_msgs.msg import Header
 from sensor_msgs import point_cloud2
+from geometry_msgs.msg import Polygon, PolygonStamped
+# will try later
+# from visualization_msgs import Marker
+# from geometry_msgs import PoseWithCovarianceStamped
 from testrobots.msg import Meannn
 from testrobots.msg import Deviation
 
 
 
-from geometry_msgs.msg import Point, PointStamped
+from geometry_msgs.msg import Point, PointStamped, Point32
 
 import struct
 import cv2
@@ -51,10 +55,11 @@ class Detection(object):
         self.publish_mean = rospy.Publisher("mean", Meannn, queue_size=1)   
         self.publish_std_dev = rospy.Publisher("deviation", Deviation, queue_size=1)
         # self.publish_covar = rospy.Publisher("covar", pc2, queue_size=1) # Covariance matrix needs to be published as a covariance array
+        self.human_polygon = rospy.Publisher("Human_marker", PolygonStamped, queue_size=1)
 
     def cloud_callback(self,data):
         print("Here in Pointcloud callback.........................................")
-        
+        header = data.header
         
         # creating the mean and covariance messages to publish 
         mean = Meannn()
@@ -66,6 +71,8 @@ class Detection(object):
         dev_y = Deviation()
         dev_z = Deviation()
         
+        polygon = Polygon()
+        poly_stamped = PolygonStamped()
         
         pcl_np = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data, remove_nans=False) 
         
@@ -142,9 +149,20 @@ class Detection(object):
                 y.append(point[1])
                 
         #plot the human's movement
-        plt.scatter(x,y)
-        plt.draw()
-        plt.pause(0.00001)
+        # plt.scatter(x,y)
+        # plt.draw()
+        # plt.pause(0.00001)
+        new_point = Point32()
+        for point in useful_cluster:
+            new_point.x, new_point.y,new_point.z = point[0] ,  0.0, point[1]
+            polygon.points.append(new_point)
+        
+    
+        poly_stamped.header.frame_id = "map"
+        poly_stamped.header.stamp = rospy.Time.now()
+        poly_stamped.polygon = polygon
+        
+        self.human_polygon.publish(poly_stamped)
         
         
         
