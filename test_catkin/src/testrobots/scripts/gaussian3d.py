@@ -5,6 +5,7 @@
 from array import array
 from cmath import sqrt
 from os import device_encoding
+from cv2 import HOUGH_MULTI_SCALE
 from numpy import NaN, cov
 import rospy
 import ros_numpy
@@ -23,7 +24,7 @@ from std_msgs.msg import Header
 from sensor_msgs import point_cloud2
 from geometry_msgs.msg import Polygon, PolygonStamped
 # will try later
-# from visualization_msgs import Marker
+from visualization_msgs.msg import Marker
 # from geometry_msgs import PoseWithCovarianceStamped
 from testrobots.msg import Meannn
 from testrobots.msg import Deviation
@@ -55,8 +56,8 @@ class Detection(object):
         self.publish_mean = rospy.Publisher("mean", Meannn, queue_size=1)   
         self.publish_std_dev = rospy.Publisher("deviation", Deviation, queue_size=1)
         # self.publish_covar = rospy.Publisher("covar", pc2, queue_size=1) # Covariance matrix needs to be published as a covariance array
-        self.human_polygon = rospy.Publisher("Human_marker", PolygonStamped, queue_size=1)
-
+        # self.human_polygon = rospy.Publisher("Human_polygon", PolygonStamped, queue_size=1)
+        self.human_marker = rospy.Publisher("Human_marker", Marker, queue_size=1)
     def cloud_callback(self,data):
         print("Here in Pointcloud callback.........................................")
         header = data.header
@@ -71,8 +72,10 @@ class Detection(object):
         dev_y = Deviation()
         dev_z = Deviation()
         
-        polygon = Polygon()
-        poly_stamped = PolygonStamped()
+        # polygon = Polygon()
+        # poly_stamped = PolygonStamped()
+        Human_Marker_cube = Marker()
+        
         
         pcl_np = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data, remove_nans=False) 
         
@@ -140,31 +143,51 @@ class Detection(object):
         # useful cluster has human with label 0, might change if more humans are added, x and y are points needed for plotting        useful_cluster = []
         useful_cluster = []
         x = []
-        y = []
+        z = []
         for i in range(len(components)):
             if labels[i] == 0 :
                 useful_cluster.append(components[i])
                 point = components[i]
                 x.append(point[0])
-                y.append(point[1])
-                
+                z.append(point[1])
+
         #plot the human's movement
         # plt.scatter(x,y)
         # plt.draw()
         # plt.pause(0.00001)
-        new_point = Point32()
-        for point in useful_cluster:
-            new_point.x, new_point.y,new_point.z = point[0] ,  0.0, point[1]
-            polygon.points.append(new_point)
+        
+        # new_point = Point32()
+        # for point in useful_cluster:
+        #     new_point.x, new_point.y,new_point.z = point[0] ,  0.0, point[1]
+        #     polygon.points.append(new_point)
         
     
-        poly_stamped.header.frame_id = "map"
-        poly_stamped.header.stamp = rospy.Time.now()
-        poly_stamped.polygon = polygon
+        # poly_stamped.header.frame_id = "map"
+        # poly_stamped.header.stamp = rospy.Time.now()
+        # poly_stamped.polygon = polygon
         
-        self.human_polygon.publish(poly_stamped)
+        # self.human_polygon.publish(poly_stamped)
+        
+        # Publish a Cube Marker for the human
+        
+        Human_Marker_cube.header.stamp = rospy.Time.now()
+        Human_Marker_cube.type = Marker.CUBE
+        Human_Marker_cube.pose.position.x = x.mean()
+        Human_Marker_cube.pose.position.y = 0
+        Human_Marker_cube.pose.position.z = y
+        Human_Marker_cube.pose.orientation = (0,0,0,1)
+        Human_Marker_cube.scale.x = 0.8
+        Human_Marker_cube.scale.y = 0.8
+        Human_Marker_cube.scale.z = 1
+        Human_Marker_cube.color.a = 1.0
+        Human_Marker_cube.color.r = 1.0
+        Human_Marker_cube.color.g = 1.0
+        Human_Marker_cube.color.b = 1.0
+        
+        self.human_marker.publish(Human_Marker_cube)
         
         
+                
         
 def main():
     rospy.init_node('Gaussian_DBSCAN', anonymous=False)
