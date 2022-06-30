@@ -172,33 +172,31 @@ class Detection(object):
         
         # Publish a Cube Marker for the human
         
-        meanx = np.mean(x)
-        meanz = np.mean(z)
-        print("x,z",np.mean(x), np.mean(z))
-        
-        if meanx == NaN or meanz == NaN:
+        if np.mean(x) == NaN or np.mean(z) == NaN:
             print("no human in view")
             pass
         else:
-            # uint8 shape = 
-            Human_Marker_cube.header.frame_id = "map"
+            
+            meanx = np.mean(x)
+            meanz = np.mean(z)
+            Human_Marker_cube.header.frame_id = "camera_rgb_optical_frame"
             Human_Marker_cube.header.stamp = rospy.Time.now()
             Human_Marker_cube.ns = "basic_shapes"
             Human_Marker_cube.id = 1
             Human_Marker_cube.type = 1
-            Human_Marker_cube.pose.position.x = 10.0 + meanx
-            Human_Marker_cube.pose.position.y = 20.0 + meanz
-            Human_Marker_cube.pose.position.z = 0.0
-            Human_Marker_cube.pose.orientation.x = 0.0
-            Human_Marker_cube.pose.orientation.y = 0.0
+            Human_Marker_cube.pose.position.x =  meanx
+            Human_Marker_cube.pose.position.y = 0.0
+            Human_Marker_cube.pose.position.z = meanz
+            Human_Marker_cube.pose.orientation.x = 1.0
+            Human_Marker_cube.pose.orientation.y = 1.0
             Human_Marker_cube.pose.orientation.z = 0.0
             Human_Marker_cube.pose.orientation.w = 0.0
             Human_Marker_cube.scale.x = 1
             Human_Marker_cube.scale.y = 1
             Human_Marker_cube.scale.z = 1
             Human_Marker_cube.color.a = 1.0
-            Human_Marker_cube.color.r = 0.0
-            Human_Marker_cube.color.g = 1.0
+            Human_Marker_cube.color.r = 1.0
+            Human_Marker_cube.color.g = 0.0
             Human_Marker_cube.color.b = 0.0
             
             
