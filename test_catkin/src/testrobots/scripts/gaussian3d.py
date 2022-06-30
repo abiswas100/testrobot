@@ -7,6 +7,7 @@ from cmath import sqrt
 from os import device_encoding
 from cv2 import HOUGH_MULTI_SCALE
 from numpy import NaN, cov
+from torch import uint8
 import rospy
 import ros_numpy
 import matplotlib.pyplot as plt
@@ -56,8 +57,9 @@ class Detection(object):
         self.publish_mean = rospy.Publisher("mean", Meannn, queue_size=1)   
         self.publish_std_dev = rospy.Publisher("deviation", Deviation, queue_size=1)
         # self.publish_covar = rospy.Publisher("covar", pc2, queue_size=1) # Covariance matrix needs to be published as a covariance array
-        # self.human_polygon = rospy.Publisher("Human_polygon", PolygonStamped, queue_size=1)
-        self.human_marker = rospy.Publisher("Human_marker", Marker, queue_size=1)
+        self.human_polygon = rospy.Publisher("Human_polygon", PolygonStamped, queue_size=1)
+        self.human_marker = rospy.Publisher("Human_marker", Marker, queue_size=2)
+    
     def cloud_callback(self,data):
         print("Here in Pointcloud callback.........................................")
         header = data.header
@@ -170,22 +172,39 @@ class Detection(object):
         
         # Publish a Cube Marker for the human
         
-        Human_Marker_cube.header.stamp = rospy.Time.now()
-        Human_Marker_cube.type = Marker.CUBE
-        Human_Marker_cube.pose.position.x = x.mean()
-        Human_Marker_cube.pose.position.y = 0
-        Human_Marker_cube.pose.position.z = y
-        Human_Marker_cube.pose.orientation = (0,0,0,1)
-        Human_Marker_cube.scale.x = 0.8
-        Human_Marker_cube.scale.y = 0.8
-        Human_Marker_cube.scale.z = 1
-        Human_Marker_cube.color.a = 1.0
-        Human_Marker_cube.color.r = 1.0
-        Human_Marker_cube.color.g = 1.0
-        Human_Marker_cube.color.b = 1.0
+        meanx = np.mean(x)
+        meanz = np.mean(z)
+        print("x,z",np.mean(x), np.mean(z))
         
-        self.human_marker.publish(Human_Marker_cube)
-        
+        if meanx == NaN or meanz == NaN:
+            print("no human in view")
+            pass
+        else:
+            # uint8 shape = 
+            Human_Marker_cube.header.frame_id = "map"
+            Human_Marker_cube.header.stamp = rospy.Time.now()
+            Human_Marker_cube.ns = "basic_shapes"
+            Human_Marker_cube.id = 1
+            Human_Marker_cube.type = 1
+            Human_Marker_cube.pose.position.x = 10.0 + meanx
+            Human_Marker_cube.pose.position.y = 20.0 + meanz
+            Human_Marker_cube.pose.position.z = 0.0
+            Human_Marker_cube.pose.orientation.x = 0.0
+            Human_Marker_cube.pose.orientation.y = 0.0
+            Human_Marker_cube.pose.orientation.z = 0.0
+            Human_Marker_cube.pose.orientation.w = 0.0
+            Human_Marker_cube.scale.x = 1
+            Human_Marker_cube.scale.y = 1
+            Human_Marker_cube.scale.z = 1
+            Human_Marker_cube.color.a = 1.0
+            Human_Marker_cube.color.r = 0.0
+            Human_Marker_cube.color.g = 1.0
+            Human_Marker_cube.color.b = 0.0
+            
+            
+            # while not rospy.is_shutdown():
+            self.human_marker.publish(Human_Marker_cube)
+                
         
                 
         
