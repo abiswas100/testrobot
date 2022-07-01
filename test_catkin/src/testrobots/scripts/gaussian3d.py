@@ -120,17 +120,17 @@ class Detection(object):
         
         # find mean for the XZ array
         xz_np_array = np.array(xzarray)
-        mean2D = abs(xz_np_array.mean(axis=1))   # axis  = 0 is for column, axis 1 for row and abs is to keep everything positive
-        # cov_xz = np.cov(xz_np_array)
-        cov_xz = np.cov(x_np_array,z_np_array)
-        
+        mean2D = xz_np_array.mean(axis=1)   # axis  = 0 is for column, axis 1 for row and abs is to keep everything positive
+        cov_xz = np.cov(xz_np_array)
+        # cov_xz = np.cov(x_np_array,z_np_array)
+        # print(mean2D, cov_xz)
         # Plot Gaussian 
         
-        Y= np.random.multivariate_normal(mean2D,cov_xz, 3)
+        Y,Z= np.random.multivariate_normal(mean2D,cov_xz, 2)
         # print(X)
         # print(Y)
         # print(Z)
-        plt.plot(Y)
+        plt.plot(Y,Z)
         plt.draw()
         plt.pause(5)
         
