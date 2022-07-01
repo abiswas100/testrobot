@@ -257,7 +257,7 @@ void callback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
    marker.color.g = 0.0f;
    marker.color.b = 1.0f;
    marker.color.a = 1.0;
-   marker_pub.publish(marker);
+   // marker_pub.publish(marker);
 
    //calculate computation time
 

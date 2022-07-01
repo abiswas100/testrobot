@@ -7,7 +7,7 @@ from cmath import sqrt
 from os import device_encoding
 from cv2 import HOUGH_MULTI_SCALE
 from numpy import NaN, cov
-from torch import uint8
+# from torch import uint8
 import rospy
 import ros_numpy
 import matplotlib.pyplot as plt
@@ -126,13 +126,13 @@ class Detection(object):
         
         # Plot Gaussian 
         
-        # Y= np.random.multivariate_normal(mean2D,cov_xz, 3)
-        # # print(X)
-        # # print(Y)
-        # # print(Z)
-        # plt.plot(Y)
-        # plt.draw()
-        # plt.pause(5)
+        Y= np.random.multivariate_normal(mean2D,cov_xz, 3)
+        # print(X)
+        # print(Y)
+        # print(Z)
+        plt.plot(Y)
+        plt.draw()
+        plt.pause(5)
         
         
         # compute DBSCAN - change eps and min_samples as required, eps- min distance between points
@@ -191,9 +191,9 @@ class Detection(object):
             Human_Marker_cube.pose.orientation.y = 1.0
             Human_Marker_cube.pose.orientation.z = 0.0
             Human_Marker_cube.pose.orientation.w = 0.0
-            Human_Marker_cube.scale.x = 1
-            Human_Marker_cube.scale.y = 1
-            Human_Marker_cube.scale.z = 1
+            Human_Marker_cube.scale.x = 0.8
+            Human_Marker_cube.scale.y = 0.8
+            Human_Marker_cube.scale.z = 0.8
             Human_Marker_cube.color.a = 1.0
             Human_Marker_cube.color.r = 1.0
             Human_Marker_cube.color.g = 0.0
