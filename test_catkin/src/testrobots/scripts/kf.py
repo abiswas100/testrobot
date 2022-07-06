@@ -253,7 +253,7 @@ if __name__ == '__main__':
     # 5) implemented till 21:00 of the vdo 
     # 6) add update function
     # 6) dont know how to find dt (delta t = time step)
-    # 7) havent tried running the code yet for obvious reasons duhhhh
+    # 7) havent tried running the code yet for obvious reasons duhhhhh
     # 8) added file name scripts/kf.py to cmakelists
     # 9) do not otch gaussian3d. Everything is copied from there. work on this script for now
     
