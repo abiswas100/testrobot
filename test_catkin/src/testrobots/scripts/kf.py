@@ -83,18 +83,10 @@ class KF(object):
     def mean(self) -> np.array:
         return self._x
         
-                    
-      
-        
-# def main():
-    
-
-    
-    
-    
-    
-    
+   
+   
     # notes for avhishek:
+    
     # 1) _x should be [initial_x,initial_v] as per vdo but we dont have v yet so figure that out 
     # 2) i have added initial_z also for the z coordinate
     # 3) G and F matrices are 2x2 but we need 3x3 if we add z coordinate as well
