@@ -29,6 +29,7 @@ from visualization_msgs.msg import Marker
 # from geometry_msgs import PoseWithCovarianceStamped
 from testrobots.msg import Meannn
 from testrobots.msg import Deviation
+from kf import KF
 
 
 
@@ -202,8 +203,44 @@ class Detection(object):
             
             # while not rospy.is_shutdown():
             self.human_marker.publish(Human_Marker_cube)
-                
+            
+        #******************   added by apala for kf   **************************************************
         
+        kf = KF(initial_x=0.0,initial_v=1.0,acc_variance=0.1)
+
+        DT = 0.2
+        NUM_STEPS = 1000
+        meas_every_step = 20
+
+        mus = []
+        covs = []
+
+        real_x = meanx #0.0 this should have our mean of cluster
+        real_v = 0.9
+        mea_variance = cov_xz #0.1 ** 2 //not sure if this is the covariance of cluster ; should be single value
+        real_xs = []
+        real_vs = []
+
+
+        for step in range(NUM_STEPS):
+            covs.append(kf.cov)
+            mus.append(kf.mean)
+            
+            real_x = real_x + DT * real_v
+            
+            kf.predict(dt=DT)
+            
+            
+            if step != 0 and step % meas_every_step == 0:
+                kf.update(meas_value=real_x + np.random.randn() * np.sqrt(mea_variance), 
+                        meas_variance=mea_variance)
+                
+            real_xs.append(real_x)
+            real_vs.append(real_v)
+            
+            print("something is printing",real_xs)
+                    
+        #***************************************************************************************        
                 
         
 def main():
