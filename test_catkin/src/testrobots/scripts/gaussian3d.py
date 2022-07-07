@@ -207,7 +207,6 @@ class Detection(object):
             
             # while not rospy.is_shutdown():
             self.human_marker.publish(Human_Marker_cube)
-<<<<<<< Updated upstream
             
         #******************   added by apala for kf   **************************************************
         
@@ -247,12 +246,7 @@ class Detection(object):
                     
         #***************************************************************************************        
                 
-=======
 
-            
-
->>>>>>> Stashed changes
-        
 def main():
     rospy.init_node('Gaussian_DBSCAN', anonymous=False)
     sn = Detection()
