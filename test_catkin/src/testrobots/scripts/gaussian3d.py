@@ -50,7 +50,10 @@ class Detection(object):
         self.mean = Point()
         self.cov_mat = []
         self.std_dev = Point()
-       
+        
+        
+        self.pointcloud_queue = []
+
         rospy.Subscriber("projected",pc2,self.cloud_callback,queue_size=1)
         
                 
@@ -131,9 +134,10 @@ class Detection(object):
         # print(X)
         # print(Y)
         # print(Z)
-        plt.plot(Y,Z)
+        plt.plot(Z)
+        plt.xlabel('Density')
         plt.draw()
-        plt.pause(5)
+        plt.pause(10)
         
         
         # compute DBSCAN - change eps and min_samples as required, eps- min distance between points
@@ -203,6 +207,7 @@ class Detection(object):
             
             # while not rospy.is_shutdown():
             self.human_marker.publish(Human_Marker_cube)
+<<<<<<< Updated upstream
             
         #******************   added by apala for kf   **************************************************
         
@@ -242,6 +247,11 @@ class Detection(object):
                     
         #***************************************************************************************        
                 
+=======
+
+            
+
+>>>>>>> Stashed changes
         
 def main():
     rospy.init_node('Gaussian_DBSCAN', anonymous=False)
