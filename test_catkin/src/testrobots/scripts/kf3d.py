@@ -112,7 +112,7 @@ print("I SHAPE = ", I.shape) #print("I SHAPE = ",I, I.shape)
 
 Hz = 100.0 # Frequency of Vision System
 dt = 1.0/Hz
-T = 1.0 # s measuremnt time
+T = 1.0 # s measurement time
 m = int(T/dt) # number of measurements
 
 px= 0.0 # x Position Start
@@ -123,8 +123,8 @@ vx = 10.0 # m/s Velocity at the beginning
 vy = 0.0 # m/s Velocity
 vz = 0.0 # m/s Velocity
 
-c = 0.1 # Drag Resistance Coefficient
-d = 0.9 # Damping
+c = 0.0 # Drag Resistance Coefficient
+d = 0.0 # Damping
 
 Xr=[]
 Yr=[]
