@@ -134,10 +134,13 @@ class Detection(object):
         # print(X)
         # print(Y)
         # print(Z)
-        plt.plot(Z)
-        plt.xlabel('Density')
-        plt.draw()
-        plt.pause(10)
+        
+        '''    Uncomment lines below to see gaussian plots
+        '''
+        # plt.plot(Z)
+        # plt.xlabel('Density')
+        # plt.draw()
+        # plt.pause(10)
         
         
         # compute DBSCAN - change eps and min_samples as required, eps- min distance between points
@@ -244,6 +247,11 @@ class Detection(object):
             
         #     print("something is printing",real_xs)
                     
+                real_xs.append(real_x)
+                real_vs.append(real_v)
+                
+                print("something is printing",real_xs)
+                        
         #***************************************************************************************        
                 
 
