@@ -50,7 +50,7 @@ class Detection(object):
         self.mean = Point()
         self.cov_mat = []
         self.std_dev = Point()
-        
+        self.pos_mean_queue = []
         
         self.pointcloud_queue = []
 
@@ -61,7 +61,6 @@ class Detection(object):
         self.publish_mean = rospy.Publisher("mean", Meannn, queue_size=1)   
         self.publish_std_dev = rospy.Publisher("deviation", Deviation, queue_size=1)
         # self.publish_covar = rospy.Publisher("covar", pc2, queue_size=1) # Covariance matrix needs to be published as a covariance array
-        self.human_polygon = rospy.Publisher("Human_polygon", PolygonStamped, queue_size=1)
         self.human_marker = rospy.Publisher("Human_marker", Marker, queue_size=2)
     
     def cloud_callback(self,data):
@@ -93,19 +92,14 @@ class Detection(object):
         z_values = []
         for i in range(0,height):
                 point = pcl_np[i]
-                x = point[0]
-                z = point[2]
-                x_values.append(x)
-                z_values.append(z)
+                x_values.append(point[0])
+                z_values.append(point[2])
                 value = [x,z]
                 xzarray.append(value)
         
         x_np_array = np.array(x_values)
         z_np_array = np.array(z_values)
 
-        mean_x = x_np_array.mean(axis=0)
-        mean_z = z_np_array.mean(axis=0)
-    
         #use these 4 lines to plot X and Z points with ROS
         
         # plt.plot(x_np_array, z_np_array, 'x')
@@ -113,30 +107,17 @@ class Detection(object):
         # plt.draw()
         # plt.pause(0.0000000001)   
         
-        mean_x_array = abs(x_np_array.mean(axis=0))
-        mean_z_array = z_np_array.mean(axis=0)        
-        cov_x = np.cov(x_np_array)
-        cov_z = np.cov(z_np_array)
-        
-        # print("mean x", mean_x_array, "", "mean_z", mean_z_array)
-        # print("Covariance x", cov_x, "", "Covariance_z", cov_z)
-        
-        
         # find mean for the XZ array
         xz_np_array = np.array(xzarray)
         mean2D = xz_np_array.mean(axis=1)   # axis  = 0 is for column, axis 1 for row and abs is to keep everything positive
         cov_xz = np.cov(xz_np_array)
-        # cov_xz = np.cov(x_np_array,z_np_array)
         # print(mean2D, cov_xz)
+
         # Plot Gaussian 
-        
-        Y,Z= np.random.multivariate_normal(mean2D,cov_xz, 2)
-        # print(X)
-        # print(Y)
-        # print(Z)
         
         '''    Uncomment lines below to see gaussian plots
         '''
+        # Y,Z= np.random.multivariate_normal(mean2D,cov_xz, 2)
         # plt.plot(Z)
         # plt.xlabel('Density')
         # plt.draw()
@@ -166,17 +147,6 @@ class Detection(object):
         # plt.draw()
         # plt.pause(0.00001)
         
-        # new_point = Point32()
-        # for point in useful_cluster:
-        #     new_point.x, new_point.y,new_point.z = point[0] ,  0.0, point[1]
-        #     polygon.points.append(new_point)
-        
-    
-        # poly_stamped.header.frame_id = "map"
-        # poly_stamped.header.stamp = rospy.Time.now()
-        # poly_stamped.polygon = polygon
-        
-        # self.human_polygon.publish(poly_stamped)
         
         # Publish a Cube Marker for the human
         
@@ -187,6 +157,7 @@ class Detection(object):
             
             meanx = np.mean(x)
             meanz = np.mean(z)
+            
             Human_Marker_cube.header.frame_id = "camera_rgb_optical_frame"
             Human_Marker_cube.header.stamp = rospy.Time.now()
             Human_Marker_cube.ns = "basic_shapes"
@@ -247,10 +218,10 @@ class Detection(object):
             
         #     print("something is printing",real_xs)
                     
-                real_xs.append(real_x)
-                real_vs.append(real_v)
+                # real_xs.append(real_x)
+                # real_vs.append(real_v)
                 
-                print("something is printing",real_xs)
+                # print("something is printing",real_xs)
                         
         #***************************************************************************************        
                 
