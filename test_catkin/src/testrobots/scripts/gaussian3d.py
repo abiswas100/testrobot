@@ -52,8 +52,10 @@ class Detection(object):
         self.cov_mat = []
         self.std_dev = Point()
         self.pos_mean_queue = []
-        t_now = rospy.Time.now()
-        pos_mean = [0.0, 0.0,t_now]
+        # t_now = rospy.Time.now()
+        t_now = rospy.get_time()
+        print(t_now)
+        pos_mean = [0.00, 0.00,t_now]
         self.pos_mean_queue.append(pos_mean)
         rospy.Subscriber("projected",pc2,self.cloud_callback,queue_size=1)
         
@@ -153,12 +155,12 @@ class Detection(object):
         
         if np.mean(x) == NaN or np.mean(z) == NaN:
             print("no human in view")
-            pass
+            
         else:
             
             meanx = round(np.mean(x),2)
             meanz = round(np.mean(z),2)
-            t_now = rospy.Time.now()
+            t_now = rospy.get_time()
     
             pos_mean_now = [meanx, meanz,t_now]
             self.pos_mean_queue.append(pos_mean_now)
@@ -186,17 +188,20 @@ class Detection(object):
             
             # while not rospy.is_shutdown():
             self.human_marker.publish(Human_Marker_cube)
-            
-            #find the velocity in x and z plane
-            
+            '''
+                find the velocity in x and z plane
+            '''
             pos_mean_last = self.pos_mean_queue.pop(0)
             meanx_last, meanz_last,t_last = pos_mean_last[0],pos_mean_last[1],pos_mean_last[2]
-            print(meanx_last, meanz_last,t_last)
+            # print("Past meanx, meanz and time",meanx_last, meanz_last,t_last)
             
             # print("popped value",self.pos_mean_queue.pop(0))
+            print("")
+            dist_x, dist_z, time_diff = round(math.dist([meanx],[meanx_last]),2) , round(math.dist([meanz],[meanz_last]),2) , t_now - t_last  #time in seconds
+            vx, vz = round((dist_x/time_diff),2), round((dist_z/time_diff),2)  # speed in m/sec
             
-            
-             
+            print("Distance travelled in x and z and time_diff", dist_x, dist_z, time_diff)
+            print("speed in x and z", vx, vz)  
             
         #******************   added by apala for kf   **************************************************
         
