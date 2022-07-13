@@ -29,6 +29,7 @@ from visualization_msgs.msg import Marker
 # from geometry_msgs import PoseWithCovarianceStamped
 from testrobots.msg import Meannn
 from testrobots.msg import Deviation
+from testrobots.msg import Velocity
 from kf import KF
 
 
@@ -58,8 +59,16 @@ class Detection(object):
         
                 
         # publishing topics
-        self.publish_mean = rospy.Publisher("mean", Meannn, queue_size=1)   
+        self.pub_mean_x = rospy.Publisher("mean_x", Meannn, queue_size=1)   
+        self.pub_mean_y = rospy.Publisher("mean_y", Meannn, queue_size=1)  
+        self.pub_mean_z = rospy.Publisher("mean_z", Meannn, queue_size=1)  
+        
+        self.pub_vel_x = rospy.Publisher("vel_x",Velocity,queue_size=1)
+        self.pub_vel_y = rospy.Publisher("vel_y",Velocity,queue_size=1)
+        self.pub_vel_z = rospy.Publisher("vel_z",Velocity,queue_size=1)
+        
         self.publish_std_dev = rospy.Publisher("deviation", Deviation, queue_size=1)
+        
         # self.publish_covar = rospy.Publisher("covar", pc2, queue_size=1) # Covariance matrix needs to be published as a covariance array
         self.human_polygon = rospy.Publisher("Human_polygon", PolygonStamped, queue_size=1)
         self.human_marker = rospy.Publisher("Human_marker", Marker, queue_size=2)
@@ -77,9 +86,11 @@ class Detection(object):
         dev_x = Deviation()
         dev_y = Deviation()
         dev_z = Deviation()
+        vel_x = Velocity()
+        vel_y = Velocity()
+        vel_z = Velocity()
         
-        # polygon = Polygon()
-        # poly_stamped = PolygonStamped()
+       
         Human_Marker_cube = Marker()
         
         
@@ -106,12 +117,7 @@ class Detection(object):
         mean_x = x_np_array.mean(axis=0)
         mean_z = z_np_array.mean(axis=0)
     
-        #use these 4 lines to plot X and Z points with ROS
-        
-        # plt.plot(x_np_array, z_np_array, 'x')
-        # plt.axis("equal")
-        # plt.draw()
-        # plt.pause(0.0000000001)   
+       
         
         mean_x_array = abs(x_np_array.mean(axis=0))
         mean_z_array = z_np_array.mean(axis=0)        
@@ -157,25 +163,13 @@ class Detection(object):
                 point = components[i]
                 x.append(point[0])
                 z.append(point[1])
+                
+        #publish mean 
+        mean_y = 0.0
+        self.pub_mean_x.publish(np.mean(x))
+        self.pub_mean_y.publish(mean_y)
+        self.pub_mean_z.publish(np.mean(z))
 
-        #plot the human's movement
-        # plt.scatter(x,y)
-        # plt.draw()
-        # plt.pause(0.00001)
-        
-        # new_point = Point32()
-        # for point in useful_cluster:
-        #     new_point.x, new_point.y,new_point.z = point[0] ,  0.0, point[1]
-        #     polygon.points.append(new_point)
-        
-    
-        # poly_stamped.header.frame_id = "map"
-        # poly_stamped.header.stamp = rospy.Time.now()
-        # poly_stamped.polygon = polygon
-        
-        # self.human_polygon.publish(poly_stamped)
-        
-        # Publish a Cube Marker for the human
         
         if np.mean(x) == NaN or np.mean(z) == NaN:
             print("no human in view")
@@ -208,43 +202,22 @@ class Detection(object):
             # while not rospy.is_shutdown():
             self.human_marker.publish(Human_Marker_cube)
             
-        #******************   added by apala for kf   **************************************************
+        #calculate velocity x,y,z
         
-        # kf = KF(initial_x=0.0,initial_v=1.0,acc_variance=0.1)
-
-        # DT = 0.2
-        # NUM_STEPS = 1000
-        # meas_every_step = 20
-
-        # mus = []
-        # covs = []
-
-        # real_x = meanx #0.0 this should have our mean of cluster
-        # real_v = 0.9
-        # mea_variance = cov_xz #0.1 ** 2 //not sure if this is the covariance of cluster ; should be single value
-        # real_xs = []
-        # real_vs = []
-
-
-        # for step in range(NUM_STEPS):
-        #     covs.append(kf.cov)
-        #     mus.append(kf.mean)
+        vel_y = 0.0
+        vel_x
+        vel_z
+        
+        
+        #publish velocity
+        self.pub_vel_x.publish(vel_x)
+        self.pub_vel_y.publish(vel_y)
+        self.pub_vel_z.publish(vel_z)
+        
             
-        #     real_x = real_x + DT * real_v
+    
             
-        #     kf.predict(dt=DT)
-            
-            
-        #     if step != 0 and step % meas_every_step == 0:
-        #         kf.update(meas_value=real_x + np.random.randn() * np.sqrt(mea_variance), 
-        #                 meas_variance=mea_variance)
-                
-        #     real_xs.append(real_x)
-        #     real_vs.append(real_v)
-            
-        #     print("something is printing",real_xs)
-                    
-        #***************************************************************************************        
+           
                 
 
 def main():
@@ -256,97 +229,4 @@ def main():
 if __name__ == '__main__':
     main()
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-##################### Apala code #################################
-
-        # arr = np.array(pcl_np)
-        # mean.mean_value = np.mean(arr)
-        # blahh = arr.mean(axis=0)  # axis  = 0 is for column, axis 1 for row 
-        # # blah has 3 values , xmean, ymean and z mean
-        # # mean_x.mean_value = blahh[0]
-        # # mean_y.mean_value = blahh[1]
-        # # mean_z.mean_value = blahh[2]
-        
-        # # print(blahh)
-        # print("mean size:", len(blahh))
-        
-        # # print("mean_x: ", mean_x.mean_value, "mean_y: " , mean_y.mean_value, "mean_z: ", mean_z.mean_value)
-        
-        # # print(arr)
-        # print("size of original array is: " , len(arr),"X",len(arr[0]))
-        
-        # cov_mat = np.cov(arr)
-        
-        # std_dev.std_dev_value = np.std(arr)
-        # duhh = arr.std(axis=0)
-        # dev_x.std_dev_value = duhh[0]
-        # dev_y.std_dev_value = duhh[1]
-        # dev_z.std_dev_value = duhh[2]
-        
-        # print(duhh)
-        
-        # # print("dev_x: ",dev_x.std_dev_value, "dev_y: " , dev_y.std_dev_value, "dev_z: ", dev_z.std_dev_value)
-        
-
-        # # print("covariance matrix is ::", cov_mat)
-       
-        # print("size of cov_mat is: ", len(cov_mat),"X",len(cov_mat[0])) 
-        # print("std deviation is: ", std_dev.std_dev_value)          
-        # print("mean is: ", mean.mean_value)
-        # # print()
-
-        # #plot the gaussian function
-        # x,y = np.random.multivariate_normal(blahh,cov_mat,2)#not taking more than 2, but example showed 5000
-        # plt.plot(x,y,'x')
-        # plt.axis('equal')
-        # plt.show()
-        
-        
-        # # s = np.random.normal(mean.mean_value,std_dev.std_dev_value,1000)
-        # # sns.distplot(random.normal(size=1000), hist=False)
-        # # plt.show()
-        # # plt.close()
-        
-        
-        
-        
-        # self.publish_mean.publish(mean)
-        # self.publish_std_dev.publish(std_dev)
-        # # self.publish_covar.publish(cov_mat)   
-
-    
+ 
