@@ -41,6 +41,7 @@ from cv_bridge import CvBridge, CvBridgeError
 import yolo as Yolo
 import numpy as np
 import time
+import math
 
 bridge = CvBridge() 
 class Detection(object):
@@ -51,9 +52,9 @@ class Detection(object):
         self.cov_mat = []
         self.std_dev = Point()
         self.pos_mean_queue = []
-        
-        self.pointcloud_queue = []
-
+        t_now = rospy.Time.now()
+        pos_mean = [0.0, 0.0,t_now]
+        self.pos_mean_queue.append(pos_mean)
         rospy.Subscriber("projected",pc2,self.cloud_callback,queue_size=1)
         
                 
@@ -94,7 +95,7 @@ class Detection(object):
                 point = pcl_np[i]
                 x_values.append(point[0])
                 z_values.append(point[2])
-                value = [x,z]
+                value = [point[0], point[2]]
                 xzarray.append(value)
         
         x_np_array = np.array(x_values)
@@ -155,9 +156,13 @@ class Detection(object):
             pass
         else:
             
-            meanx = np.mean(x)
-            meanz = np.mean(z)
-            
+            meanx = round(np.mean(x),2)
+            meanz = round(np.mean(z),2)
+            t_now = rospy.Time.now()
+    
+            pos_mean_now = [meanx, meanz,t_now]
+            self.pos_mean_queue.append(pos_mean_now)
+           
             Human_Marker_cube.header.frame_id = "camera_rgb_optical_frame"
             Human_Marker_cube.header.stamp = rospy.Time.now()
             Human_Marker_cube.ns = "basic_shapes"
@@ -181,6 +186,17 @@ class Detection(object):
             
             # while not rospy.is_shutdown():
             self.human_marker.publish(Human_Marker_cube)
+            
+            #find the velocity in x and z plane
+            
+            pos_mean_last = self.pos_mean_queue.pop(0)
+            meanx_last, meanz_last,t_last = pos_mean_last[0],pos_mean_last[1],pos_mean_last[2]
+            print(meanx_last, meanz_last,t_last)
+            
+            # print("popped value",self.pos_mean_queue.pop(0))
+            
+            
+             
             
         #******************   added by apala for kf   **************************************************
         
