@@ -2,12 +2,14 @@
 #!/usr/bin/env python3
 
 #imports 
+import sys
+import rospy
 from array import array
 from cmath import sqrt
 from os import device_encoding
 # from cv2 import HOUGH_MULTI_SCALE
 from numpy import NaN, cov
-import rospy
+# import rospy
 import ros_numpy
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
@@ -163,11 +165,7 @@ class Detection(object):
                 x.append(point[0])
                 z.append(point[1])
                 
-        #publish mean 
-        mean_y = 0.0
-        self.pub_mean_x.publish(np.mean(x))
-        self.pub_mean_y.publish(mean_y)
-        self.pub_mean_z.publish(np.mean(z))
+        
 
         
         if np.mean(x) == NaN or np.mean(z) == NaN:
@@ -175,8 +173,15 @@ class Detection(object):
             pass
         else:
             
+            #publish mean 
+            # mean_y = 0.0
+            # self.pub_mean_x.publish(np.mean(x))
+            # self.pub_mean_y.publish(mean_y)
+            # self.pub_mean_z.publish(np.mean(z))
+            
             meanx = np.mean(x)
             meanz = np.mean(z)
+            meany = 0.0
             t_now = rospy.get_time()
             pos_mean_now = [meanx, meanz,t_now]
             self.pos_mean_queue.append(pos_mean_now)
@@ -230,7 +235,7 @@ class Detection(object):
             self.pub_vel_z.publish(vz)
             
             # kalman filtering 
-            kal_fil(np.mean(x),mean_y, np.mean(z),vx,vy,vz)
+            kal_fil(meanx,meany, meanz,vx,vy,vz)
         
         
  
@@ -239,11 +244,14 @@ class Detection(object):
 
 #****************************************************************************************************************
 
-def kal_fil(mean_x,  mean_y,  mean_z, vel_x,  vel_y, vel_z):
+def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z):
+    
+        Human_Marker_cube = Marker()
+        
         P = 100.0*np.eye(9) #covariance matrix
 
 
-        dt = 0.1 #time step = 10 hz
+        dt = 0.2 #time step = 20 hz
         acc = 1/2.0*dt**2
         vel = dt
 
@@ -342,14 +350,14 @@ def kal_fil(mean_x,  mean_y,  mean_z, vel_x,  vel_y, vel_z):
 
         # MEASUREMENTS Synthetically creation of the Position Data for the ball-----------------------------------------
 
-        Hz = 100.0 # Frequency of Vision System
+        Hz = 5.0 # Frequency of Vision System approx 5 for lidar
         dt = 1.0/Hz
-        T = 1.0 # s measurement time
+        T = 20.0 # s measurement time 1.0s
         m = int(T/dt) # number of measurements
 
-        px= mean_x # x Position Start
-        py= mean_y # y Position Start
-        pz= mean_z # z Position Start
+        px= mean__x # x Position Start
+        py= mean__y # y Position Start
+        pz= mean__z # z Position Start
 
         vx = vel_x # m/s Velocity at the beginning
         vy = vel_y # m/s Velocity
@@ -362,12 +370,12 @@ def kal_fil(mean_x,  mean_y,  mean_z, vel_x,  vel_y, vel_z):
         Yr=[]
         Zr=[]
         for i in range(int(m)):
-            accx = -c*vx**2  # Drag Resistance
+            accx = -c*vx**2  # Drag Resistance = 0
             
             vx += accx*dt
             px += vx*dt
 
-            accz = -9.806 + c*vz**2 # Gravitation + Drag
+            accz = -9.806 + c*vz**2 # Gravitation
             vz += accz*dt
             pz += vz*dt
             
@@ -390,26 +398,26 @@ def kal_fil(mean_x,  mean_y,  mean_z, vel_x,  vel_y, vel_z):
         Ym = Yr + sp * (np.random.randn(m))
         Zm = Zr + sp * (np.random.randn(m))
 
-        #PLOT ----ball trajectory observed from cv system-----------------------------------------------
+        #PLOT ----human trajectory observed from cv system-----------------------------------------------
 
         fig = plt.figure(figsize=(16,9))
         ax = fig.add_subplot(111, projection='3d')
-        ax.scatter(Xm, Ym, Zm, c='gray')
+        ax.scatter(Xm, Zm, Ym, c='gray')
         ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
+        ax.set_ylabel('Z')
+        ax.set_zlabel('Y')
         plt.title('human motion trajectory')
 
         #ax.w_xaxis.set_pane_color((1.0, 1.0, 1.0, 1.0))
 
         # Axis equal
         max_range = np.array([Xm.max()-Xm.min(), Ym.max()-Ym.min(), Zm.max()-Zm.min()]).max() / 3.0
-        mean_x = Xm.mean()
-        mean_y = Ym.mean()
-        mean_z = Zm.mean()
-        ax.set_xlim(mean_x - max_range, mean_x + max_range)
-        ax.set_ylim(mean_y - max_range, mean_y + max_range)
-        ax.set_zlim(mean_z - max_range, mean_z + max_range)
+        mean__x = Xm.mean()
+        mean__y = Ym.mean()
+        mean__z = Zm.mean()
+        ax.set_xlim(mean__x - max_range, mean__x + max_range)
+        ax.set_ylim(mean__y - max_range, mean__y + max_range)
+        ax.set_zlim(mean__z - max_range, mean__z + max_range)
         #plt.savefig('BallTrajectory-Computervision.png', dpi=150, bbox_inches='tight')
 
         #---------------------------------------------------------------------------------------------------
@@ -419,7 +427,7 @@ def kal_fil(mean_x,  mean_y,  mean_z, vel_x,  vel_y, vel_z):
 
         #initial state:
 
-        x = np.matrix([px, py, pz, vx, vy, vz, 0.0, 0.0, -9.81]).T
+        x = np.matrix([px, py, pz, vx, vy, vz, 0.0, 0.0, 9.81]).T #check accx ; acceleration in z
         print("X SHAPE = ", x.shape) # 9x1 #print(x, x.shape)
 
 
@@ -526,28 +534,54 @@ def kal_fil(mean_x,  mean_y,  mean_z, vel_x,  vel_y, vel_z):
             Kddy.append(float(K[7,0]))
             Kddz.append(float(K[8,0]))
             
+            Human_Marker_cube.header.frame_id = "camera_rgb_optical_frame"
+            Human_Marker_cube.header.stamp = rospy.Time.now()
+            Human_Marker_cube.ns = "basic_shapes"
+            Human_Marker_cube.id = 1
+            Human_Marker_cube.type = 1
+            Human_Marker_cube.pose.position.x =  xt
+            Human_Marker_cube.pose.position.y = yt
+            Human_Marker_cube.pose.position.z = zt
+            Human_Marker_cube.pose.orientation.x = 1.0
+            Human_Marker_cube.pose.orientation.y = 1.0
+            Human_Marker_cube.pose.orientation.z = 0.0
+            Human_Marker_cube.pose.orientation.w = 0.0
+            Human_Marker_cube.scale.x = 0.8
+            Human_Marker_cube.scale.y = 0.8
+            Human_Marker_cube.scale.z = 0.8
+            Human_Marker_cube.color.a = 1.0
+            Human_Marker_cube.color.r = 0.0
+            Human_Marker_cube.color.g = 1.0
+            Human_Marker_cube.color.b = 0.0
+            
+            
+            # while not rospy.is_shutdown():
+            self.human_marker.publish(Human_Marker_cube)
+            
             #-------------------------------------------------------------
             
-            #plot position in 3d------------------------------------------------------------------------------
-            
+            #plot position in 3d-----------------------------------------------------------------------------
+       
         fig = plt.figure(figsize=(16,9))
         ax = fig.add_subplot(111, projection='3d')
-        ax.plot(xt,yt,zt, label='Kalman Filter Estimate')
-        ax.plot(Xr, Yr, Zr, label='Real')
+        ax.plot(xt,zt,yt, label='Kalman Filter Estimate')
+        ax.plot(Xr, Zr, Yr, label='Real')
         ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
+        ax.set_ylabel('Z')
+        ax.set_zlabel('Y')
         ax.legend()
         plt.title('Human Trajectory estimated with Kalman Filter')
+        
+        
 
         # Axis equal
         max_range = np.array([Xm.max()-Xm.min(), Ym.max()-Ym.min(), Zm.max()-Zm.min()]).max() / 3.0
-        mean_x = Xm.mean()
-        mean_y = Ym.mean()
-        mean_z = Zm.mean()
-        ax.set_xlim(mean_x - max_range, mean_x + max_range)
-        ax.set_ylim(mean_y - max_range, mean_y + max_range)
-        ax.set_zlim(mean_z - max_range, mean_z + max_range)
+        mean__x = Xm.mean()
+        mean__y = Ym.mean()
+        mean__z = Zm.mean()
+        ax.set_xlim(mean__x - max_range, mean__x + max_range)
+        ax.set_ylim(mean__y - max_range, mean__y + max_range)
+        ax.set_zlim(mean__z - max_range, mean__z + max_range)
         plt.savefig('Kalman-Filter-Human-Trajectory.png', dpi=150, bbox_inches='tight')
 
 
