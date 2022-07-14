@@ -115,13 +115,13 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz):
         T = 20.0 # s measurement time 1.0s
         m = int(T/dt) # number of measurements
 
-        px= meanx # x Position Start
-        py= meany # y Position Start
-        pz= meanz # z Position Start
+        px= mean__x # x Position Start
+        py= mean__y # y Position Start
+        pz= mean__z # z Position Start
 
-        # vx = vel_x # m/s Velocity at the beginning
-        # vy = vel_y # m/s Velocity
-        # vz = vel_z # m/s Velocity
+        vx = vel_x # m/s Velocity at the beginning
+        vy = vel_y # m/s Velocity
+        vz = vel_z # m/s Velocity
 
         c = 0.0 # Drag Resistance Coefficient
         d = 0.0 # Damping
@@ -132,19 +132,19 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz):
         for i in range(int(m)):
             #accx = -c*vx**2  # Drag Resistance = 0
             
-            vx += acc_x*dt
+            vx += accx*dt
             px += vx*dt
 
             #accz = -9.806 + c*vz**2 # Gravitation
-            vz += acc_z*dt
+            vz += accz*dt
             pz += vz*dt
             
             if pz<0.01:
                 vz=-vz*d
                 pz+=0.02
             if vx<0.1:
-                acc_x=0.0
-                acc_z=0.0
+                accx=0.0
+                accz=0.0
                 
             Xr.append(px)
             Yr.append(py)
@@ -175,9 +175,9 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz):
         meanx = Xm.mean()
         meany = Ym.mean()
         meanz = Zm.mean()
-        ax.set_xlim(meanx - max_range, meanx + max_range)
-        ax.set_ylim(meany - max_range, meany + max_range)
-        ax.set_zlim(meanz - max_range, meanz + max_range)
+        ax.set_xlim(mean__x - max_range, mean__x + max_range)
+        ax.set_ylim(mean__y - max_range, mean__y + max_range)
+        ax.set_zlim(mean__z - max_range, mean__z + max_range)
         #plt.savefig('BallTrajectory-Computervision.png', dpi=150, bbox_inches='tight')
 
         #---------------------------------------------------------------------------------------------------
