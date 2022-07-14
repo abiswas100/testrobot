@@ -24,7 +24,7 @@ import sensor_msgs.msg as sensor_msgs
 from std_msgs.msg import Header
 from sensor_msgs import point_cloud2
 from geometry_msgs.msg import Polygon, PolygonStamped
-from visualization_msgs.msg import Marker
+from visualization_msgs.msg import Marker, MarkerArray
 from testrobots.msg import Meannn
 from testrobots.msg import Deviation
 from testrobots.msg import Velocity
@@ -73,6 +73,7 @@ class Detection(object):
         
         self.human_polygon = rospy.Publisher("Human_polygon", PolygonStamped, queue_size=1)
         self.human_marker = rospy.Publisher("Human_marker", Marker, queue_size=2)
+        self.human_pred = rospy.Publisher("Human_prediction", MarkerArray, queue_size=2)
     
     
     def cloud_callback(self,data):
@@ -94,6 +95,7 @@ class Detection(object):
         
        
         Human_Marker_cube = Marker()
+        Human_prediction = MarkerArray()
         
         
         pcl_np = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(data, remove_nans=False) 
@@ -224,18 +226,23 @@ class Detection(object):
             dist_x, dist_z, time_diff = round(math.dist([meanx],[meanx_last]),2) , round(math.dist([meanz],[meanz_last]),2) , t_now - t_last  #time in seconds
             vx, vz, vy = round((dist_x/time_diff),2), round((dist_z/time_diff),2), 0.0  # speed in m/sec
             
+            acc_x, acc_z = round((vx/time_diff),2), round((vz/time_diff),2)
+            print("accleration in x and z", acc_x, acc_z)
+            acc_y = 0.0
             # print("Distance travelled in x and z and time_diff", dist_x, dist_z, time_diff)
             # print("speed in x and z", vx, vz) 
 
 
                     
-            #publish velocity
-            self.pub_vel_x.publish(vx)
-            self.pub_vel_y.publish(vy)
-            self.pub_vel_z.publish(vz)
+            # #publish velocity
+            # self.pub_vel_x.publish(vx)
+            # self.pub_vel_y.publish(vy)
+            # self.pub_vel_z.publish(vz)
             
             # kalman filtering 
-            kal_fil(meanx,meany, meanz,vx,vy,vz)
+            # kal_fil(meanx,meany, meanz,vx,vy,vz, acc_x,acc_y,acc_z)
+            
+           
         
         
  
@@ -244,9 +251,11 @@ class Detection(object):
 
 #****************************************************************************************************************
 
-def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z):
+# def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz):
     
-        Human_Marker_cube = Marker()
+        
+        Human_prediction = MarkerArray()
+        
         
         P = 100.0*np.eye(9) #covariance matrix
 
@@ -355,13 +364,13 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z):
         T = 20.0 # s measurement time 1.0s
         m = int(T/dt) # number of measurements
 
-        px= mean__x # x Position Start
-        py= mean__y # y Position Start
-        pz= mean__z # z Position Start
+        px= meanx # x Position Start
+        py= meany # y Position Start
+        pz= meanz # z Position Start
 
-        vx = vel_x # m/s Velocity at the beginning
-        vy = vel_y # m/s Velocity
-        vz = vel_z # m/s Velocity
+        # vx = vel_x # m/s Velocity at the beginning
+        # vy = vel_y # m/s Velocity
+        # vz = vel_z # m/s Velocity
 
         c = 0.0 # Drag Resistance Coefficient
         d = 0.0 # Damping
@@ -370,21 +379,21 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z):
         Yr=[]
         Zr=[]
         for i in range(int(m)):
-            accx = -c*vx**2  # Drag Resistance = 0
+            #accx = -c*vx**2  # Drag Resistance = 0
             
-            vx += accx*dt
+            vx += acc_x*dt
             px += vx*dt
 
-            accz = -9.806 + c*vz**2 # Gravitation
-            vz += accz*dt
+            #accz = -9.806 + c*vz**2 # Gravitation
+            vz += acc_z*dt
             pz += vz*dt
             
             if pz<0.01:
                 vz=-vz*d
                 pz+=0.02
             if vx<0.1:
-                accx=0.0
-                accz=0.0
+                acc_x=0.0
+                acc_z=0.0
                 
             Xr.append(px)
             Yr.append(py)
@@ -412,12 +421,12 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z):
 
         # Axis equal
         max_range = np.array([Xm.max()-Xm.min(), Ym.max()-Ym.min(), Zm.max()-Zm.min()]).max() / 3.0
-        mean__x = Xm.mean()
-        mean__y = Ym.mean()
-        mean__z = Zm.mean()
-        ax.set_xlim(mean__x - max_range, mean__x + max_range)
-        ax.set_ylim(mean__y - max_range, mean__y + max_range)
-        ax.set_zlim(mean__z - max_range, mean__z + max_range)
+        meanx = Xm.mean()
+        meany = Ym.mean()
+        meanz = Zm.mean()
+        ax.set_xlim(meanx - max_range, meanx + max_range)
+        ax.set_ylim(meany - max_range, meany + max_range)
+        ax.set_zlim(meanz - max_range, meanz + max_range)
         #plt.savefig('BallTrajectory-Computervision.png', dpi=150, bbox_inches='tight')
 
         #---------------------------------------------------------------------------------------------------
@@ -534,29 +543,41 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z):
             Kddy.append(float(K[7,0]))
             Kddz.append(float(K[8,0]))
             
-            Human_Marker_cube.header.frame_id = "camera_rgb_optical_frame"
-            Human_Marker_cube.header.stamp = rospy.Time.now()
-            Human_Marker_cube.ns = "basic_shapes"
-            Human_Marker_cube.id = 1
-            Human_Marker_cube.type = 1
-            Human_Marker_cube.pose.position.x =  xt
-            Human_Marker_cube.pose.position.y = yt
-            Human_Marker_cube.pose.position.z = zt
-            Human_Marker_cube.pose.orientation.x = 1.0
-            Human_Marker_cube.pose.orientation.y = 1.0
-            Human_Marker_cube.pose.orientation.z = 0.0
-            Human_Marker_cube.pose.orientation.w = 0.0
-            Human_Marker_cube.scale.x = 0.8
-            Human_Marker_cube.scale.y = 0.8
-            Human_Marker_cube.scale.z = 0.8
-            Human_Marker_cube.color.a = 1.0
-            Human_Marker_cube.color.r = 0.0
-            Human_Marker_cube.color.g = 1.0
-            Human_Marker_cube.color.b = 0.0
+            for i in xt:
+                # Human_prediction.header.frame_id = "camera_rgb_optical_frame"
+                # Human_prediction.header.stamp = rospy.Time.now()
+                # Human_prediction.ns = "basic_shapes"
+                Human_prediction.id = 6
+                Human_prediction.type = 6
+                Human_prediction.pose.position.x =  xt[i]
+                Human_prediction.pose.position.y = yt[i]
+                Human_prediction.pose.position.z = zt[i]
+                Human_prediction.pose.orientation.x = 1.0
+                Human_prediction.pose.orientation.y = 1.0
+                Human_prediction.pose.orientation.z = 0.0
+                Human_prediction.pose.orientation.w = 0.0
+                Human_prediction.scale.x = 0.8
+                Human_prediction.scale.y = 0.8
+                Human_prediction.scale.z = 0.8
+                Human_prediction.color.a = 1.0
+                Human_prediction.color.r = 0.0
+                Human_prediction.color.g = 1.0
+                Human_prediction.color.b = 0.0
+                
+                self.human_pred.publish(Human_prediction)
             
+                
+            
+            
+           
             
             # while not rospy.is_shutdown():
-            self.human_marker.publish(Human_Marker_cube)
+            
+            
+           
+           
+            
+            
             
             #-------------------------------------------------------------
             
