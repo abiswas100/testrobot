@@ -200,8 +200,11 @@ class Detection(object):
             dist_x, dist_z, time_diff = round(math.dist([meanx],[meanx_last]),2) , round(math.dist([meanz],[meanz_last]),2) , t_now - t_last  #time in seconds
             vx, vz = round((dist_x/time_diff),2), round((dist_z/time_diff),2)  # speed in m/sec
             
-            print("Distance travelled in x and z and time_diff", dist_x, dist_z, time_diff)
-            print("speed in x and z", vx, vz)  
+            acc_x, acc_z = round((vx/time_diff),2), round((vz/time_diff),2)
+            print("accleration in x and z", acc_x, acc_z)
+            
+            # print("Distance travelled in x and z and time_diff", dist_x, dist_z, time_diff)
+            # print("speed in x and z", vx, vz)  
             
         #******************   added by apala for kf   **************************************************
         

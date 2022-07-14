@@ -41,7 +41,6 @@ import numpy as np
 import time
 import math
 
-bridge = CvBridge() 
 class Detection(object):
 
     def __init__(self):
@@ -218,15 +217,13 @@ class Detection(object):
             # print("popped value",self.pos_mean_queue.pop(0))
             print("")
             dist_x, dist_z, time_diff = round(math.dist([meanx],[meanx_last]),2) , round(math.dist([meanz],[meanz_last]),2) , t_now - t_last  #time in seconds
-            vx, vz = round((dist_x/time_diff),2), round((dist_z/time_diff),2)  # speed in m/sec
+            vx, vz, vy = round((dist_x/time_diff),2), round((dist_z/time_diff),2), 0.0  # speed in m/sec
             
-            print("Distance travelled in x and z and time_diff", dist_x, dist_z, time_diff)
-            print("speed in x and z", vx, vz) 
-        
-            vy = 0.0
-      
-        
-        
+            # print("Distance travelled in x and z and time_diff", dist_x, dist_z, time_diff)
+            # print("speed in x and z", vx, vz) 
+
+
+                    
             #publish velocity
             self.pub_vel_x.publish(vx)
             self.pub_vel_y.publish(vy)
