@@ -5,9 +5,8 @@
 from array import array
 from cmath import sqrt
 from os import device_encoding
-from cv2 import HOUGH_MULTI_SCALE
+# from cv2 import HOUGH_MULTI_SCALE
 from numpy import NaN, cov
-# from torch import uint8
 import rospy
 import ros_numpy
 import matplotlib.pyplot as plt
@@ -16,7 +15,6 @@ from matplotlib.collections import PatchCollection
 import seaborn as sns
 from sklearn.cluster import DBSCAN
 from numpy import random
-
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import PointCloud2 as pc2
 from sensor_msgs.msg import PointField
@@ -24,31 +22,24 @@ import sensor_msgs.msg as sensor_msgs
 from std_msgs.msg import Header
 from sensor_msgs import point_cloud2
 from geometry_msgs.msg import Polygon, PolygonStamped
-# will try later
 from visualization_msgs.msg import Marker
-# from geometry_msgs import PoseWithCovarianceStamped
 from testrobots.msg import Meannn
 from testrobots.msg import Deviation
 from testrobots.msg import Velocity
 from kf import KF
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-# from IPython.display import YouTubeVideo
 from scipy.stats import norm
 from sympy import Symbol, Matrix
 from sympy.interactive import printing
-
-
-
-
 from geometry_msgs.msg import Point, PointStamped, Point32
-
 import struct
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 import yolo as Yolo
 import numpy as np
 import time
+import math
 
 bridge = CvBridge() 
 class Detection(object):
@@ -58,10 +49,12 @@ class Detection(object):
         self.mean = Point()
         self.cov_mat = []
         self.std_dev = Point()
-        
-        
+        self.pos_mean_queue = []
         self.pointcloud_queue = []
-
+        t_now = rospy.get_time()
+        print(t_now)
+        pos_mean = [0.00, 0.00,t_now]
+        self.pos_mean_queue.append(pos_mean)
         rospy.Subscriber("projected",pc2,self.cloud_callback,queue_size=1)
         
                 
@@ -76,9 +69,10 @@ class Detection(object):
         
         self.publish_std_dev = rospy.Publisher("deviation", Deviation, queue_size=1)
         
-        # self.publish_covar = rospy.Publisher("covar", pc2, queue_size=1) # Covariance matrix needs to be published as a covariance array
+        
         self.human_polygon = rospy.Publisher("Human_polygon", PolygonStamped, queue_size=1)
         self.human_marker = rospy.Publisher("Human_marker", Marker, queue_size=2)
+    
     
     def cloud_callback(self,data):
         print("Here in Pointcloud callback.........................................")
@@ -93,9 +87,9 @@ class Detection(object):
         dev_x = Deviation()
         dev_y = Deviation()
         dev_z = Deviation()
-        vel_x = Velocity()
-        vel_y = Velocity()
-        vel_z = Velocity()
+        vx = Velocity()
+        vy = Velocity()
+        vz = Velocity()
         
        
         Human_Marker_cube = Marker()
@@ -140,17 +134,16 @@ class Detection(object):
         mean2D = xz_np_array.mean(axis=1)   # axis  = 0 is for column, axis 1 for row and abs is to keep everything positive
         cov_xz = np.cov(xz_np_array)
         # cov_xz = np.cov(x_np_array,z_np_array)
-        # print(mean2D, cov_xz)
-        # Plot Gaussian 
         
-        Y,Z= np.random.multivariate_normal(mean2D,cov_xz, 2)
-        # print(X)
-        # print(Y)
-        # print(Z)
-        plt.plot(Z)
-        plt.xlabel('Density')
-        plt.draw()
-        plt.pause(10)
+        # Plot Gaussian 
+        '''    Uncomment lines below to see gaussian plots
+        '''
+        
+        # Y,Z= np.random.multivariate_normal(mean2D,cov_xz, 2)
+        # plt.plot(Z)
+        # plt.xlabel('Density')
+        # plt.draw()
+        # plt.pause(10)
         
         
         # compute DBSCAN - change eps and min_samples as required, eps- min distance between points
@@ -185,6 +178,10 @@ class Detection(object):
             
             meanx = np.mean(x)
             meanz = np.mean(z)
+            t_now = rospy.get_time()
+            pos_mean_now = [meanx, meanz,t_now]
+            self.pos_mean_queue.append(pos_mean_now)
+            
             Human_Marker_cube.header.frame_id = "camera_rgb_optical_frame"
             Human_Marker_cube.header.stamp = rospy.Time.now()
             Human_Marker_cube.ns = "basic_shapes"
@@ -209,345 +206,358 @@ class Detection(object):
             # while not rospy.is_shutdown():
             self.human_marker.publish(Human_Marker_cube)
             
-        #calculate velocity x,y,z
+            #calculate velocity x,y,z
         
-        vel_y = 0.0
-        vel_x
-        vel_z
+            '''
+                find the velocity in x and z plane
+            '''
+            pos_mean_last = self.pos_mean_queue.pop(0)
+            meanx_last, meanz_last,t_last = pos_mean_last[0],pos_mean_last[1],pos_mean_last[2]
+            # print("Past meanx, meanz and time",meanx_last, meanz_last,t_last)
+            
+            # print("popped value",self.pos_mean_queue.pop(0))
+            print("")
+            dist_x, dist_z, time_diff = round(math.dist([meanx],[meanx_last]),2) , round(math.dist([meanz],[meanz_last]),2) , t_now - t_last  #time in seconds
+            vx, vz = round((dist_x/time_diff),2), round((dist_z/time_diff),2)  # speed in m/sec
+            
+            print("Distance travelled in x and z and time_diff", dist_x, dist_z, time_diff)
+            print("speed in x and z", vx, vz) 
+        
+            vy = 0.0
+      
         
         
-        #publish velocity
-        self.pub_vel_x.publish(vel_x)
-        self.pub_vel_y.publish(vel_y)
-        self.pub_vel_z.publish(vel_z)
+            #publish velocity
+            self.pub_vel_x.publish(vx)
+            self.pub_vel_y.publish(vy)
+            self.pub_vel_z.publish(vz)
+            
+            # kalman filtering 
+            kal_fil(np.mean(x),mean_y, np.mean(z),vx,vy,vz)
         
-        kal_fil(np.mean(x),mean_y, np.mean(z),vel_x,vel_y,vel_z)
         
-# kalman filtering *********************************************************************************************
  
             
-def kal_fil(mean_x,  mean_y,  mean_z, vel_x,  vel_y, vel_z):
-    P = 100.0*np.eye(9) #covariance matrix
-
-
-    dt = 0.1 #time step = 10 hz
-    acc = 1/2.0*dt**2
-    vel = dt
-
-    # x[k+1] = A * x[k] where A = dynamic matrix
-
-    A = np.matrix([[1.0, 0.0, 0.0, vel, 0.0, 0.0, acc, 0.0, 0.0],
-                [0.0, 1.0, 0.0, 0.0,  vel, 0.0, 0.0, acc, 0.0],
-                [0.0, 0.0, 1.0, 0.0, 0.0,  vel, 0.0, 0.0, acc],
-                [0.0, 0.0, 0.0, 1.0, 0.0, 0.0,  vel, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,  vel, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,  vel],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
-
-    print("A SHAPE = ",A.shape) # 9x9
-
-    #y[k] = H * x[k] where H = measurement matrix
-
-    H = np.matrix([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
-
-    print("H SHAPE = ",H.shape) # 3x9 #print(H, H.shape)
-
-    rp = 1.0**2  # Noise of Position Measurement
-    R = np.matrix([[rp, 0.0, 0.0],
-                [0.0, rp, 0.0],
-                [0.0, 0.0, rp]])
-
-    print("R SHAPE = ", R.shape) # 3x3 #print("R SHAPE = ",R, R.shape)
-
-    #----------------------------------------------------------------------------------------------
-
-    """"
-
-    link: https://github.com/balzer82/Kalman/blob/master/Kalman-Filter-CA-Ball.ipynb?create=1
-
-    The Position of an object can be influenced by a force (e.g. wind),
-    which leads to an acceleration disturbance (noise). 
-    This process noise has to be modeled with the process noise covariance matrix Q.
-
-    To easily calcualte Q, one can ask the question: 
-    How the noise effects my state vector? For example, 
-    how the jerk change the position over one timestep dt. 
-    With  as the magnitude of the standard deviation of the jerk, which distrubs the ball in 3D space. 
-    We do not assume cross correlation, which means if a jerk will act in x direction of the movement, 
-    it will not push in y or z direction.
-
-    We can construct the values with the help of a matrix Gs, which is an "actor" to the state vector.
-    """
-
     
-    printing.init_printing()
-    dts = Symbol('\Delta t')
-    Gs = Matrix([dts**3/6, dts**2/2, dts]) #Gs applies effect of an unknown input to state vector
-
-    sj = 0.1 #sigma standard deviation
-
-    #Q = Gs * Gs T * sigma^2
-
-    Q = np.matrix([[(dt**6)/36, 0, 0, (dt**5)/12, 0, 0, (dt**4)/6, 0, 0],
-                [0, (dt**6)/36, 0, 0, (dt**5)/12, 0, 0, (dt**4)/6, 0],
-                [0, 0, (dt**6)/36, 0, 0, (dt**5)/12, 0, 0, (dt**4)/6],
-                [(dt**5)/12, 0, 0, (dt**4)/4, 0, 0, (dt**3)/2, 0, 0],
-                [0, (dt**5)/12, 0, 0, (dt**4)/4, 0, 0, (dt**3)/2, 0],
-                [0, 0, (dt**5)/12, 0, 0, (dt**4)/4, 0, 0, (dt**3)/2],
-                [(dt**4)/6, 0, 0, (dt**3)/2, 0, 0, (dt**2), 0, 0],
-                [0, (dt**4)/6, 0, 0, (dt**3)/2, 0, 0, (dt**2), 0],
-                [0, 0, (dt**4)/6, 0, 0, (dt**3)/2, 0, 0, (dt**2)]]) *sj**2
-
-    print("Q SHAPE = ",Q.shape) # 9x9
-
-    #-----------------------------------------------------------------------------------------------
-
-    # B = disturbance control matrix 
-
-    B = np.matrix([[0.0],
-                [0.0],
-                [0.0],
-                [0.0],
-                [0.0],
-                [0.0],
-                [0.0],
-                [0.0],
-                [0.0]])
-
-    print("B SHAPE = ", B.shape) # 9x1 #print("B SHAPE = ",B, B.shape)
-
-    # u = control input
-
-    u = 0.0 # Assumed constant over time
-
-    I = np.eye(9) #identity matrix
-    print("I SHAPE = ", I.shape) #print("I SHAPE = ",I, I.shape)
-
-    # MEASUREMENTS Synthetically creation of the Position Data for the ball-----------------------------------------
-
-    Hz = 100.0 # Frequency of Vision System
-    dt = 1.0/Hz
-    T = 1.0 # s measurement time
-    m = int(T/dt) # number of measurements
-
-    px= mean_x # x Position Start
-    py= mean_y # y Position Start
-    pz= mean_z # z Position Start
-
-    vx = vel_x # m/s Velocity at the beginning
-    vy = vel_y # m/s Velocity
-    vz = vel_z # m/s Velocity
-
-    c = 0.0 # Drag Resistance Coefficient
-    d = 0.0 # Damping
-
-    Xr=[]
-    Yr=[]
-    Zr=[]
-    for i in range(int(m)):
-        accx = -c*vx**2  # Drag Resistance
-        
-        vx += accx*dt
-        px += vx*dt
-
-        accz = -9.806 + c*vz**2 # Gravitation + Drag
-        vz += accz*dt
-        pz += vz*dt
-        
-        if pz<0.01:
-            vz=-vz*d
-            pz+=0.02
-        if vx<0.1:
-            accx=0.0
-            accz=0.0
-            
-        Xr.append(px)
-        Yr.append(py)
-        Zr.append(pz)
-        
-    #ADD NOISE TO REAL POSITION-----------------------------------------------------------------------------
-
-    sp= 0.1 # Sigma for position noise
-
-    Xm = Xr + sp * (np.random.randn(m))
-    Ym = Yr + sp * (np.random.randn(m))
-    Zm = Zr + sp * (np.random.randn(m))
-
-    #PLOT ----ball trajectory observed from cv system-----------------------------------------------
-
-    fig = plt.figure(figsize=(16,9))
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(Xm, Ym, Zm, c='gray')
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
-    plt.title('human motion trajectory')
-
-    #ax.w_xaxis.set_pane_color((1.0, 1.0, 1.0, 1.0))
-
-    # Axis equal
-    max_range = np.array([Xm.max()-Xm.min(), Ym.max()-Ym.min(), Zm.max()-Zm.min()]).max() / 3.0
-    mean_x = Xm.mean()
-    mean_y = Ym.mean()
-    mean_z = Zm.mean()
-    ax.set_xlim(mean_x - max_range, mean_x + max_range)
-    ax.set_ylim(mean_y - max_range, mean_y + max_range)
-    ax.set_zlim(mean_z - max_range, mean_z + max_range)
-    #plt.savefig('BallTrajectory-Computervision.png', dpi=150, bbox_inches='tight')
-
-    #---------------------------------------------------------------------------------------------------
-
-    measurements = np.vstack((Xm,Ym,Zm))
-    # print(measurements.shape) # 3 x 100
-
-    #initial state:
-
-    x = np.matrix([px, py, pz, vel_x, vel_y, vel_z, 0.0, 0.0, -9.81]).T
-    print("X SHAPE = ", x.shape) # 9x1 #print(x, x.shape)
-
-
-    # Preallocation for Plotting
-    xt = []
-    yt = []
-    zt = []
-    dxt= []
-    dyt= []
-    dzt= []
-    ddxt=[]
-    ddyt=[]
-    ddzt=[]
-    Zx = []
-    Zy = []
-    Zz = []
-    Px = []
-    Py = []
-    Pz = []
-    Pdx= []
-    Pdy= []
-    Pdz= []
-    Pddx=[]
-    Pddy=[]
-    Pddz=[]
-    Kx = []
-    Ky = []
-    Kz = []
-    Kdx= []
-    Kdy= []
-    Kdz= []
-    Kddx=[]
-    Kddy=[]
-    Kddz=[]
-
-
-    #implement equations------------------------------------------------------------------------------
-
-    hitplate=False
-    for filterstep in range(m):
-        
-        # Model the direction switch, when hitting the plate
-        if x[2]<0.01 and not hitplate:
-            x[5]=-x[5]
-            hitplate=True
-        
-        # Time Update (Prediction)
-        # ========================
-        # Project the state ahead
-        x = A*x + B*u
-        
-        # Project the error covariance ahead
-        P = A*P*A.T + Q   
-        # print("P SHAPE = ",P.shape) # 9x9
-        
-        
-        # Measurement Update (Correction)
-        # ===============================
-        # Compute the Kalman Gain
-        S = H*P*H.T + R
-        K = (P*H.T) * np.linalg.pinv(S)
-
-        
-        # Update the estimate via z
-        Z = measurements[:,filterstep].reshape(H.shape[0],1)
-        y = Z - (H*x)                            # Innovation or Residual
-        x = x + (K*y)
-        
-        # Update the error covariance
-        P = (I - (K*H))*P
-        
-    
-        
-        # Save states for Plotting
-        xt.append(float(x[0]))
-        yt.append(float(x[1]))
-        zt.append(float(x[2]))
-        dxt.append(float(x[3]))
-        dyt.append(float(x[4]))
-        dzt.append(float(x[5]))
-        ddxt.append(float(x[6]))
-        ddyt.append(float(x[7]))
-        ddzt.append(float(x[8]))
-        
-        Zx.append(float(Z[0]))
-        Zy.append(float(Z[1]))
-        Zz.append(float(Z[2]))
-        Px.append(float(P[0,0]))
-        Py.append(float(P[1,1]))
-        Pz.append(float(P[2,2]))
-        Pdx.append(float(P[3,3]))
-        Pdy.append(float(P[4,4]))
-        Pdz.append(float(P[5,5]))
-        Pddx.append(float(P[6,6]))
-        Pddy.append(float(P[7,7]))
-        Pddz.append(float(P[8,8]))
-        Kx.append(float(K[0,0]))
-        Ky.append(float(K[1,0]))
-        Kz.append(float(K[2,0]))
-        Kdx.append(float(K[3,0]))
-        Kdy.append(float(K[4,0]))
-        Kdz.append(float(K[5,0]))
-        Kddx.append(float(K[6,0]))
-        Kddy.append(float(K[7,0]))
-        Kddz.append(float(K[8,0]))
-        
-        #-------------------------------------------------------------
-        
-        #plot position in 3d------------------------------------------------------------------------------
-        
-    fig = plt.figure(figsize=(16,9))
-    ax = fig.add_subplot(111, projection='3d')
-    ax.plot(xt,yt,zt, label='Kalman Filter Estimate')
-    ax.plot(Xr, Yr, Zr, label='Real')
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
-    ax.legend()
-    plt.title('Human Trajectory estimated with Kalman Filter')
-
-    # Axis equal
-    max_range = np.array([Xm.max()-Xm.min(), Ym.max()-Ym.min(), Zm.max()-Zm.min()]).max() / 3.0
-    mean_x = Xm.mean()
-    mean_y = Ym.mean()
-    mean_z = Zm.mean()
-    ax.set_xlim(mean_x - max_range, mean_x + max_range)
-    ax.set_ylim(mean_y - max_range, mean_y + max_range)
-    ax.set_zlim(mean_z - max_range, mean_z + max_range)
-    plt.savefig('Kalman-Filter-Human-Trajectory.png', dpi=150, bbox_inches='tight')
-
-
-    dist = np.sqrt((Xm-xt)**2 + (Ym-yt)**2 + (Zm-zt)**2)
-    print('Estimated Position is %.2fm away from human position.' % dist[-1])           
-    
-
 
 #****************************************************************************************************************
 
+def kal_fil(mean_x,  mean_y,  mean_z, vel_x,  vel_y, vel_z):
+        P = 100.0*np.eye(9) #covariance matrix
+
+
+        dt = 0.1 #time step = 10 hz
+        acc = 1/2.0*dt**2
+        vel = dt
+
+        # x[k+1] = A * x[k] where A = dynamic matrix
+
+        A = np.matrix([[1.0, 0.0, 0.0, vel, 0.0, 0.0, acc, 0.0, 0.0],
+                    [0.0, 1.0, 0.0, 0.0,  vel, 0.0, 0.0, acc, 0.0],
+                    [0.0, 0.0, 1.0, 0.0, 0.0,  vel, 0.0, 0.0, acc],
+                    [0.0, 0.0, 0.0, 1.0, 0.0, 0.0,  vel, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,  vel, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,  vel],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
+
+        print("A SHAPE = ",A.shape) # 9x9
+
+        #y[k] = H * x[k] where H = measurement matrix
+
+        H = np.matrix([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
+
+        print("H SHAPE = ",H.shape) # 3x9 #print(H, H.shape)
+
+        rp = 1.0**2  # Noise of Position Measurement
+        R = np.matrix([[rp, 0.0, 0.0],
+                    [0.0, rp, 0.0],
+                    [0.0, 0.0, rp]])
+
+        print("R SHAPE = ", R.shape) # 3x3 #print("R SHAPE = ",R, R.shape)
+
+        #----------------------------------------------------------------------------------------------
+
+        """"
+
+        link: https://github.com/balzer82/Kalman/blob/master/Kalman-Filter-CA-Ball.ipynb?create=1
+
+        The Position of an object can be influenced by a force (e.g. wind),
+        which leads to an acceleration disturbance (noise). 
+        This process noise has to be modeled with the process noise covariance matrix Q.
+
+        To easily calcualte Q, one can ask the question: 
+        How the noise effects my state vector? For example, 
+        how the jerk change the position over one timestep dt. 
+        With  as the magnitude of the standard deviation of the jerk, which distrubs the ball in 3D space. 
+        We do not assume cross correlation, which means if a jerk will act in x direction of the movement, 
+        it will not push in y or z direction.
+
+        We can construct the values with the help of a matrix Gs, which is an "actor" to the state vector.
+        """
+
+        
+        printing.init_printing()
+        dts = Symbol('\Delta t')
+        Gs = Matrix([dts**3/6, dts**2/2, dts]) #Gs applies effect of an unknown input to state vector
+
+        sj = 0.1 #sigma standard deviation
+
+        #Q = Gs * Gs T * sigma^2
+
+        Q = np.matrix([[(dt**6)/36, 0, 0, (dt**5)/12, 0, 0, (dt**4)/6, 0, 0],
+                    [0, (dt**6)/36, 0, 0, (dt**5)/12, 0, 0, (dt**4)/6, 0],
+                    [0, 0, (dt**6)/36, 0, 0, (dt**5)/12, 0, 0, (dt**4)/6],
+                    [(dt**5)/12, 0, 0, (dt**4)/4, 0, 0, (dt**3)/2, 0, 0],
+                    [0, (dt**5)/12, 0, 0, (dt**4)/4, 0, 0, (dt**3)/2, 0],
+                    [0, 0, (dt**5)/12, 0, 0, (dt**4)/4, 0, 0, (dt**3)/2],
+                    [(dt**4)/6, 0, 0, (dt**3)/2, 0, 0, (dt**2), 0, 0],
+                    [0, (dt**4)/6, 0, 0, (dt**3)/2, 0, 0, (dt**2), 0],
+                    [0, 0, (dt**4)/6, 0, 0, (dt**3)/2, 0, 0, (dt**2)]]) *sj**2
+
+        print("Q SHAPE = ",Q.shape) # 9x9
+
+        #-----------------------------------------------------------------------------------------------
+
+        # B = disturbance control matrix 
+
+        B = np.matrix([[0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0]])
+
+        print("B SHAPE = ", B.shape) # 9x1 #print("B SHAPE = ",B, B.shape)
+
+        # u = control input
+
+        u = 0.0 # Assumed constant over time
+
+        I = np.eye(9) #identity matrix
+        print("I SHAPE = ", I.shape) #print("I SHAPE = ",I, I.shape)
+
+        # MEASUREMENTS Synthetically creation of the Position Data for the ball-----------------------------------------
+
+        Hz = 100.0 # Frequency of Vision System
+        dt = 1.0/Hz
+        T = 1.0 # s measurement time
+        m = int(T/dt) # number of measurements
+
+        px= mean_x # x Position Start
+        py= mean_y # y Position Start
+        pz= mean_z # z Position Start
+
+        vx = vel_x # m/s Velocity at the beginning
+        vy = vel_y # m/s Velocity
+        vz = vel_z # m/s Velocity
+
+        c = 0.0 # Drag Resistance Coefficient
+        d = 0.0 # Damping
+
+        Xr=[]
+        Yr=[]
+        Zr=[]
+        for i in range(int(m)):
+            accx = -c*vx**2  # Drag Resistance
             
-           
+            vx += accx*dt
+            px += vx*dt
+
+            accz = -9.806 + c*vz**2 # Gravitation + Drag
+            vz += accz*dt
+            pz += vz*dt
+            
+            if pz<0.01:
+                vz=-vz*d
+                pz+=0.02
+            if vx<0.1:
+                accx=0.0
+                accz=0.0
                 
+            Xr.append(px)
+            Yr.append(py)
+            Zr.append(pz)
+            
+        #ADD NOISE TO REAL POSITION-----------------------------------------------------------------------------
+
+        sp= 0.1 # Sigma for position noise
+
+        Xm = Xr + sp * (np.random.randn(m))
+        Ym = Yr + sp * (np.random.randn(m))
+        Zm = Zr + sp * (np.random.randn(m))
+
+        #PLOT ----ball trajectory observed from cv system-----------------------------------------------
+
+        fig = plt.figure(figsize=(16,9))
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(Xm, Ym, Zm, c='gray')
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        plt.title('human motion trajectory')
+
+        #ax.w_xaxis.set_pane_color((1.0, 1.0, 1.0, 1.0))
+
+        # Axis equal
+        max_range = np.array([Xm.max()-Xm.min(), Ym.max()-Ym.min(), Zm.max()-Zm.min()]).max() / 3.0
+        mean_x = Xm.mean()
+        mean_y = Ym.mean()
+        mean_z = Zm.mean()
+        ax.set_xlim(mean_x - max_range, mean_x + max_range)
+        ax.set_ylim(mean_y - max_range, mean_y + max_range)
+        ax.set_zlim(mean_z - max_range, mean_z + max_range)
+        #plt.savefig('BallTrajectory-Computervision.png', dpi=150, bbox_inches='tight')
+
+        #---------------------------------------------------------------------------------------------------
+
+        measurements = np.vstack((Xm,Ym,Zm))
+        # print(measurements.shape) # 3 x 100
+
+        #initial state:
+
+        x = np.matrix([px, py, pz, vx, vy, vz, 0.0, 0.0, -9.81]).T
+        print("X SHAPE = ", x.shape) # 9x1 #print(x, x.shape)
+
+
+        # Preallocation for Plotting
+        xt = []
+        yt = []
+        zt = []
+        dxt= []
+        dyt= []
+        dzt= []
+        ddxt=[]
+        ddyt=[]
+        ddzt=[]
+        Zx = []
+        Zy = []
+        Zz = []
+        Px = []
+        Py = []
+        Pz = []
+        Pdx= []
+        Pdy= []
+        Pdz= []
+        Pddx=[]
+        Pddy=[]
+        Pddz=[]
+        Kx = []
+        Ky = []
+        Kz = []
+        Kdx= []
+        Kdy= []
+        Kdz= []
+        Kddx=[]
+        Kddy=[]
+        Kddz=[]
+
+
+        #implement equations------------------------------------------------------------------------------
+
+        hitplate=False
+        for filterstep in range(m):
+            
+            # Model the direction switch, when hitting the plate
+            if x[2]<0.01 and not hitplate:
+                x[5]=-x[5]
+                hitplate=True
+            
+            # Time Update (Prediction)
+            # ========================
+            # Project the state ahead
+            x = A*x + B*u
+            
+            # Project the error covariance ahead
+            P = A*P*A.T + Q   
+            # print("P SHAPE = ",P.shape) # 9x9
+            
+            
+            # Measurement Update (Correction)
+            # ===============================
+            # Compute the Kalman Gain
+            S = H*P*H.T + R
+            K = (P*H.T) * np.linalg.pinv(S)
+
+            
+            # Update the estimate via z
+            Z = measurements[:,filterstep].reshape(H.shape[0],1)
+            y = Z - (H*x)                            # Innovation or Residual
+            x = x + (K*y)
+            
+            # Update the error covariance
+            P = (I - (K*H))*P
+            
+        
+            
+            # Save states for Plotting
+            xt.append(float(x[0]))
+            yt.append(float(x[1]))
+            zt.append(float(x[2]))
+            dxt.append(float(x[3]))
+            dyt.append(float(x[4]))
+            dzt.append(float(x[5]))
+            ddxt.append(float(x[6]))
+            ddyt.append(float(x[7]))
+            ddzt.append(float(x[8]))
+            
+            Zx.append(float(Z[0]))
+            Zy.append(float(Z[1]))
+            Zz.append(float(Z[2]))
+            Px.append(float(P[0,0]))
+            Py.append(float(P[1,1]))
+            Pz.append(float(P[2,2]))
+            Pdx.append(float(P[3,3]))
+            Pdy.append(float(P[4,4]))
+            Pdz.append(float(P[5,5]))
+            Pddx.append(float(P[6,6]))
+            Pddy.append(float(P[7,7]))
+            Pddz.append(float(P[8,8]))
+            Kx.append(float(K[0,0]))
+            Ky.append(float(K[1,0]))
+            Kz.append(float(K[2,0]))
+            Kdx.append(float(K[3,0]))
+            Kdy.append(float(K[4,0]))
+            Kdz.append(float(K[5,0]))
+            Kddx.append(float(K[6,0]))
+            Kddy.append(float(K[7,0]))
+            Kddz.append(float(K[8,0]))
+            
+            #-------------------------------------------------------------
+            
+            #plot position in 3d------------------------------------------------------------------------------
+            
+        fig = plt.figure(figsize=(16,9))
+        ax = fig.add_subplot(111, projection='3d')
+        ax.plot(xt,yt,zt, label='Kalman Filter Estimate')
+        ax.plot(Xr, Yr, Zr, label='Real')
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        ax.legend()
+        plt.title('Human Trajectory estimated with Kalman Filter')
+
+        # Axis equal
+        max_range = np.array([Xm.max()-Xm.min(), Ym.max()-Ym.min(), Zm.max()-Zm.min()]).max() / 3.0
+        mean_x = Xm.mean()
+        mean_y = Ym.mean()
+        mean_z = Zm.mean()
+        ax.set_xlim(mean_x - max_range, mean_x + max_range)
+        ax.set_ylim(mean_y - max_range, mean_y + max_range)
+        ax.set_zlim(mean_z - max_range, mean_z + max_range)
+        plt.savefig('Kalman-Filter-Human-Trajectory.png', dpi=150, bbox_inches='tight')
+
+
+        dist = np.sqrt((Xm-xt)**2 + (Ym-yt)**2 + (Zm-zt)**2)
+        print('Estimated Position is %.2fm away from human position.' % dist[-1])           
+    
+               
 
 def main():
     rospy.init_node('Gaussian_DBSCAN', anonymous=False)

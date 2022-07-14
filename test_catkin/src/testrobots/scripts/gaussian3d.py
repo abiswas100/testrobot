@@ -5,7 +5,7 @@
 from array import array
 from cmath import sqrt
 from os import device_encoding
-from cv2 import HOUGH_MULTI_SCALE
+# from cv2 import HOUGH_MULTI_SCALE
 from numpy import NaN, cov
 # from torch import uint8
 import rospy
