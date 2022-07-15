@@ -27,7 +27,7 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz):
                     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
                     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
 
-        print("A SHAPE = ",A.shape) # 9x9
+        # print("A SHAPE = ",A.shape) # 9x9
 
         #y[k] = H * x[k] where H = measurement matrix
 
@@ -35,14 +35,14 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz):
                     [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
 
-        print("H SHAPE = ",H.shape) # 3x9 #print(H, H.shape)
+        # print("H SHAPE = ",H.shape) # 3x9 #print(H, H.shape)
 
         rp = 1.0**2  # Noise of Position Measurement
         R = np.matrix([[rp, 0.0, 0.0],
                     [0.0, rp, 0.0],
                     [0.0, 0.0, rp]])
 
-        print("R SHAPE = ", R.shape) # 3x3 #print("R SHAPE = ",R, R.shape)
+        # print("R SHAPE = ", R.shape) # 3x3 #print("R SHAPE = ",R, R.shape)
 
         #----------------------------------------------------------------------------------------------
 
@@ -83,7 +83,7 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz):
                     [0, (dt**4)/6, 0, 0, (dt**3)/2, 0, 0, (dt**2), 0],
                     [0, 0, (dt**4)/6, 0, 0, (dt**3)/2, 0, 0, (dt**2)]]) *sj**2
 
-        print("Q SHAPE = ",Q.shape) # 9x9
+        # print("Q SHAPE = ",Q.shape) # 9x9
 
         #-----------------------------------------------------------------------------------------------
 
@@ -99,18 +99,18 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz):
                     [0.0],
                     [0.0]])
 
-        print("B SHAPE = ", B.shape) # 9x1 #print("B SHAPE = ",B, B.shape)
+        # print("B SHAPE = ", B.shape) # 9x1 #print("B SHAPE = ",B, B.shape)
 
         # u = control input
 
         u = 0.0 # Assumed constant over time
 
         I = np.eye(9) #identity matrix
-        print("I SHAPE = ", I.shape) #print("I SHAPE = ",I, I.shape)
+        # print("I SHAPE = ", I.shape) #print("I SHAPE = ",I, I.shape)
 
         # MEASUREMENTS Synthetically creation of the Position Data for the ball-----------------------------------------
 
-        Hz = 5.0 # Frequency of Vision System approx 5 for lidar
+        Hz = 20.0 # Frequency of Vision System approx 5 for lidar
         dt = 1.0/Hz
         T = 20.0 # s measurement time 1.0s
         m = int(T/dt) # number of measurements
@@ -188,7 +188,7 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz):
         #initial state:
 
         x = np.matrix([px, py, pz, vx, vy, vz, 0.0, 0.0, 9.81]).T #check accx ; acceleration in z
-        print("X SHAPE = ", x.shape) # 9x1 #print(x, x.shape)
+        # print("X SHAPE = ", x.shape) # 9x1 #print(x, x.shape)
 
 
         # Preallocation for Plotting
@@ -321,6 +321,13 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz):
 
         dist = np.sqrt((Xm-xt)**2 + (Ym-yt)**2 + (Zm-zt)**2)
         print('Estimated Position is %.2fm away from human position.' % dist[-1])    
+        
+        print ("real x position is:", Xr)
+        print ("real y position is:", Yr)
+        print ("real z position is:", Zr)
+        print ("estimate x position is:", Xm)
+        print ("estimate y position is:", Ym)
+        print ("estimate z position is:", Zm)
         
         return xt,yt, zt, Xr, Yr, Zr      
     
