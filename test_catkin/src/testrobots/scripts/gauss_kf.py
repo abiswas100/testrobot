@@ -229,7 +229,7 @@ class Detection(object):
             vx, vz, vy = round((dist_x/time_diff),2), round((dist_z/time_diff),2), 0.0  # speed in m/sec
             
             acc_x, acc_z = round((vx/time_diff),2), round((vz/time_diff),2)
-            print("accleration in x and z", acc_x, acc_z)
+            # print("accleration in x and z", acc_x, acc_z)
             acc_y = 0.0
             # print("Distance travelled in x and z and time_diff", dist_x, dist_z, time_diff)
             # print("speed in x and z", vx, vz) 
@@ -244,8 +244,8 @@ class Detection(object):
             # kalman filtering 
             xt,yt,zt,Xr,Yr,Zr = kal_fil(meanx,meany, meanz,vx,vy,vz, acc_x,acc_y,acc_z)
             
-            for i in xt:
-                
+            for i in range(len(xt)):
+               
                 marker.header.frame_id = "camera_rgb_optical_frame"
                 marker.header.stamp = rospy.Time.now()
                 marker.ns = "basic_shapes"
@@ -268,7 +268,7 @@ class Detection(object):
                 
                 Human_prediction.markers.append(marker)
                                 
-            self.human_pred.publish(Human_Marker_cube)
+            self.human_pred.publish(Human_prediction)
                 
             
            
