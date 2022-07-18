@@ -249,7 +249,7 @@ class Detection(object):
                 marker.header.frame_id = "camera_rgb_optical_frame"
                 marker.header.stamp = rospy.Time.now()
                 marker.ns = "basic_shapes"
-                marker.id = 1
+                marker.id = i
                 marker.type = 1
                 marker.pose.position.x =  xt[i]
                 marker.pose.position.y = yt[i]
