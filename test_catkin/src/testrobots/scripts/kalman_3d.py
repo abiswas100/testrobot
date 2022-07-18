@@ -5,13 +5,13 @@ from scipy.stats import norm
 from sympy import Symbol, Matrix
 from sympy.interactive import printing
 
-def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz):
+def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz, time_diff):
     
         
         P = 100.0*np.eye(9) #covariance matrix
 
 
-        dt = 0.2 #time step = 20 hz
+        dt = time_diff #0.2 #time step = 20 hz
         acc = 1/2.0*dt**2
         vel = dt
 
@@ -37,7 +37,7 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz):
 
         # print("H SHAPE = ",H.shape) # 3x9 #print(H, H.shape)
 
-        rp = 1.0**2  # Noise of Position Measurement
+        rp = 1.0  #**2  # Noise of Position Measurement
         R = np.matrix([[rp, 0.0, 0.0],
                     [0.0, rp, 0.0],
                     [0.0, 0.0, rp]])
@@ -111,7 +111,7 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz):
         # MEASUREMENTS Synthetically creation of the Position Data for the ball-----------------------------------------
 
         Hz = 20.0 # Frequency of Vision System approx 5 for lidar
-        dt = 1.0/Hz
+        dt = time_diff/Hz #1.0/Hz
         T = 20.0 # s measurement time 1.0s
         m = int(T/dt) # number of measurements
 

@@ -242,7 +242,7 @@ class Detection(object):
             # self.pub_vel_z.publish(vz)
             
             # kalman filtering 
-            xt,yt,zt,Xr,Yr,Zr = kal_fil(meanx,meany, meanz,vx,vy,vz, acc_x,acc_y,acc_z)
+            xt,yt,zt,Xr,Yr,Zr = kal_fil(meanx,meany, meanz,vx,vy,vz, acc_x,acc_y,acc_z,time_diff)
             
             for i in range(len(xt)):
                
