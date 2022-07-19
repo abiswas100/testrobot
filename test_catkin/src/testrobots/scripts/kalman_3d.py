@@ -8,7 +8,7 @@ from sympy.interactive import printing
 def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz, time_diff):
     
         
-        P = 100.0*np.eye(9) #covariance matrix
+        P = 200.0*np.eye(9) #covariance matrix 100
 
 
         dt = time_diff #0.2 #time step = 20 hz
@@ -37,7 +37,7 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz, ti
 
         # print("H SHAPE = ",H.shape) # 3x9 #print(H, H.shape)
 
-        rp = 1.0  #**2  # Noise of Position Measurement
+        rp = 1.0#**2  # Noise of Position Measurement
         R = np.matrix([[rp, 0.0, 0.0],
                     [0.0, rp, 0.0],
                     [0.0, 0.0, rp]])
@@ -69,7 +69,7 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz, ti
         dts = Symbol('\Delta t')
         Gs = Matrix([dts**3/6, dts**2/2, dts]) #Gs applies effect of an unknown input to state vector
 
-        sj = 0.1 #sigma standard deviation
+        sj = 0.0 #sigma standard deviation 0.1
 
         #Q = Gs * Gs T * sigma^2
 
@@ -110,9 +110,9 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz, ti
 
         # MEASUREMENTS Synthetically creation of the Position Data for the ball-----------------------------------------
 
-        Hz = 20.0 # Frequency of Vision System approx 5 for lidar
+        Hz = 4.5 # Frequency of Vision System approx 5 for lidar
         dt = time_diff/Hz #1.0/Hz
-        T = 20.0 # s measurement time 1.0s
+        T = 0.4 # s measurement time 1.0s
         m = int(T/dt) # number of measurements
 
         px= mean__x # x Position Start
@@ -152,7 +152,7 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz, ti
             
         #ADD NOISE TO REAL POSITION-----------------------------------------------------------------------------
 
-        sp= 0.1 # Sigma for position noise
+        sp= 0.0 # Sigma for position noise 0.1
 
         Xm = Xr + sp * (np.random.randn(m))
         Ym = Yr + sp * (np.random.randn(m))

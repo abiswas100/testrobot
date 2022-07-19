@@ -3,6 +3,8 @@
 
 #imports 
 import sys
+
+from cv2 import HuMoments
 import rospy
 from array import array
 from cmath import sqrt
@@ -11,6 +13,7 @@ from os import device_encoding
 from numpy import NaN, cov
 # import rospy
 import ros_numpy
+import visualization_msgs
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
@@ -31,7 +34,7 @@ from testrobots.msg import Velocity
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.stats import norm
-from sympy import Symbol, Matrix
+from sympy import Add, Symbol, Matrix, im
 from sympy.interactive import printing
 from geometry_msgs.msg import Point, PointStamped, Point32
 import struct
@@ -201,9 +204,9 @@ class Detection(object):
             Human_Marker_cube.pose.orientation.y = 1.0
             Human_Marker_cube.pose.orientation.z = 0.0
             Human_Marker_cube.pose.orientation.w = 0.0
-            Human_Marker_cube.scale.x = 0.8
-            Human_Marker_cube.scale.y = 0.8
-            Human_Marker_cube.scale.z = 0.8
+            Human_Marker_cube.scale.x = 0.5
+            Human_Marker_cube.scale.y = 0.5
+            Human_Marker_cube.scale.z = 0.5
             Human_Marker_cube.color.a = 1.0
             Human_Marker_cube.color.r = 1.0
             Human_Marker_cube.color.g = 0.0
@@ -235,48 +238,43 @@ class Detection(object):
             # print("speed in x and z", vx, vz) 
 
 
-                    
-            # #publish velocity
-            # self.pub_vel_x.publish(vx)
-            # self.pub_vel_y.publish(vy)
-            # self.pub_vel_z.publish(vz)
-            
             # kalman filtering 
             xt,yt,zt,Xr,Yr,Zr = kal_fil(meanx,meany, meanz,vx,vy,vz, acc_x,acc_y,acc_z,time_diff)
             
-            for i in range(len(xt)):
-               
-                marker.header.frame_id = "camera_rgb_optical_frame"
-                marker.header.stamp = rospy.Time.now()
-                marker.ns = "basic_shapes"
-                marker.id = i
-                marker.type = 1
-                marker.pose.position.x =  xt[i]
-                marker.pose.position.y = yt[i]
-                marker.pose.position.z = zt[i]
-                marker.pose.orientation.x = 1.0
-                marker.pose.orientation.y = 1.0
-                marker.pose.orientation.z = 0.0
-                marker.pose.orientation.w = 0.0
-                marker.scale.x = 0.8
-                marker.scale.y = 0.8
-                marker.scale.z = 0.8
-                marker.color.a = 1.0
-                marker.color.r = 0.0
-                marker.color.g = 1.0
-                marker.color.b = 0.0
-                
-                Human_prediction.markers.append(marker)
-                                
-            self.human_pred.publish(Human_prediction)
-                
+            if np.mean(x) == NaN or np.mean(z) == NaN:
+                print("no human in view")
+                pass
+            else:
             
-           
-        
-        
- 
-            
-    
+                for i in range(len(xt)):
+                    
+                    marker.header.frame_id = "camera_rgb_optical_frame"
+                    marker.ns = "basic_shapes"
+                    marker.id = i
+                    marker.type = 1
+                    # marker.action = 0
+                    marker.pose.position.x =  xt[i]
+                    marker.pose.position.y = yt[i]
+                    marker.pose.position.z = zt[i]
+                    marker.pose.orientation.x = 1.0
+                    marker.pose.orientation.y = 1.0
+                    marker.pose.orientation.z = 0.0
+                    marker.pose.orientation.w = 0.0
+                    marker.scale.x = 0.5
+                    marker.scale.y = 0.5
+                    marker.scale.z = 0.5
+                    marker.color.a = 1.0
+                    marker.color.r = 0.0
+                    marker.color.g = 1.0
+                    marker.color.b = 0.0
+                    # marker.lifetime = 5
+                    
+                
+                    
+                    Human_prediction.markers.append(marker)
+                    
+                self.human_pred.publish(Human_prediction)
+                 
 
 #****************************************************************************************************************
 
