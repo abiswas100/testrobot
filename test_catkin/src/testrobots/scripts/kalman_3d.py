@@ -10,6 +10,7 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz, dt
         
         P = 100.0*np.eye(9) #covariance matrix 100    
         print("dt:", dt)
+        # dt = 3*dt
 
         # x[k+1] = F * x[k] where F = dynamic matrix
 

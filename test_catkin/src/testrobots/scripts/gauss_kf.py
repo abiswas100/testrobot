@@ -156,8 +156,7 @@ class Detection(object):
         # plt.draw()
         # plt.pause(10)
         
-        
-        # compute DBSCAN - change eps and min_samples as required, eps- min distance between points
+                # compute DBSCAN - change eps and min_samples as required, eps- min distance between points
         # learn more from - https://scikit-learn.org/stable/modules/generated/sklearn.cluster.DBSCAN.html
         DBSCAN_cluster = DBSCAN(eps=0.5, min_samples=30).fit(xz_np_array)
         labels = DBSCAN_cluster.labels_
@@ -174,17 +173,12 @@ class Detection(object):
                 point = components[i]
                 x.append(point[0])
                 z.append(point[1])
-                
-        
 
         
         if np.mean(x) == NaN or np.mean(z) == NaN:
             print("no human in view")
             pass
         else:
-            
-           
-            
             meanx = np.mean(x)
             meanz = np.mean(z)
             meany = 0.0
@@ -193,25 +187,25 @@ class Detection(object):
             pos_mean_now = [meanx, meanz,t_now]
             self.pos_mean_queue.append(pos_mean_now)
             
-            Human_Marker_cube.header.frame_id = "camera_rgb_optical_frame"
-            Human_Marker_cube.header.stamp = rospy.Time.now()
-            Human_Marker_cube.ns = "basic_shapes"
-            Human_Marker_cube.id = 1
-            Human_Marker_cube.type = 1
-            Human_Marker_cube.pose.position.x = meanx
-            Human_Marker_cube.pose.position.y = 0.0
-            Human_Marker_cube.pose.position.z = meanz
-            Human_Marker_cube.pose.orientation.x = 1.0
-            Human_Marker_cube.pose.orientation.y = 1.0
-            Human_Marker_cube.pose.orientation.z = 0.0
-            Human_Marker_cube.pose.orientation.w = 0.0
-            Human_Marker_cube.scale.x = 0.5
-            Human_Marker_cube.scale.y = 0.5
-            Human_Marker_cube.scale.z = 0.5
-            Human_Marker_cube.color.a = 1.0
-            Human_Marker_cube.color.r = 1.0
-            Human_Marker_cube.color.g = 0.0
-            Human_Marker_cube.color.b = 0.0
+            # Human_Marker_cube.header.frame_id = "camera_rgb_optical_frame"
+            # Human_Marker_cube.header.stamp = rospy.Time.now()
+            # Human_Marker_cube.ns = "basic_shapes"
+            # Human_Marker_cube.id = 1
+            # Human_Marker_cube.type = 1
+            # Human_Marker_cube.pose.position.x = meanx
+            # Human_Marker_cube.pose.position.y = 0.0
+            # Human_Marker_cube.pose.position.z = meanz
+            # Human_Marker_cube.pose.orientation.x = 1.0
+            # Human_Marker_cube.pose.orientation.y = 1.0
+            # Human_Marker_cube.pose.orientation.z = 0.0
+            # Human_Marker_cube.pose.orientation.w = 0.0
+            # Human_Marker_cube.scale.x = 0.5
+            # Human_Marker_cube.scale.y = 0.5
+            # Human_Marker_cube.scale.z = 0.5
+            # Human_Marker_cube.color.a = 1.0
+            # Human_Marker_cube.color.r = 1.0
+            # Human_Marker_cube.color.g = 0.0
+            # Human_Marker_cube.color.b = 0.0
             
            
             
@@ -244,6 +238,8 @@ class Detection(object):
             xt,yt,zt,Xr,Yr,Zr,dist = kal_fil(meanx,meany, meanz,vx,vy,vz, acc_x,acc_y,acc_z,time_diff)
             
             
+            
+            
             if np.mean(x) == NaN or np.mean(z) == NaN:
                 print("no human in view")
                 pass
@@ -252,7 +248,28 @@ class Detection(object):
                 dt = time_diff
                 T = 5.0 # s measurement time 1.0s
                 num = int(T/dt) # number of measurements
-                # num = int(time_diff/5.0)
+                    # num = int(time_diff/5.0)
+                    # Human_Marker_cube.header.frame_id = "camera_rgb_optical_frame"
+                Human_Marker_cube.header.stamp = rospy.Time.now()
+                Human_Marker_cube.ns = "basic_shapes"
+                Human_Marker_cube.id = 1
+                Human_Marker_cube.type = 1
+                Human_Marker_cube.pose.position.x = meanx
+                Human_Marker_cube.pose.position.y = 0.0
+                Human_Marker_cube.pose.position.z = meanz
+                Human_Marker_cube.pose.orientation.x = 1.0
+                Human_Marker_cube.pose.orientation.y = 1.0
+                Human_Marker_cube.pose.orientation.z = 0.0
+                Human_Marker_cube.pose.orientation.w = 0.0
+                Human_Marker_cube.scale.x = 0.5
+                Human_Marker_cube.scale.y = 0.5
+                Human_Marker_cube.scale.z = 0.5
+                Human_Marker_cube.color.a = 1.0
+                Human_Marker_cube.color.r = 1.0
+                Human_Marker_cube.color.g = 0.0
+                Human_Marker_cube.color.b = 0.0
+                
+                self.human_marker.publish(Human_Marker_cube)
             
                 for i in (range(num-10)): #len(xt)-4
                     
