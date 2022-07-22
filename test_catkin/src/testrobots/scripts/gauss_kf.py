@@ -3,6 +3,7 @@
 
 #imports 
 import sys
+import time
 
 from cv2 import HuMoments
 import rospy
@@ -81,6 +82,9 @@ class Detection(object):
     
     def cloud_callback(self,data):
         print("Here in Pointcloud callback.........................................")
+        st1 = time.time() 
+        st0 = time.time() #start time for db scan
+        
         header = data.header
         
         # creating the mean and covariance messages to publish 
@@ -179,15 +183,12 @@ class Detection(object):
             pass
         else:
             
-            #publish mean 
-            # mean_y = 0.0
-            # self.pub_mean_x.publish(np.mean(x))
-            # self.pub_mean_y.publish(mean_y)
-            # self.pub_mean_z.publish(np.mean(z))
+           
             
             meanx = np.mean(x)
             meanz = np.mean(z)
             meany = 0.0
+            print("current position:", "[ ", meanx,",","0.0",",",meanz,"]")
             t_now = rospy.get_time()
             pos_mean_now = [meanx, meanz,t_now]
             self.pos_mean_queue.append(pos_mean_now)
@@ -217,42 +218,48 @@ class Detection(object):
             # while not rospy.is_shutdown():
             self.human_marker.publish(Human_Marker_cube)
             
+            et0 = time.time() #end time for db scan + marker publishing
+            
+            elapsed_time0 = et0 - st0
+            print('DB SCAN Execution time:', elapsed_time0, 'seconds')
+            
             #calculate velocity x,y,z
         
             '''
                 find the velocity in x and z plane
             '''
             pos_mean_last = self.pos_mean_queue.pop(0)
-            meanx_last, meanz_last,t_last = pos_mean_last[0],pos_mean_last[1],pos_mean_last[2]
-            # print("Past meanx, meanz and time",meanx_last, meanz_last,t_last)
-            
-            # print("popped value",self.pos_mean_queue.pop(0))
-            print("")
+            meanx_last, meanz_last,t_last = pos_mean_last[0],pos_mean_last[1],pos_mean_last[2]        
             dist_x, dist_z, time_diff = round(math.dist([meanx],[meanx_last]),2) , round(math.dist([meanz],[meanz_last]),2) , t_now - t_last  #time in seconds
-            vx, vz, vy = round((dist_x/time_diff),2), round((dist_z/time_diff),2), 0.0  # speed in m/sec
-            
-            acc_x, acc_z = round((vx/time_diff),2), round((vz/time_diff),2)
-            # print("accleration in x and z", acc_x, acc_z)
+            vx, vz, vy = round((dist_x/time_diff),2), round((dist_z/time_diff),2), 0.0  # speed in m/sec            
+            acc_x, acc_z = round((vx/time_diff),2), round((vz/time_diff),2)            
             acc_y = 0.0
-            # print("Distance travelled in x and z and time_diff", dist_x, dist_z, time_diff)
-            # print("speed in x and z", vx, vz) 
-
-
-            # kalman filtering 
-            xt,yt,zt,Xr,Yr,Zr = kal_fil(meanx,meany, meanz,vx,vy,vz, acc_x,acc_y,acc_z,time_diff)
+        
+            
+            
+            st2 = time.time() #start time for kalman filtering
+            
+            # kalman filtering   ----------------------------------------------------------------------------------------------------
+            print("position in kf:", "[ ", meanx,",",meany,",",meanz,"]")
+            xt,yt,zt,Xr,Yr,Zr,dist = kal_fil(meanx,meany, meanz,vx,vy,vz, acc_x,acc_y,acc_z,time_diff)
+            
             
             if np.mean(x) == NaN or np.mean(z) == NaN:
                 print("no human in view")
                 pass
             else:
+                
+                dt = time_diff
+                T = 5.0 # s measurement time 1.0s
+                num = int(T/dt) # number of measurements
+                # num = int(time_diff/5.0)
             
-                for i in range(len(xt)):
+                for i in (range(num-10)): #len(xt)-4
                     
                     marker.header.frame_id = "camera_rgb_optical_frame"
                     marker.ns = "basic_shapes"
                     marker.id = i
                     marker.type = 1
-                    # marker.action = 0
                     marker.pose.position.x =  xt[i]
                     marker.pose.position.y = yt[i]
                     marker.pose.position.z = zt[i]
@@ -260,29 +267,50 @@ class Detection(object):
                     marker.pose.orientation.y = 1.0
                     marker.pose.orientation.z = 0.0
                     marker.pose.orientation.w = 0.0
-                    marker.scale.x = 0.5
-                    marker.scale.y = 0.5
-                    marker.scale.z = 0.5
+                    marker.scale.x = 0.7
+                    marker.scale.y = 0.7
+                    marker.scale.z = 0.7
                     marker.color.a = 1.0
                     marker.color.r = 0.0
                     marker.color.g = 1.0
                     marker.color.b = 0.0
-                    # marker.lifetime = 5
+                    # marker.lifetime = 100
+                
+                    print("marker x",i ,": ", xt[i])
+                    print("marker y",i ,": ", yt[i])
+                    print("marker z",i ,": ", zt[i])
                     
                 
                     
                     Human_prediction.markers.append(marker)
                     
                 self.human_pred.publish(Human_prediction)
+                
+                et2 = time.time() #end time for kalman filtering
+                elapsed_time2 = et2 - st2
+                print('Kalman Execution time:', elapsed_time2, 'seconds')
+                et1 = time.time()
+    
+                elapsed_time1 = et1 - st1
+                print('Total Execution time:', elapsed_time1, 'seconds')
+                print()
                  
 
 #****************************************************************************************************************
 
 def main():
     rospy.init_node('Gaussian_DBSCAN', anonymous=False)
+    
+
     sn = Detection()
+    
+    
+    
+   
+    
     while not rospy.is_shutdown():
         rospy.spin()
+        
 
 if __name__ == '__main__':
     main()
