@@ -5,14 +5,16 @@ from scipy.stats import norm
 from sympy import Symbol, Matrix
 from sympy.interactive import printing
 
-def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz, dt):
+def kal_fil(prev_x, prev_y, prev_z,curr_x,  curr_y,  curr_z, vel_x,  vel_y, vel_z,accx,accy,accz, dt):
     
         
-        P = 100.0*np.eye(9) #covariance matrix 100    
-        print("dt:", dt)
-        # dt = 3*dt
+        P = 10.0*np.eye(9) #covariance matrix 100    
+        # print("dt:", dt)
+        
 
         # x[k+1] = F * x[k] where F = dynamic matrix
+        # print("current x:", curr_x)
+        # print("prev: ", prev_x)
 
         
         F = np.matrix([[1.0, 0.0, 0.0, dt, 0.0, 0.0, 1/2.0*dt**2, 0.0, 0.0],
@@ -37,7 +39,7 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz, dt
 
 
         # R = Measurement noise variance 
-        rp = 1.0#**2  
+        rp = 0.1#**2  
         R = np.matrix([[rp, 0.0, 0.0],
                        [0.0, rp, 0.0],
                        [0.0, 0.0, rp]])
@@ -88,32 +90,27 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz, dt
         # print("I SHAPE = ", I.shape) #print("I SHAPE = ",I, I.shape)
 
         
-        T = 5.0 # s measurement time 1.0s
+        T = 30.0 # 15s measurement time 1.0s
         m = int(T/dt) # number of measurements
 
-        px= mean__x # x Position Start
-        py= mean__y # y Position Start
-        pz= mean__z # z Position Start
+        px= prev_x # x Position Start
+        py= prev_y # y Position Start
+        pz= prev_z # z Position Start
 
        
-        Xr=[]
-        Yr=[]
-        Zr=[]
-        
-        for i in range(int(m)):
-            Xr.append(px)
-            Yr.append(py)
-            Zr.append(pz)
             
         # add noise to real pos -----------------------------------------------------------------------------
 
-        sp= 0.1 # Sigma for position noise 0.1
+        sp= 0.0 # Sigma for position noise 0.1
 
-        Xm = Xr + sp * (np.random.randn(m))
-        Ym = Yr + sp * (np.random.randn(m))
-        Zm = Zr + sp * (np.random.randn(m))
+        
+        
+        Xm = curr_x + sp * (np.random.randn(m))
+        Ym = curr_y + sp * (np.random.randn(m))
+        Zm = curr_z + sp * (np.random.randn(m))
 
-       
+      
+
         #---------------------------------------------------------------------------------------------------
 
         measurements = np.vstack((Xm,Ym,Zm))
@@ -138,8 +135,14 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz, dt
         for filterstep in range(m):
             
             #prediction
+            # print("x:", x)
+            # print()
             x = F*x + B*u # time update
+            # print("f:", F)
+            # print()
             P = F*P*F.T + Q # project error covariance
+            # print("P:", P)
+            # print()
             
             #correction
             S = H*P*H.T + R
@@ -147,24 +150,35 @@ def kal_fil(mean__x,  mean__y,  mean__z, vel_x,  vel_y, vel_z,accx,accy,accz, dt
             Z = measurements[:,filterstep].reshape(H.shape[0],1) # update estimate
             y = Z - (H*x)                         
             x = x + (K*y)
-            P = (I - (K*H))*P # update error covariance
-            
+            # print("x:", x)
+            # print()
+            P = (I - (K*H))*P # update error covariance  
+            # print("P:", P)
+            # print()         
            
             
             # Save states 
+        
             xt.append(float(x[0]))
             yt.append(float(x[1]))
             zt.append(float(x[2]))
-           
-           
-            
+       
        
 
-
+        # print("xt:", xt)
+        # print()
+        # print("yt:", yt)
+        # print()
+        # print("zt:", zt)
+        # print()
+        # print("xm:", Xm)
+        # print()
+        
+        
         dist = np.sqrt((Xm-xt)**2 + (Ym-yt)**2 + (Zm-zt)**2)
-        print('Estimated Position is %.2fm away from human position.' % dist[-1])    
+        # print('Estimated Position is %.2fm away from human position.' % dist[-1])    
   
         
-        return xt,yt, zt, Xr, Yr, Zr , dist    
+        return xt,yt, zt, dist    
     
  

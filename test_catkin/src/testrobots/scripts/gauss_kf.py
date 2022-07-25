@@ -57,7 +57,7 @@ class Detection(object):
         self.pos_mean_queue = []
         self.pointcloud_queue = []
         t_now = rospy.get_time()
-        print(t_now)
+        # print(t_now)
         pos_mean = [0.00, 0.00,t_now]
         self.pos_mean_queue.append(pos_mean)
         rospy.Subscriber("projected",pc2,self.cloud_callback,queue_size=1)
@@ -75,16 +75,21 @@ class Detection(object):
         self.publish_std_dev = rospy.Publisher("deviation", Deviation, queue_size=1)
         
         
-        self.human_polygon = rospy.Publisher("Human_polygon", PolygonStamped, queue_size=1)
+        
         self.human_marker = rospy.Publisher("Human_marker", Marker, queue_size=2)
+        self.human_marker2 = rospy.Publisher("Human_marker2", Marker, queue_size=2)
+        self.human_marker3 = rospy.Publisher("Human_marker3", Marker, queue_size=2)
         self.human_pred = rospy.Publisher("Human_prediction", MarkerArray, queue_size=2)
     
     
     def cloud_callback(self,data):
         print("Here in Pointcloud callback.........................................")
-        st1 = time.time() 
-        st0 = time.time() #start time for db scan
         
+        now = rospy.get_rostime()
+        rospy.loginfo("Cloud in time %i %i", now.secs,now.nsecs)
+        print()
+        
+       
         header = data.header
         
         # creating the mean and covariance messages to publish 
@@ -102,6 +107,8 @@ class Detection(object):
         
        
         Human_Marker_cube = Marker()
+        Human_Marker_cube2 = Marker()
+        Human_Marker_cube3 = Marker()
         Human_prediction = MarkerArray()
         marker = Marker()
         
@@ -156,7 +163,7 @@ class Detection(object):
         # plt.draw()
         # plt.pause(10)
         
-                # compute DBSCAN - change eps and min_samples as required, eps- min distance between points
+        # compute DBSCAN - change eps and min_samples as required, eps- min distance between points
         # learn more from - https://scikit-learn.org/stable/modules/generated/sklearn.cluster.DBSCAN.html
         DBSCAN_cluster = DBSCAN(eps=0.5, min_samples=30).fit(xz_np_array)
         labels = DBSCAN_cluster.labels_
@@ -182,40 +189,40 @@ class Detection(object):
             meanx = np.mean(x)
             meanz = np.mean(z)
             meany = 0.0
-            print("current position:", "[ ", meanx,",","0.0",",",meanz,"]")
+            # print("current position:", "[ ", meanx,",","0.0",",",meanz,"]")
             t_now = rospy.get_time()
             pos_mean_now = [meanx, meanz,t_now]
             self.pos_mean_queue.append(pos_mean_now)
+            Human_Marker_cube.header.stamp = rospy.Time.now()
+            Human_Marker_cube.header.frame_id = "camera_rgb_optical_frame"
+            Human_Marker_cube.ns = "basic_shapes"
+            Human_Marker_cube.id = 1
+            Human_Marker_cube.type = 1
+            Human_Marker_cube.pose.position.x = meanx
+            Human_Marker_cube.pose.position.y = 0.0
+            Human_Marker_cube.pose.position.z = meanz
+            Human_Marker_cube.pose.orientation.x = 1.0
+            Human_Marker_cube.pose.orientation.y = 1.0
+            Human_Marker_cube.pose.orientation.z = 0.0
+            Human_Marker_cube.pose.orientation.w = 0.0
+            Human_Marker_cube.scale.x = 0.5
+            Human_Marker_cube.scale.y = 0.5
+            Human_Marker_cube.scale.z = 0.5
+            Human_Marker_cube.color.a = 0.8
+            Human_Marker_cube.color.r = 1.0
+            Human_Marker_cube.color.g = 0.0
+            Human_Marker_cube.color.b = 0.0
             
-            # Human_Marker_cube.header.frame_id = "camera_rgb_optical_frame"
-            # Human_Marker_cube.header.stamp = rospy.Time.now()
-            # Human_Marker_cube.ns = "basic_shapes"
-            # Human_Marker_cube.id = 1
-            # Human_Marker_cube.type = 1
-            # Human_Marker_cube.pose.position.x = meanx
-            # Human_Marker_cube.pose.position.y = 0.0
-            # Human_Marker_cube.pose.position.z = meanz
-            # Human_Marker_cube.pose.orientation.x = 1.0
-            # Human_Marker_cube.pose.orientation.y = 1.0
-            # Human_Marker_cube.pose.orientation.z = 0.0
-            # Human_Marker_cube.pose.orientation.w = 0.0
-            # Human_Marker_cube.scale.x = 0.5
-            # Human_Marker_cube.scale.y = 0.5
-            # Human_Marker_cube.scale.z = 0.5
-            # Human_Marker_cube.color.a = 1.0
-            # Human_Marker_cube.color.r = 1.0
-            # Human_Marker_cube.color.g = 0.0
-            # Human_Marker_cube.color.b = 0.0
-            
-           
-            
-            # while not rospy.is_shutdown():
             self.human_marker.publish(Human_Marker_cube)
             
-            et0 = time.time() #end time for db scan + marker publishing
+            now1 = rospy.get_rostime()
+            rospy.loginfo("Current position marker time %i %i", now1.secs, now1.nsecs)
+            print()
+        
+           
             
-            elapsed_time0 = et0 - st0
-            print('DB SCAN Execution time:', elapsed_time0, 'seconds')
+            
+            
             
             #calculate velocity x,y,z
         
@@ -228,17 +235,62 @@ class Detection(object):
             vx, vz, vy = round((dist_x/time_diff),2), round((dist_z/time_diff),2), 0.0  # speed in m/sec            
             acc_x, acc_z = round((vx/time_diff),2), round((vz/time_diff),2)            
             acc_y = 0.0
+            meany_last = 0.0
+            
+            #---------------marker at prev position----------------
+            
+            if np.mean(x) == NaN or np.mean(z) == NaN:
+                print("no human in view")
+                pass
+            else:
+                Human_Marker_cube2.header.stamp = rospy.Time.now()
+                Human_Marker_cube2.header.frame_id = "camera_rgb_optical_frame"
+                Human_Marker_cube2.ns = "basic_shapes"
+                Human_Marker_cube2.id = 1
+                Human_Marker_cube2.type = 1
+                Human_Marker_cube2.pose.position.x = meanx_last
+                Human_Marker_cube2.pose.position.y = 0.0
+                Human_Marker_cube2.pose.position.z = meanz_last
+                Human_Marker_cube2.pose.orientation.x = 1.0
+                Human_Marker_cube2.pose.orientation.y = 1.0
+                Human_Marker_cube2.pose.orientation.z = 0.0
+                Human_Marker_cube2.pose.orientation.w = 0.0
+                Human_Marker_cube2.scale.x = 0.5
+                Human_Marker_cube2.scale.y = 0.5
+                Human_Marker_cube2.scale.z = 0.5
+                Human_Marker_cube2.color.a = 1.0
+                Human_Marker_cube2.color.r = 0.0
+                Human_Marker_cube2.color.g = 0.0
+                Human_Marker_cube2.color.b = 1.0
+                
+                self.human_marker2.publish(Human_Marker_cube2)
         
             
             
-            st2 = time.time() #start time for kalman filtering
+           
             
             # kalman filtering   ----------------------------------------------------------------------------------------------------
-            print("position in kf:", "[ ", meanx,",",meany,",",meanz,"]")
-            xt,yt,zt,Xr,Yr,Zr,dist = kal_fil(meanx,meany, meanz,vx,vy,vz, acc_x,acc_y,acc_z,time_diff)
+            # print("position in kf:", "[ ", meanx,",",meany,",",meanz,"]")
             
+            print("current position :", "[ ", meanx,",",meany,",",meanz,"]")
+            # print("prev position in kf:", "[ ", meanx_last,",",meany_last,",",meanz_last,"]")
+            # print("velocity: ", vx,vy,vz)
+            # print("acceleration:", acc_x,acc_y,acc_z)
+            # print("dt:", time_diff)
             
+            now4 = rospy.get_rostime()
+            rospy.loginfo("kalman filtering start time %i %i", now4.secs, now4.nsecs)
+            print()
             
+        
+            
+            xt,yt,zt,dist = kal_fil(meanx_last,meany_last, meanz_last,meanx,meany,meanz,vx,vy,vz, acc_x,acc_y,acc_z,time_diff)
+            
+            now2 = rospy.get_rostime()
+            rospy.loginfo("kalman filtering end time %i %i", now2.secs, now2.nsecs)
+            print()
+            
+            #vx,vy,vz, acc_x,acc_y,acc_z,time_diff
             
             if np.mean(x) == NaN or np.mean(z) == NaN:
                 print("no human in view")
@@ -246,32 +298,40 @@ class Detection(object):
             else:
                 
                 dt = time_diff
-                T = 5.0 # s measurement time 1.0s
+                T = 30.0 # s measurement time 1.0s
                 num = int(T/dt) # number of measurements
                     # num = int(time_diff/5.0)
                     # Human_Marker_cube.header.frame_id = "camera_rgb_optical_frame"
-                Human_Marker_cube.header.stamp = rospy.Time.now()
-                Human_Marker_cube.ns = "basic_shapes"
-                Human_Marker_cube.id = 1
-                Human_Marker_cube.type = 1
-                Human_Marker_cube.pose.position.x = meanx
-                Human_Marker_cube.pose.position.y = 0.0
-                Human_Marker_cube.pose.position.z = meanz
-                Human_Marker_cube.pose.orientation.x = 1.0
-                Human_Marker_cube.pose.orientation.y = 1.0
-                Human_Marker_cube.pose.orientation.z = 0.0
-                Human_Marker_cube.pose.orientation.w = 0.0
-                Human_Marker_cube.scale.x = 0.5
-                Human_Marker_cube.scale.y = 0.5
-                Human_Marker_cube.scale.z = 0.5
-                Human_Marker_cube.color.a = 1.0
-                Human_Marker_cube.color.r = 1.0
-                Human_Marker_cube.color.g = 0.0
-                Human_Marker_cube.color.b = 0.0
                 
-                self.human_marker.publish(Human_Marker_cube)
+                #**********************************************************
+                
+                # publish last marker only --------------------------
+                # Human_Marker_cube3.header.stamp = rospy.Time.now()
+                # Human_Marker_cube3.header.frame_id = "camera_rgb_optical_frame"
+                # Human_Marker_cube3.ns = "basic_shapes"
+                # Human_Marker_cube3.id = 1
+                # Human_Marker_cube3.type = 1
+                # Human_Marker_cube3.pose.position.x = xt[num-1]
+                # Human_Marker_cube3.pose.position.y = 0.0
+                # Human_Marker_cube3.pose.position.z = zt[num-1]
+                # Human_Marker_cube3.pose.orientation.x = 1.0
+                # Human_Marker_cube3.pose.orientation.y = 1.0
+                # Human_Marker_cube3.pose.orientation.z = 0.0
+                # Human_Marker_cube3.pose.orientation.w = 0.0
+                # Human_Marker_cube3.scale.x = 0.1
+                # Human_Marker_cube3.scale.y = 0.1
+                # Human_Marker_cube3.scale.z = 0.1
+                # Human_Marker_cube3.color.a = 0.8
+                # Human_Marker_cube3.color.r = 0.0
+                # Human_Marker_cube3.color.g = 0.0
+                # Human_Marker_cube3.color.b = 1.0
+                
+                # self.human_marker3.publish(Human_Marker_cube3)
+                # print("last prediction: ", "[", xt[num-1],", 0.0,", zt[num-1],"]")
+                #-------------------------------------------------------
+                
             
-                for i in (range(num-10)): #len(xt)-4
+                for i in (range(0, num, 30)): #len(xt)-4
                     
                     marker.header.frame_id = "camera_rgb_optical_frame"
                     marker.ns = "basic_shapes"
@@ -284,50 +344,49 @@ class Detection(object):
                     marker.pose.orientation.y = 1.0
                     marker.pose.orientation.z = 0.0
                     marker.pose.orientation.w = 0.0
-                    marker.scale.x = 0.7
-                    marker.scale.y = 0.7
-                    marker.scale.z = 0.7
+                    marker.scale.x = 0.5
+                    marker.scale.y = 0.5
+                    marker.scale.z = 0.5
                     marker.color.a = 1.0
                     marker.color.r = 0.0
                     marker.color.g = 1.0
                     marker.color.b = 0.0
-                    # marker.lifetime = 100
+                  
                 
-                    print("marker x",i ,": ", xt[i])
-                    print("marker y",i ,": ", yt[i])
-                    print("marker z",i ,": ", zt[i])
+                    # print("marker x",i ,": ", xt[i])
+                    # print("marker y",i ,": ", yt[i])
+                    # print("marker z",i ,": ", zt[i])
+                    now6 = rospy.get_rostime()
+                    print("marker",[i])
+                    rospy.loginfo("marker append time %i %i", now6.secs, now6.nsecs)
+                    print()
                     
                 
                     
                     Human_prediction.markers.append(marker)
-                    
+                
+                now3 = rospy.get_rostime()
+                rospy.loginfo("marker publishing start time %i %i", now3.secs, now3.nsecs)  
+                print()
+                 
                 self.human_pred.publish(Human_prediction)
                 
-                et2 = time.time() #end time for kalman filtering
-                elapsed_time2 = et2 - st2
-                print('Kalman Execution time:', elapsed_time2, 'seconds')
-                et1 = time.time()
-    
-                elapsed_time1 = et1 - st1
-                print('Total Execution time:', elapsed_time1, 'seconds')
+                now5 = rospy.get_rostime()
+                rospy.loginfo("marker publishing  end time %i %i", now5.secs, now5.nsecs)
                 print()
+                
+                
+                
                  
 
 #****************************************************************************************************************
 
 def main():
     rospy.init_node('Gaussian_DBSCAN', anonymous=False)
-    
-
+    # rate = rospy.Rate(10)
     sn = Detection()
-    
-    
-    
-   
-    
     while not rospy.is_shutdown():
-        rospy.spin()
-        
+        rospy.spin()    
 
 if __name__ == '__main__':
     main()
